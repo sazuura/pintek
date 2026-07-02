@@ -1,0 +1,17 @@
+Biru Tua (utama): #1A237E
+
+Biru Medium (hover/secondary): #283593
+
+Putih: #FFFFFF
+
+Abu Tua (teks/secondary): #2E2E2E
+
+
+
+Biru Tua (primary): #1A237E
+
+Navy (secondary/hover): #0D1B2A
+
+Abu Tua (text/secondary): #2E2E2E
+
+Putih Gading (background utama): #FAFAF7
