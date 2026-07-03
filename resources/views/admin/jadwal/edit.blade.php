@@ -27,7 +27,7 @@
                 <h3><i class="bx bx-info-circle"></i> Informasi Jadwal</h3>
                 <div class="form-grid">
                     <div class="form-group span-2">
-                        <label class="form-label">Judul Kegiatan <span class="req">*</span></label>
+                        <label class="form-label">Judul Rapat <span class="req">*</span></label>
                         <input type="text" name="judul_kegiatan" class="form-input"
                             value="{{ old('judul_kegiatan', $jadwal->judul_kegiatan) }}" required>
                     </div>
@@ -76,9 +76,8 @@
                             onchange="refreshOperatorOptions()">
                             <option value="" disabled selected>-- Pilih Operator --</option>
                             @foreach($operators as $op)
-                                {{-- PERBAIKAN: Tambahkan atribut data-jadwal di bawah ini --}}
-                                <option value="{{ $op->id_user }}" 
-                                        data-jadwal="{{ json_encode($op->jadwal_array ?? []) }}" 
+                                <option value="{{ $op->id_user }}"
+                                        data-jadwal='@json($op->jadwalDitugaskan->pluck("tanggal")->map(fn($t) => \Carbon\Carbon::parse($t)->format("Y-m-d")))'
                                         {{ $op->id_user == $idUser ? 'selected' : '' }}>
                                     {{ $op->nama_user }}
                                 </option>
@@ -94,53 +93,6 @@
                 <i class="bx bx-plus"></i> Tambah Operator
             </button>
         </div>
-
-            {{-- <div class="form-card">
-                <h3><i class="bx bxs-wrench"></i> Peralatan</h3>
-                <div class="dynamic-list" id="peralatan-list">
-                    @forelse($selectedPeralatan as $jp)
-                    <div class="dynamic-item">
-                        <select name="peralatan_ids[]" class="form-select">
-                            <option value="">-- Pilih Peralatan --</option>
-                            @foreach($peralatans->groupBy('gedung') as $gedung => $items)
-                            <optgroup label="{{ $gedung }}">
-                                @foreach($items as $alat)
-                                <option value="{{ $alat->id_peralatan }}" {{ $alat->
-                                    id_peralatan==$jp->id_peralatan?'selected':'' }}>
-                                    {{ $alat->nama_peralatan }} — stok: {{ $alat->stok_tersedia }}
-                                </option>
-                                @endforeach
-                            </optgroup>
-                            @endforeach
-                        </select>
-                        <input type="number" name="peralatan_jumlah[]" class="form-input" min="1" value="{{ $jp->jumlah }}"
-                            style="flex:0 0 80px;">
-                        <button type="button" class="btn-remove" onclick="removeItem(this)"><i
-                                class="bx bx-trash"></i></button>
-                    </div>
-                    @empty
-                    <div class="dynamic-item">
-                        <select name="peralatan_ids[]" class="form-select">
-                            <option value="">-- Pilih Peralatan (opsional) --</option>
-                            @foreach($peralatans->groupBy('gedung') as $gedung => $items)
-                            <optgroup label="{{ $gedung }}">
-                                @foreach($items as $alat)
-                                <option value="{{ $alat->id_peralatan }}">{{ $alat->nama_peralatan }} — stok: {{
-                                    $alat->stok_tersedia }}</option>
-                                @endforeach
-                            </optgroup>
-                            @endforeach
-                        </select>
-                        <input type="number" name="peralatan_jumlah[]" class="form-input" min="1" placeholder="Jml"
-                            style="flex:0 0 80px;">
-                        <button type="button" class="btn-remove" onclick="removeItem(this)"><i
-                                class="bx bx-trash"></i></button>
-                    </div>
-                    @endforelse
-                </div>
-                <button type="button" class="btn-add-item" id="add-peralatan"><i class="bx bx-plus"></i> Tambah
-                    Peralatan</button>
-            </div> --}}
 
             <div class="form-actions">
                 <a href="{{ route('admin.jadwal.index') }}" class="btn-cancel">Batal</a>

@@ -298,48 +298,6 @@ form button{
     font-size:14px;
 }
 
-/* =================================================
-   PAGINATION
-================================================= */
-
-.pagination-clean{
-    margin-top:20px;
-    display:flex;
-    justify-content:center;
-    gap:6px;
-}
-
-.page-btn{
-    min-width:34px;
-    height:34px;
-    padding:0 10px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:8px;
-    background:#f5f6fa;
-    color:#555;
-    text-decoration:none;
-    font-size:14px;
-    transition:0.2s ease;
-}
-
-.page-btn:hover{
-    background:#4f46e5;
-    color:white;
-}
-
-.page-btn.active{
-    background:#4f46e5;
-    color:white;
-    font-weight:600;
-}
-
-.page-btn.disabled{
-    background:#eee;
-    color:#aaa;
-    pointer-events:none;
-}
 /* GRID DETAIL */
 .detail-grid{
     display:grid;
@@ -929,6 +887,7 @@ button.btn-download {
 	font-family: var(--poppins);
 	max-height: calc(100vh - 56px);
 	overflow-y: auto;
+	overflow-x: hidden;
 }
 #content main .head-title {
 	display: flex;
@@ -1140,7 +1099,7 @@ button.btn-download {
 
 
 /* ============================================================
-   OVERLAY — muncul di belakang sidebar saat mobile
+   OVERLAY - muncul di belakang sidebar saat mobile
    ============================================================ */
 #sidebar-overlay {
 	display: none;
@@ -1153,7 +1112,7 @@ button.btn-download {
 	display: block;
 }
 
-/* Hamburger button — hidden di desktop, muncul di mobile */
+/* Hamburger button - hidden di desktop, muncul di mobile */
 #sidebar-toggle {
 	display: none;
 	background: none;
@@ -1282,7 +1241,7 @@ button.btn-download {
 		text-align: center;
 	}
 
-	/* Hapus min-width paksa — ini penyebab overflow di tabel */
+	/* Hapus min-width paksa - ini penyebab overflow di tabel */
 	#content main .table-data .head {
 		min-width: unset;
 	}
@@ -1295,7 +1254,7 @@ button.btn-download {
 }
 
 /* =============================================================
-   FIXES — Tambahan di atas adminhub.css original
+   FIXES - Tambahan di atas adminhub.css original
    Memperbaiki: sidebar toggle, dark mode, navbar, responsive
 ============================================================= */
 
@@ -1313,7 +1272,7 @@ button.btn-download {
     align-items: center;
 }
 
-/* ── Fix: dark mode — gunakan sistem .toggle + .icon ──────── */
+/* ── Fix: dark mode - gunakan sistem .toggle + .icon ──────── */
 /* Hapus konflik dengan .switch-mode pill (sistem lama) */
 /* Pakai sistem emoji yang sudah ada di CSS: .toggle + .icon  */
 #content nav .switch-mode {
@@ -1326,12 +1285,12 @@ button.btn-download {
     align-items: center;
 }
 
-/* ── Fix: navbar layout — semua item sejajar ────────────────── */
+/* ── Fix: navbar layout - semua item sejajar ────────────────── */
 #content nav {
     justify-content: space-between;
 }
 
-/* ── Fix: nav-badges — logo instansi di navbar ──────────────── */
+/* ── Fix: nav-badges - logo instansi di navbar ──────────────── */
 .nav-badges {
     display: flex;
     align-items: center;
@@ -1406,8 +1365,10 @@ button.btn-download {
     gap: 16px;
     margin-bottom: 24px;
 }
+.dashboard-main-stack .stat-cards { margin-bottom: 0; }
 
 .stat-card {
+    position: relative;
     background: var(--light);
     border-radius: 12px;
     padding: 20px;
@@ -1439,8 +1400,28 @@ button.btn-download {
 .stat-card-icon.purple { background: #f3e8ff; color: #8b5cf6; }
 .stat-card-icon.orange { background: #FFF0E5; color: #FD7238; }
 
+.stat-trend {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    cursor: default;
+}
+.stat-trend i { font-size: 13px; }
+.stat-trend.up    { color: #1abc9c; background: #e6f9f0; }
+.stat-trend.down  { color: #e74c3c; background: #fdecea; }
+.stat-trend.flat  { color: var(--dark-grey); background: var(--grey); }
+.stat-trend.neutral { color: var(--dark-grey); background: var(--grey); font-weight: 500; }
+
 .stat-card-info h3 {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--dark);
     line-height: 1;
@@ -1475,6 +1456,391 @@ button.btn-download {
 .chart-card canvas {
     max-height: 240px;
 }
+
+.chart-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.chart-card-header h3 { margin-bottom: 16px; }
+
+.chart-type-toggle {
+    position: relative;
+    display: inline-flex;
+    gap: 4px;
+    background: var(--grey);
+    border-radius: 11px;
+    padding: 3px;
+    flex-shrink: 0;
+}
+/* Thumb putih yang meluncur di belakang tombol aktif */
+.chart-type-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 32px;
+    height: 30px;
+    background: var(--light);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    z-index: 0;
+}
+.chart-type-toggle[data-active="bar"]  .chart-type-thumb { transform: translateX(0); }
+.chart-type-toggle[data-active="line"] .chart-type-thumb { transform: translateX(36px); }
+
+.chart-type-btn {
+    position: relative;
+    z-index: 1;
+    width: 32px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    outline: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--dark-grey);
+    font-size: 16px;
+    cursor: pointer;
+    transition: color .2s;
+}
+.chart-type-btn:hover { color: var(--dark); }
+.chart-type-btn.active { color: var(--blue); }
+
+/* Layout asimetris: chart + peringkat lebih lebar di kiri, kalender + aktivitas ditumpuk sempit di kanan */
+.chart-grid-asym {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: start;
+}
+.dashboard-main-stack,
+.dashboard-sidebar-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.chart-grid-asym .chart-card {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+}
+/* Chart.js butuh parent dengan tinggi pasti agar tidak "membesar" tanpa henti di dalam flex column */
+.chart-canvas-wrap {
+    position: relative;
+    height: 240px;
+    flex-shrink: 0;
+}
+.chart-canvas-wrap canvas { max-height: none; }
+.chart-canvas-wrap-tall { height: 340px; }
+
+/* ── Dashboard: aktivitas terbaru ───────────────────────────── */
+.activity-feed {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--grey);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #e8f4fd;
+    color: #3C91E6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+}
+.activity-body p {
+    margin: 0 0 2px;
+    font-size: 13px;
+    color: var(--dark);
+    line-height: 1.4;
+}
+.activity-body small {
+    font-size: 11px;
+    color: var(--dark-grey);
+}
+.activity-empty {
+    text-align: center;
+    padding: 40px 10px;
+    color: var(--dark-grey);
+}
+.activity-empty i {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 8px;
+}
+.activity-empty p { margin: 0; font-size: 13px; }
+
+/* ── Dashboard: kalender kepadatan jadwal ───────────────────── */
+.calendar-title-row {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.calendar-subtitle {
+    display: block;
+    color: var(--dark-grey);
+    font-size: 12px;
+    margin-top: 2px;
+}
+.calendar-legend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--dark-grey);
+    white-space: nowrap;
+}
+.legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.legend-swatch.today    { background: var(--blue); }
+.legend-swatch.upcoming { background: rgba(139,92,246,.5); }
+.legend-swatch.past     { background: rgba(60,145,230,.15); }
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--grey);
+}
+.calendar-header h4 {
+    margin: 0;
+    font-size: 15px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+.calendar-month { color: var(--dark); font-weight: 700; }
+.calendar-year { color: var(--blue); font-weight: 700; }
+.calendar-nav {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--grey);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark-grey);
+    font-size: 18px;
+    transition: background .2s, color .2s, transform .15s;
+    flex-shrink: 0;
+}
+.calendar-nav:hover { background: var(--blue); color: #fff; transform: scale(1.06); }
+
+.calendar-scroll { overflow-x: hidden; }
+.calendar-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 6px;
+    table-layout: fixed;
+}
+.calendar-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--dark-grey);
+    text-align: center;
+    padding-bottom: 10px;
+}
+.calendar-cell {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0 auto;
+    transition: transform .15s;
+}
+.calendar-cell.clickable { cursor: pointer; }
+.calendar-cell.clickable:hover { transform: scale(1.08); }
+.calendar-cell.faded { color: var(--dark-grey); opacity: .5; }
+/* Jadwal akan datang: ungu konsisten (tidak dipengaruhi jumlah) */
+.calendar-cell.upcoming { background-color: rgba(139,92,246,.4); }
+/* Jadwal sudah lewat: biru pudar */
+.calendar-cell.past { background-color: rgba(60,145,230,.15); }
+.calendar-cell.today {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(60,145,230,.45);
+}
+.calendar-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: 0 0 0 2px var(--light);
+}
+.calendar-cell.today .calendar-badge {
+    background: #fff;
+    color: var(--blue);
+    box-shadow: 0 0 0 2px var(--blue);
+}
+.calendar-cell.upcoming .calendar-badge { background: #8b5cf6; }
+
+@media screen and (max-width: 480px) {
+    .calendar-cell { font-size: 11px; max-height: 34px; border-radius: 8px; }
+    .calendar-table { border-spacing: 4px; }
+    .calendar-badge { min-width: 13px; height: 13px; font-size: 8px; bottom: -3px; right: -3px; }
+    .calendar-title-row { flex-direction: column; }
+    .chart-canvas-wrap { height: 200px; }
+}
+
+/* Tooltip kustom untuk sel kalender — posisi fixed (relatif ke viewport) supaya tidak pernah
+   terpotong oleh overflow:hidden pada container manapun, beda dari native title tooltip. */
+.calendar-tooltip {
+    position: fixed;
+    display: none;
+    background: var(--dark);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    z-index: 3000;
+    pointer-events: none;
+}
+.calendar-tooltip.show { display: block; }
+
+/* ── Dashboard: modal jadwal per tanggal ────────────────────── */
+.jadwal-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 2100; /* di atas #sidebar (2000) & #sidebar-overlay (1999) supaya sidebar ikut ter-dim */
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.jadwal-modal-overlay.open { display: flex; }
+.jadwal-modal {
+    background: var(--light);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,.25);
+}
+.jadwal-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--grey);
+}
+.jadwal-modal-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--dark);
+}
+.jadwal-modal-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark-grey);
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: background .2s, color .2s;
+}
+.jadwal-modal-close:hover { background: var(--grey); color: var(--dark); }
+.jadwal-modal-body {
+    padding: 16px 20px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.jadwal-modal-item {
+    background: var(--grey);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+.jadwal-modal-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.jadwal-modal-item-top strong { font-size: 13px; color: var(--dark); }
+.jadwal-modal-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--dark-grey);
+    margin-top: 4px;
+}
+.jadwal-modal-item-meta i { margin-right: 4px; }
+.jadwal-modal-empty {
+    text-align: center;
+    padding: 30px 10px;
+    color: var(--dark-grey);
+}
+.jadwal-modal-empty i { font-size: 32px; display: block; margin-bottom: 8px; }
+.jadwal-modal-empty p { margin: 0; font-size: 13px; }
 
 /* ── Toolbar: search + filter bar ──────────────────────────── */
 .content-toolbar {
@@ -1648,6 +2014,55 @@ button.btn-download {
     margin: 0;
     font-weight: 500;
 }
+
+/* ── Detail panel (dropdown accordion tabel - dipakai di semua tabel) ── */
+.detail-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px 32px;
+    padding: 18px 16px;
+}
+.detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 160px;
+}
+.detail-row.full { flex: 2 1 260px; }
+.detail-row > i {
+    font-size: 18px;
+    color: var(--blue);
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+.detail-row label {
+    font-size: 11px;
+    color: var(--dark-grey);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    display: block;
+    margin-bottom: 2px;
+}
+.detail-row p {
+    color: var(--dark);
+    margin: 0;
+    font-weight: 500;
+    font-size: 13px;
+    word-break: break-word;
+}
+.detail-row a {
+    color: #25D366;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.detail-row a:hover { text-decoration: underline; }
+.detail-row.danger > i,
+.detail-row.danger p { color: #e74c3c; }
 
 /* Chevron indicator di baris accordion */
 .accordion-chevron {
@@ -1877,6 +2292,8 @@ body.dark .badge-inactive { background: #2a2a2a; color: #666; }
 .page-link:hover   { background: var(--blue-light); color: var(--blue); }
 .page-link.active  { background: var(--blue); color: white; font-weight: 600; }
 .page-link.disabled{ opacity: .4; pointer-events: none; }
+.page-link.ellipsis{ background: transparent; border-color: transparent; cursor: default; color: var(--dark-grey); }
+.page-link.ellipsis:hover { background: transparent; color: var(--dark-grey); }
 
 /* ── Form fields ─────────────────────────────────────────────── */
 .form-card {
@@ -1948,6 +2365,30 @@ body.dark .badge-inactive { background: #2a2a2a; color: #666; }
     box-shadow: 0 0 0 3px rgba(60,145,230,.10);
 }
 .form-input:read-only { background: var(--grey); cursor: not-allowed; }
+
+/* ── Password wrapper: input + tombol mata ──────────────────── */
+.password-wrap {
+    position: relative;
+}
+.password-wrap .form-input {
+    padding-right: 44px;
+}
+.eye-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--dark-grey);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    transition: color .2s;
+}
+.eye-btn:hover { color: var(--blue); }
 
 .form-input.error,
 .form-select.error { border-color: #e74c3c; }
@@ -2056,6 +2497,19 @@ body.dark .badge-inactive { background: #2a2a2a; color: #666; }
 .btn-add-item:hover { background: #e8f4fd; }
 
 /* ── Responsive fine-tuning ─────────────────────────────────── */
+/* Desktop: kolom kalender + aktivitas terbaru sedikit lebih besar dari default, tidak berlebihan */
+@media screen and (min-width: 1101px) {
+    .chart-grid-asym { grid-template-columns: 14fr 7fr; }
+    .calendar-cell { max-height: 43px; }
+    .activity-feed { max-height: 280px; }
+    .activity-icon { width: 35px; height: 35px; }
+}
+
+@media screen and (max-width: 1100px) {
+    .chart-grid-asym { grid-template-columns: 1fr; }
+    .chart-canvas-wrap-tall { height: 300px; }
+}
+
 @media screen and (max-width: 768px) {
     .stat-cards { grid-template-columns: repeat(2, 1fr); }
     .chart-grid { grid-template-columns: 1fr; }
@@ -2063,6 +2517,9 @@ body.dark .badge-inactive { background: #2a2a2a; color: #666; }
     .toolbar-right { margin-left: 0; width: 100%; }
     .content-toolbar { flex-direction: column; align-items: stretch; }
     .toolbar-search { max-width: 100%; }
+    .chart-card { padding: 16px; }
+    .chart-canvas-wrap { height: 220px; }
+    .chart-canvas-wrap-tall { height: 280px; }
 }
 
 @media screen and (max-width: 480px) {
@@ -2070,6 +2527,8 @@ body.dark .badge-inactive { background: #2a2a2a; color: #666; }
     .peralatan-grid { grid-template-columns: 1fr; }
     .form-actions { flex-direction: column-reverse; }
     .btn-submit, .btn-cancel { width: 100%; justify-content: center; }
+    .chart-canvas-wrap { height: 200px; }
+    .chart-canvas-wrap-tall { height: 260px; }
 }
 
 
@@ -2132,7 +2591,8 @@ body.dark .badge-inactive { background: #2a2a2a; color: #666; }
 }
 
 .tab-panels {
-    background: var(--light);
+    background: transparent;
+    padding: 16px;
 }
 
 .tab-panel {

@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Test alur presensi operator — validasi waktu dan status.
+ * Test alur presensi operator - validasi waktu dan status.
  */
 class OperatorAbsensiTest extends TestCase
 {

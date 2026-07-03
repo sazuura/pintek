@@ -1,16 +1,18 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Peminjaman;
+use App\Models\Penjadwalan;
 use App\Models\Peralatan;
 use App\Services\PeminjamanService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PeminjamanController extends Controller
 {
     public function __construct(private PeminjamanService $service) {}
     public function operatorIndex(Request $request)
     {
-        $peminjaman = Peminjaman::with('items.peralatan')
+        $peminjaman = Peminjaman::with(['items.peralatan', 'penjadwalan'])
             ->where('id_user', auth()->user()->id_user)
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
             ->orderByDesc('created_at')
@@ -27,11 +29,15 @@ class PeminjamanController extends Controller
             ->groupBy('gedung');
 
         $selectedPeralatanId = $request->query('id_peralatan');
-        return view('operator.peminjaman.create', compact('peralatan', 'selectedPeralatanId'));
+        $jadwalAktif          = $this->jadwalAktifOperator();
+        return view('operator.peminjaman.create', compact('peralatan', 'selectedPeralatanId', 'jadwalAktif'));
     }
     public function operatorStore(Request $request)
     {
+        $idJadwalAktif = $this->jadwalAktifOperator()->pluck('id_penjadwalan');
+
         $request->validate([
+            'id_penjadwalan'          => ['nullable', Rule::in($idJadwalAktif)],
             'tanggal_pinjam'          => 'required|date|after_or_equal:today',
             'tanggal_kembali_rencana' => 'required|date|after:tanggal_pinjam',
             'keperluan'               => 'required|string|max:255',
@@ -40,13 +46,15 @@ class PeminjamanController extends Controller
             'peralatan_jumlah'        => 'required|array',
             'peralatan_jumlah.*'      => 'required|integer|min:1',
         ], [
-            'peralatan_ids.required' => 'Pilih minimal 1 peralatan.',
+            'id_penjadwalan.in'       => 'Jadwal yang dipilih tidak valid.',
+            'peralatan_ids.required'  => 'Pilih minimal 1 peralatan.',
             'tanggal_kembali_rencana.after' => 'Tanggal kembali harus setelah tanggal pinjam.',
         ]);
         try {
             $this->service->ajukan(
                 header: [
                     'id_user'                 => auth()->user()->id_user,
+                    'id_penjadwalan'          => $request->id_penjadwalan ?: null,
                     'tanggal_pinjam'          => $request->tanggal_pinjam,
                     'tanggal_kembali_rencana' => $request->tanggal_kembali_rencana,
                     'keperluan'               => $request->keperluan,
@@ -61,8 +69,21 @@ class PeminjamanController extends Controller
         return redirect()->route('operator.peminjaman.index')
             ->with('success', 'Pengajuan berhasil dikirim. Notifikasi telah dikirim ke petugas inventaris.');
     }
+
+    /**
+     * Jadwal milik operator yang login, berstatus aktif (belum lewat & belum dibatalkan) -
+     * dipakai sebagai pilihan "kaitkan ke jadwal" saat mengajukan peminjaman.
+     */
+    private function jadwalAktifOperator()
+    {
+        return Penjadwalan::whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
+            ->where('status', '!=', 'dibatalkan')
+            ->whereRaw("TIMESTAMP(tanggal, waktu_selesai) >= NOW()")
+            ->orderBy('tanggal')
+            ->get();
+    }
     public function inventarisIndex(Request $request){
-        $peminjaman = Peminjaman::with(['user', 'items.peralatan'])
+        $peminjaman = Peminjaman::with(['user', 'items.peralatan', 'penjadwalan'])
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
             ->when($request->id_user, fn($q, $v) => $q->where('id_user', $v))
             ->orderByDesc('created_at')

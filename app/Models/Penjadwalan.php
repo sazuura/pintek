@@ -3,14 +3,13 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class Penjadwalan extends Model
-{
-    protected $table        = 'penjadwalan';
-    protected $primaryKey   = 'id_penjadwalan';
-    public    $incrementing = false;
-    protected $keyType      = 'string';
-    public    $timestamps   = false;
-    protected $fillable = [
+    class Penjadwalan extends Model
+    {
+        protected $table        = 'penjadwalan';
+        protected $primaryKey   = 'id_penjadwalan';
+        public    $incrementing = false;
+        protected $keyType      = 'string';
+        protected $fillable = [
         'id_penjadwalan',
         'judul_kegiatan',
         'tanggal',
@@ -18,28 +17,21 @@ class Penjadwalan extends Model
         'waktu_selesai',
         'platform',
         'keterangan',
-        'id_pemateri',
         'status',
         'alasan_batal',
     ];
+
+    public function operators()
+    {
+        return $this->belongsToMany(User::class, 'jadwal_operator', 'id_penjadwalan', 'id_user');
+    }
     protected $casts = [
         'tanggal' => 'date:Y-m-d',
     ];
 
-    public function absensi()
+    public function peminjaman()
     {
-        return $this->hasMany(Absensi::class, 'id_penjadwalan', 'id_penjadwalan');
-    }
-
-    public function jadwalPeralatan()
-    {
-        return $this->hasMany(JadwalPeralatan::class, 'id_penjadwalan', 'id_penjadwalan');
-    }
-
-    public function pemateri()
-    {
-        return $this->belongsTo(User::class, 'id_pemateri', 'id_user')
-                    ->withDefault(['nama_user' => '-']);
+        return $this->hasMany(Peminjaman::class, 'id_penjadwalan', 'id_penjadwalan');
     }
 
     public function isDibatalkan(): bool

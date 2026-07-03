@@ -18,7 +18,7 @@
                 <thead>
                     <tr>
                         <th style="width:40px;">#</th>
-                        <th class="sortable">Kegiatan <span class="sort-icon">⇅</span></th>
+                        <th class="sortable">Judul Rapat <span class="sort-icon">⇅</span></th>
                         <th class="hide-mobile sortable">Tanggal <span class="sort-icon">⇅</span></th>
                         <th class="hide-mobile">Waktu</th>
                         <th class="hide-mobile">Platform</th>
@@ -28,8 +28,9 @@
                 <tbody>
                     @forelse($jadwal as $index => $j)
                     @php
-                        $absensi = $j->absensi->firstWhere('id_user', auth()->user()->id_user);
-                        $uid     = 'jd-'.$j->id_penjadwalan;
+                        $uid        = 'jd-'.$j->id_penjadwalan;
+                        $sudahLewat = \Carbon\Carbon::parse($j->tanggal->format('Y-m-d') . ' ' . $j->waktu_selesai)->isPast();
+                        $dibatalkan = $j->isDibatalkan();
                     @endphp
                     <tr class="accordion-row" data-target="{{ $uid }}">
                         <td>{{ $jadwal->firstItem() + $index }}</td>
@@ -37,7 +38,7 @@
                             <div style="font-weight:500;">{{ $j->judul_kegiatan }}</div>
                             <div style="font-size:12px;color:var(--dark-grey);">{{ $j->keterangan }}</div>
                         </td>
-                        <td class="hide-mobile">{{ $j->tanggal->translatedFormat('d M Y') }}</td>
+                        <td class="hide-mobile">{{ $j->tanggal->translatedFormat('D, d M Y') }}</td>
                         <td class="hide-mobile">
                             {{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
                             {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }}
@@ -51,10 +52,12 @@
                         </td>
                         <td>
                             <div style="display:flex;align-items:center;gap:6px;">
-                                @if($absensi)
-                                    <span class="badge {{ $absensi->badge['class'] }}">{{ $absensi->badge['label'] }}</span>
+                                @if($dibatalkan)
+                                    <span class="badge badge-danger"><i class="bx bx-x-circle"></i> Dibatalkan</span>
+                                @elseif($sudahLewat)
+                                    <span class="badge badge-active"><i class="bx bx-check-double"></i> Selesai</span>
                                 @else
-                                    <span class="badge badge-inactive">-</span>
+                                    <span class="badge badge-info"><i class="bx bx-check-circle"></i> Aktif</span>
                                 @endif
                                 <i class="bx bx-chevron-down accordion-chevron"></i>
                             </div>
@@ -80,12 +83,8 @@
                                     <p>{{ $j->keterangan ?? '-' }}</p>
                                 </div>
                                 <div class="detail-item">
-                                    <label>Peralatan</label>
-                                    <p>{{ $j->jadwalPeralatan->map(fn($jp)=>$jp->peralatan->nama_peralatan.' (x'.$jp->jumlah.')')->join(', ') ?: '-' }}</p>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Status Presensi</label>
-                                    <p>{{ $absensi ? $absensi->badge['label'] : '-' }}</p>
+                                    <label>Operator Bertugas</label>
+                                    <p>{{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -101,23 +100,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="pagination-wrap">
-            <span>Menampilkan {{ $jadwal->firstItem() }}–{{ $jadwal->lastItem() }} dari {{ $jadwal->total() }} jadwal</span>
-            <div class="pagination-links">
-                @if($jadwal->onFirstPage())
-                    <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
-                @else
-                    <a href="{{ $jadwal->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
-                @endif
-                @foreach(range(1, $jadwal->lastPage()) as $p)
-                    <a href="{{ $jadwal->url($p) }}" class="page-link {{ $jadwal->currentPage()==$p?'active':'' }}">{{ $p }}</a>
-                @endforeach
-                @if($jadwal->hasMorePages())
-                    <a href="{{ $jadwal->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
-                @else
-                    <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
-                @endif
-            </div>
+        <x-pagination :paginator="$jadwal" label="jadwal" />
         </div>
     </div>
 </main>

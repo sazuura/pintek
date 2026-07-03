@@ -46,6 +46,7 @@
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th style="width:32px;"></th>
                             <th style="width:40px;">#</th>
                             <th class="sortable">Nama <span class="sort-icon">⇅</span></th>
                             <th class="hide-mobile">Email</th>
@@ -60,6 +61,7 @@
                             @php $uid = 'usr-' . $user->id_user; @endphp
 
                             <tr class="accordion-row {{ !$user->isActive() ? 'row-inactive' : '' }}" data-target="{{ $uid }}">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
                                 <td>{{ $users->firstItem() + $index }}</td>
                                 <td>
                                     <div style="font-weight:500;">{{ $user->nama_user }}</div>
@@ -80,7 +82,6 @@
                                 </td>
                                 <td>
                                     <div class="action-group">
-                                        <i class="bx bx-chevron-down accordion-chevron"></i>
                                         <a href="{{ route('admin.users.edit', $user->id_user) }}" class="btn-icon edit">
                                             <i class="bx bx-edit"></i>
                                         </a>
@@ -99,30 +100,41 @@
 
                             <tr class="accordion-detail" id="{{ $uid }}">
                                 <td colspan="7">
-                                    <div class="accordion-detail-inner">
-                                        <div class="detail-item">
-                                            <label>ID User</label>
-                                            <p>{{ $user->id_user }}</p>
+                                    @php
+                                        $waNumber = $user->nohp ? '62' . ltrim(preg_replace('/\D/', '', $user->nohp), '0') : null;
+                                    @endphp
+                                    <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-id-card"></i>
+                                            <div>
+                                                <label>ID User</label>
+                                                <p>{{ $user->id_user }}</p>
+                                            </div>
                                         </div>
-                                        <div class="detail-item">
-                                            <label>No. HP</label>
-                                            <p>{{ $user->nohp ?? '-' }}</p>
+                                        <div class="detail-row">
+                                            <i class="bx bxl-whatsapp"></i>
+                                            <div>
+                                                <label>No. HP</label>
+                                                @if($waNumber)
+                                                    <p><a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener">{{ $user->nohp }} <i class="bx bx-link-external" style="font-size:11px;"></i></a></p>
+                                                @else
+                                                    <p>-</p>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <div class="detail-item">
-                                            <label>Email</label>
-                                            <p>{{ $user->email }}</p>
+                                        <div class="detail-row">
+                                            <i class="bx {{ $user->jenis_kelamin === 'L' ? 'bx-male-sign' : ($user->jenis_kelamin === 'P' ? 'bx-female-sign' : 'bx-question-mark') }}"></i>
+                                            <div>
+                                                <label>Jenis Kelamin</label>
+                                                <p>{{ $user->jenis_kelamin === 'L' ? 'Laki-laki' : ($user->jenis_kelamin === 'P' ? 'Perempuan' : '-') }}</p>
+                                            </div>
                                         </div>
-                                        <div class="detail-item">
-                                            <label>Role</label>
-                                            <p>{{ ucfirst($user->role) }}</p>
-                                        </div>
-                                        {{-- <div class="detail-item">
-                                            <label>Gedung</label>
-                                            <p>{{ $user->gedung ?? '-' }}</p>
-                                        </div> --}}
-                                        <div class="detail-item">
-                                            <label>Status</label>
-                                            <p>{{ $user->isActive() ? 'Active' : 'Inactive' }}</p>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-map"></i>
+                                            <div>
+                                                <label>Alamat</label>
+                                                <p>{{ $user->alamat ?? '-' }}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -138,24 +150,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="pagination-wrap">
-                <span>Menampilkan {{ $users->firstItem() }}–{{ $users->lastItem() }} dari {{ $users->total() }} user</span>
-                <div class="pagination-links">
-                    @if($users->onFirstPage())
-                        <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
-                    @else
-                        <a href="{{ $users->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
-                    @endif
-                    @foreach(range(1, $users->lastPage()) as $p)
-                        <a href="{{ $users->url($p) }}"
-                            class="page-link {{ $users->currentPage() == $p ? 'active' : '' }}">{{ $p }}</a>
-                    @endforeach
-                    @if($users->hasMorePages())
-                        <a href="{{ $users->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
-                    @else
-                        <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
-                    @endif
-                </div>
+            <x-pagination :paginator="$users" label="user" />
             </div>
         </div>
     </main>

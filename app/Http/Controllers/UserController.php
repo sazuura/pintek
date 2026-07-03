@@ -28,22 +28,26 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nama_user' => 'required|string|max:100',
-            'nohp'      => 'required|string|max:20|unique:users,nohp',
-            'email'     => 'required|email|unique:users,email',
-            'password'  => 'required|string|min:6',
-            'role'      => 'required|in:admin,operator,inventaris',
+            'nama_user'     => 'required|string|max:100',
+            'jenis_kelamin' => 'required|in:L,P',
+            'alamat'        => 'required|string|max:255',
+            'nohp'          => 'required|string|max:20|unique:users,nohp',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required|string|min:6',
+            'role'          => 'required|in:admin,operator,inventaris',
         ], [
             'gedung.required_if' => 'Nama gedung wajib diisi untuk role inventaris.',
         ]);
         User::create([
-            'id_user'   => IdGenerator::next(User::class, 'id_user', 'USR-'),
-            'nama_user' => $data['nama_user'],
-            'nohp'      => $data['nohp'],
-            'email'     => $data['email'],
-            'password'  => bcrypt($data['password']),
-            'role'      => $data['role'],
-            'status'    => 'active',
+            'id_user'       => IdGenerator::next(User::class, 'id_user', 'USR-'),
+            'nama_user'     => $data['nama_user'],
+            'jenis_kelamin' => $data['jenis_kelamin'],
+            'alamat'        => $data['alamat'],
+            'nohp'          => $data['nohp'],
+            'email'         => $data['email'],
+            'password'      => bcrypt($data['password']),
+            'role'          => $data['role'],
+            'status'        => 'active',
         ]);
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil ditambahkan.');
@@ -56,19 +60,23 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         $data = $request->validate([
-            'nama_user' => 'required|string|max:100',
-            'nohp'      => 'required|string|max:20|unique:users,nohp,' . $id . ',id_user',
-            'email'     => 'required|email|unique:users,email,' . $id . ',id_user',
-            'password'  => 'nullable|string|min:6',
-            'role'      => 'required|in:admin,operator,inventaris',
+            'nama_user'     => 'required|string|max:100',
+            'jenis_kelamin' => 'required|in:L,P',
+            'alamat'        => 'required|string|max:255',
+            'nohp'          => 'required|string|max:20|unique:users,nohp,' . $id . ',id_user',
+            'email'         => 'required|email|unique:users,email,' . $id . ',id_user',
+            'password'      => 'nullable|string|min:6',
+            'role'          => 'required|in:admin,operator,inventaris',
         ], [
             'gedung.required_if' => 'Nama gedung wajib diisi untuk role inventaris.',
         ]);
         $update = [
-            'nama_user' => $data['nama_user'],
-            'nohp'      => $data['nohp'],
-            'email'     => $data['email'],
-            'role'      => $data['role'],
+            'nama_user'     => $data['nama_user'],
+            'jenis_kelamin' => $data['jenis_kelamin'],
+            'alamat'        => $data['alamat'],
+            'nohp'          => $data['nohp'],
+            'email'         => $data['email'],
+            'role'          => $data['role'],
         ];
         if (!empty($data['password'])) {
             $update['password'] = bcrypt($data['password']);

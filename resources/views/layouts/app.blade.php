@@ -5,15 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Sistem') — Diskominfotik</title>
+    <title>@yield('title', 'Sistem') - Diskominfotik</title>
 
     {{--
-    ANTI-FLASH — wajib jadi script PERTAMA di
+    ANTI-FLASH - wajib jadi script PERTAMA di
 
     <head>, sebelum CSS apapun.
 
         Masalah: browser render body dengan warna default (putih) dulu,
-        baru JS jalan dan tambahkan class .dark — hasilnya ada flash putih.
+        baru JS jalan dan tambahkan class .dark - hasilnya ada flash putih.
 
         Solusi: script ini jalan SEBELUM CSS dimuat dan SEBELUM body dirender.
         Langsung tambahkan class 'dark' ke
@@ -36,7 +36,7 @@
 
 {{--
 
-<body> tanpa class — class 'dark' sudah ditulis via document.write di atas jika perlu.
+<body> tanpa class - class 'dark' sudah ditulis via document.write di atas jika perlu.
     Jangan tambahkan class apapun di sini agar tidak konflik.
     --}}
 

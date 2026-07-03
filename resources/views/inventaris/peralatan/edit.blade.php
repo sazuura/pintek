@@ -7,9 +7,6 @@
         <div class="head-title">
             <div class="left">
                 <h1>Edit Peralatan</h1>
-                <div style="font-size:13px;color:var(--dark-grey);margin-top:4px;">
-                    <i class="bx bx-building"></i> {{ auth()->user()->gedung }}
-                </div>
             </div>
             <a href="{{ route('inventaris.peralatan.index') }}" class="toolbar-btn neutral">
                 <i class="bx bx-arrow-back"></i> Kembali
@@ -36,7 +33,7 @@
                         <span class="form-hint">ID tidak bisa diubah.</span>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Kode Barang</label>
+                        <label class="form-label">Nomor Seri</label>
                         <input type="text" name="kode_barang"
                             class="form-input {{ $errors->has('kode_barang') ? 'error' : '' }}"
                             value="{{ old('kode_barang', $peralatan->kode_barang) }}" placeholder="cth: GU/LAP/2024/001">

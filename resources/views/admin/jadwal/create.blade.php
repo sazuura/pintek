@@ -27,7 +27,7 @@
                 <h3><i class="bx bx-info-circle"></i> Informasi Jadwal</h3>
                 <div class="form-grid">
                     <div class="form-group span-2">
-                        <label class="form-label">Judul Kegiatan <span class="req">*</span></label>
+                        <label class="form-label">Judul Rapat <span class="req">*</span></label>
                         <input type="text" name="judul_kegiatan"
                             class="form-input {{ $errors->has('judul_kegiatan') ? 'error' : '' }}"
                             value="{{ old('judul_kegiatan') }}" placeholder="cth: Rapat Koordinasi Bulanan" required>
@@ -77,7 +77,7 @@
                             <option value="" disabled selected>-- Pilih Operator --</option>
                             @foreach($operators as $op)
                                 <option value="{{ $op->id_user }}" data-nohp="{{ $op->nohp }}"
-                                    data-jadwal='@json($op->absensi->pluck("tanggal")->map(fn($t) => \Carbon\Carbon::parse($t)->format("Y-m-d")))'>
+                                    data-jadwal='@json($op->jadwalDitugaskan->pluck("tanggal")->map(fn($t) => \Carbon\Carbon::parse($t)->format("Y-m-d")))'>
                                     {{ $op->nama_user }}
                                 </option>
                             @endforeach
@@ -91,40 +91,6 @@
                     <i class="bx bx-plus"></i> Tambah Operator
                 </button>
             </div>
-
-            {{-- <div class="form-card">
-                <h3><i class="bx bxs-wrench"></i> Peralatan yang Digunakan <small>(opsional)</small></h3>
-                <p class="form-hint" style="margin-bottom:12px;">
-                    Peralatan yang sudah dipilih di baris lain otomatis tersembunyi.
-                    Peralatan dengan stok habis di-disable.
-                </p>
-                <div class="dynamic-list" id="peralatan-list">
-                    <div class="dynamic-item">
-                        <select name="peralatan_ids[]" class="form-select peralatan-select"
-                            onchange="refreshPeralatanOptions()">
-                            <option value="">-- Pilih Peralatan (opsional) --</option>
-                            @foreach($peralatans->groupBy('gedung') as $gedung => $items)
-                            <optgroup label="{{ $gedung }}">
-                                @foreach($items as $alat)
-                                <option value="{{ $alat->id_peralatan }}" data-stok="{{ $alat->stok_tersedia }}" {{ $alat->
-                                    stok_tersedia <= 0 ? 'disabled' : '' }}>
-                                        {{ $alat->nama_peralatan }} — stok: {{ $alat->stok_tersedia }}
-                                </option>
-                                @endforeach
-                            </optgroup>
-                            @endforeach
-                        </select>
-                        <input type="number" name="peralatan_jumlah[]" class="form-input" min="1" placeholder="Jml"
-                            style="flex:0 0 80px;">
-                        <button type="button" class="btn-remove" onclick="removePeralatan(this)">
-                            <i class="bx bx-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <button type="button" class="btn-add-item" id="add-peralatan">
-                    <i class="bx bx-plus"></i> Tambah Peralatan
-                </button>
-            </div> --}}
 
             <div class="form-actions">
                 <a href="{{ route('admin.jadwal.index') }}" class="btn-cancel">Batal</a>
@@ -232,48 +198,5 @@
         }
 
         document.getElementById('add-operator').addEventListener('click', addOperator);
-
-
-        // ── Peralatan: hide yang sudah dipilih ────────────────────────────────────
-        function getSelectedPeralatan() {
-            return Array.from(document.querySelectorAll('.peralatan-select'))
-                .map(function (s) { return s.value; })
-                .filter(function (v) { return v !== ''; });
-        }
-
-        function refreshPeralatanOptions() {
-            var selected = getSelectedPeralatan();
-
-            document.querySelectorAll('.peralatan-select').forEach(function (select) {
-                var currentVal = select.value;
-                Array.from(select.options).forEach(function (opt) {
-                    if (!opt.value) return;
-                    var isSelectedElsewhere = selected.includes(opt.value) && opt.value !== currentVal;
-                    opt.hidden = isSelectedElsewhere;
-                });
-            });
-        }
-
-        function removePeralatan(btn) {
-            var list = document.getElementById('peralatan-list');
-            if (list.children.length > 1) {
-                btn.closest('.dynamic-item').remove();
-                refreshPeralatanOptions();
-            }
-        }
-
-        function addPeralatan() {
-            var list = document.getElementById('peralatan-list');
-            var first = list.querySelector('.dynamic-item');
-            var clone = first.cloneNode(true);
-            clone.querySelector('select').value = '';
-            clone.querySelector('select').onchange = refreshPeralatanOptions;
-            clone.querySelector('input[type=number]').value = '';
-            clone.querySelector('.btn-remove').onclick = function () { removePeralatan(this); };
-            list.appendChild(clone);
-            refreshPeralatanOptions();
-        }
-
-        document.getElementById('add-peralatan').addEventListener('click', addPeralatan);
     </script>
 @endpush

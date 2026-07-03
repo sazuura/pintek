@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ═══════════════════════════════════════════════════
     // 1. ACCORDION
-    //    Delegation ke document — cocok untuk <tr> yang
+    //    Delegation ke document - cocok untuk <tr> yang
     //    di-render via @foreach di Blade.
     // ═══════════════════════════════════════════════════
     document.addEventListener('click', function (e) {
@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Tutup semua accordion yang sedang terbuka
         document.querySelectorAll('tr.accordion-detail.open').forEach(function (d) {
             d.classList.remove('open');
+            // Reset form konfirmasi inline (mis. form batalkan) yang mungkin
+            // masih terbuka di dalam baris ini, supaya tidak "nyangkut" aktif
+            // saat baris ditutup lewat klik dropdown.
+            d.querySelectorAll('.inline-confirm-form').forEach(function (f) {
+                f.style.display = 'none';
+            });
         });
         document.querySelectorAll('tr.accordion-row.open').forEach(function (r) {
             r.classList.remove('open');
@@ -36,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ═══════════════════════════════════════════════════
     // 2. TAB VIEW
-    //    Delegation ke document — tab bisa ada di mana
+    //    Delegation ke document - tab bisa ada di mana
     //    saja di halaman.
     // ═══════════════════════════════════════════════════
     document.addEventListener('click', function (e) {

@@ -27,7 +27,7 @@ class PeminjamanServiceTest extends TestCase
     {
         parent::setUp();
 
-        // Mock WA — test tidak kirim WA sungguhan
+        // Mock WA - test tidak kirim WA sungguhan
         $waMock = Mockery::mock(WhatsAppService::class);
         $waMock->shouldReceive('templatePeminjamanBaru')->andReturn('pesan test');
         $waMock->shouldReceive('kirim')->andReturn(true);
@@ -135,7 +135,7 @@ class PeminjamanServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/tidak berwenang/');
 
-        // inventaris Gedung A coba setujui — harus ditolak
+        // inventaris Gedung A coba setujui - harus ditolak
         $this->service->setujui($peminjaman, $this->invGedungA);
     }
 

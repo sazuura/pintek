@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Peralatan — Diskominfotik</title>
+    <title>Laporan Peralatan - Diskominfotik</title>
     <style>
         * {
             margin: 0;
@@ -67,15 +67,10 @@
             font-weight: 600;
         }
 
-        .terpasang {
-            background: #e6f9f0;
-            color: #1abc9c;
-        }
-
-        .belum {
-            background: #fff4e5;
-            color: #f39c12;
-        }
+        .badge-warning { background: #fff4e5; color: #f39c12; }
+        .badge-active  { background: #e6f9f0; color: #1abc9c; }
+        .badge-danger  { background: #fdecea; color: #e74c3c; }
+        .badge-info    { background: #e8f4fd; color: #3498db; }
 
         .footer {
             margin-top: 20px;
@@ -97,29 +92,25 @@
             <tr>
                 <th>#</th>
                 <th>Peralatan</th>
-                <th>Kode Barang</th>
+                <th>Nomor Seri</th>
                 <th>Gedung</th>
-                <th>Kegiatan</th>
-                <th>Tanggal</th>
+                <th>Peminjam</th>
+                <th>Tanggal Pinjam</th>
                 <th>Jml</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($jadwalPeralatan as $i => $jp)
+            @forelse($peralatan as $index => $item)
                 <tr>
-                    <td>{{ $i + 1 }}</td>
-                    <td>{{ $jp->peralatan->nama_peralatan }}</td>
-                    <td>{{ $jp->peralatan->kode_barang ?? '-' }}</td>
-                    <td>{{ $jp->peralatan->gedung }}</td>
-                    <td>{{ $jp->penjadwalan->judul_kegiatan }}</td>
-                    <td>{{ $jp->penjadwalan->tanggal->format('d/m/Y') }}</td>
-                    <td>{{ $jp->jumlah }}</td>
-                    <td>
-                        <span class="badge {{ $jp->sudahDipasang() ? 'terpasang' : 'belum' }}">
-                            {{ $jp->sudahDipasang() ? 'Terpasang' : 'Belum' }}
-                        </span>
-                    </td>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ $item->peralatan->nama_peralatan }}</td>
+                    <td>{{ $item->peralatan->kode_barang ?? '-' }}</td>
+                    <td>{{ $item->peralatan->gedung }}</td>
+                    <td>{{ $item->peminjaman->user->nama_user ?? '-' }}</td>
+                    <td>{{ $item->peminjaman->tanggal_pinjam->format('d/m/Y') }}</td>
+                    <td>{{ $item->jumlah }}</td>
+                    <td><span class="badge {{ $item->peminjaman->badge['class'] }}">{{ $item->peminjaman->badge['label'] }}</span></td>
                 </tr>
             @empty
                 <tr>
@@ -128,7 +119,7 @@
             @endforelse
         </tbody>
     </table>
-    <div class="footer">Sistem Penjadwalan Zoom — Diskominfotik</div>
+    <div class="footer">Sistem Penjadwalan Zoom - Diskominfotik</div>
 </body>
 
 </html>

@@ -46,8 +46,9 @@
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th style="width:32px;"></th>
                             <th style="width:40px;">#</th>
-                            <th class="sortable">Judul Kegiatan <span class="sort-icon">⇅</span></th>
+                            <th class="sortable">Judul Rapat <span class="sort-icon">⇅</span></th>
                             <th class="hide-mobile sortable">Tanggal <span class="sort-icon">⇅</span></th>
                             <th class="hide-mobile">Waktu</th>
                             <th class="hide-mobile">Platform</th>
@@ -64,14 +65,15 @@
                             @endphp
 
                             <tr class="accordion-row {{ $dibatalkan ? 'row-inactive' : '' }}" data-target="{{ $uid }}">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
                                 <td>{{ $jadwal->firstItem() + $index }}</td>
                                 <td>
                                     <div style="font-weight:500;">{{ $j->judul_kegiatan }}</div>
                                     <div style="font-size:12px;color:var(--dark-grey);margin-top:2px;">
-                                        {{ $j->absensi->count() }} operator
+                                        {{ $j->operators->count() }} operator
                                     </div>
                                 </td>
-                                <td class="hide-mobile">{{ $j->tanggal->translatedFormat('d M Y') }}</td>
+                                <td class="hide-mobile">{{ $j->tanggal->translatedFormat('D, d M Y') }}</td>
                                 <td class="hide-mobile">{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
                                     {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }}
                                 </td>
@@ -99,7 +101,6 @@
                                 </td>
                                 <td>
                                     <div class="action-group">
-                                        <i class="bx bx-chevron-down accordion-chevron"></i>
                                         @if(!$dibatalkan)
                                             @if($sudahLewat)
                                                 <a href="{{ route('admin.jadwal.show', $j->id_penjadwalan) }}" class="btn-icon view"><i
@@ -108,7 +109,7 @@
                                                 <a href="{{ route('admin.jadwal.edit', $j->id_penjadwalan) }}" class="btn-icon edit"><i
                                                         class="bx bx-edit"></i></a>
                                                 <button type="button" class="btn-icon delete" title="Batalkan Jadwal"
-                                                    onclick="toggleBatal('batal-{{ $j->id_penjadwalan }}')">
+                                                    onclick="bukaBatalkan('{{ $uid }}', 'batal-{{ $j->id_penjadwalan }}')">
                                                     <i class="bx bx-block"></i>
                                                 </button>
                                             @endif
@@ -119,49 +120,62 @@
 
                             {{-- Accordion detail --}}
                             <tr class="accordion-detail" id="{{ $uid }}">
-                                <td colspan="7">
-                                    <div class="accordion-detail-inner">
-                                        <div class="detail-item">
-                                            <label>Tanggal</label>
-                                            <p>{{ $j->tanggal->translatedFormat('l, d F Y') }}</p>
+                                <td colspan="8">
+                                    <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-calendar"></i>
+                                            <div>
+                                                <label>Tanggal</label>
+                                                <p>{{ $j->tanggal->translatedFormat('l, d F Y') }}</p>
+                                            </div>
                                         </div>
-                                        <div class="detail-item">
-                                            <label>Waktu</label>
-                                            <p>{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
-                                                {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }} WIB
-                                            </p>
+                                        <div class="detail-row">
+                                            <i class="bx bx-time-five"></i>
+                                            <div>
+                                                <label>Waktu</label>
+                                                <p>{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
+                                                    {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }} WIB
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div class="detail-item">
-                                            <label>Platform</label>
-                                            <p>{{ $j->platform }}</p>
+                                        <div class="detail-row">
+                                            <i class="bx bx-desktop"></i>
+                                            <div>
+                                                <label>Platform</label>
+                                                <p>{{ $j->platform }}</p>
+                                            </div>
                                         </div>
-                                        <div class="detail-item">
-                                            <label>Keterangan</label>
-                                            <p>{{ $j->keterangan ?? '-' }}</p>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-note"></i>
+                                            <div>
+                                                <label>Keterangan</label>
+                                                <p>{{ $j->keterangan ?? '-' }}</p>
+                                            </div>
                                         </div>
-                                        <div class="detail-item">
-                                            <label>Operator</label>
-                                            <p>{{ $j->absensi->map(fn($a) => $a->user->nama_user)->join(', ') ?: '-' }}</p>
-                                        </div>
-                                        <div class="detail-item">
-                                            <label>Peralatan</label>
-                                            <p>{{ $j->jadwalPeralatan->map(fn($jp) => $jp->peralatan->nama_peralatan . ' (x' . $jp->jumlah . ')')->join(', ') ?: '-' }}
-                                            </p>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-group"></i>
+                                            <div>
+                                                <label>Operator</label>
+                                                <p>{{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}</p>
+                                            </div>
                                         </div>
                                         @if($dibatalkan)
-                                            <div class="detail-item" style="grid-column:span 2;">
-                                                <label>Alasan Pembatalan</label>
-                                                <p style="color:#e74c3c;">{{ $j->alasan_batal }}</p>
+                                            <div class="detail-row full danger">
+                                                <i class="bx bx-error-circle"></i>
+                                                <div>
+                                                    <label>Alasan Pembatalan</label>
+                                                    <p>{{ $j->alasan_batal }}</p>
+                                                </div>
                                             </div>
                                         @endif
                                     </div>
 
                                     {{-- Form batalkan inline --}}
                                     @if(!$dibatalkan && !$sudahLewat)
-                                        <div id="batal-{{ $j->id_penjadwalan }}"
+                                        <div id="batal-{{ $j->id_penjadwalan }}" class="inline-confirm-form"
                                             style="display:none;padding:14px 16px;border-top:1px solid var(--grey);background:#fdecea;">
                                             <div style="font-size:13px;font-weight:600;color:#c0392b;margin-bottom:10px;">
-                                                <i class="bx bx-error"></i> Batalkan Jadwal — notif WA akan dikirim ke semua
+                                                <i class="bx bx-error"></i> Batalkan Jadwal - notif WA akan dikirim ke semua
                                                 operator
                                             </div>
                                             <form action="{{ route('admin.jadwal.batalkan', $j->id_penjadwalan) }}" method="POST"
@@ -174,7 +188,7 @@
                                                     <i class="bx bx-block"></i> Batalkan
                                                 </button>
                                                 <button type="button" class="toolbar-btn neutral" style="height:36px;"
-                                                    onclick="toggleBatal('batal-{{ $j->id_penjadwalan }}')">Batal</button>
+                                                    onclick="tutupBatalkan('batal-{{ $j->id_penjadwalan }}')">Batal</button>
                                             </form>
                                         </div>
                                     @endif
@@ -183,7 +197,7 @@
 
                         @empty
                             <tr>
-                                <td colspan="7" style="text-align:center;padding:40px;color:var(--dark-grey);">
+                                <td colspan="8" style="text-align:center;padding:40px;color:var(--dark-grey);">
                                     <i class="bx bx-calendar-x" style="font-size:36px;display:block;margin-bottom:8px;"></i>
                                     Belum ada jadwal
                                 </td>
@@ -192,25 +206,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="pagination-wrap">
-                <span>Menampilkan {{ $jadwal->firstItem() }}–{{ $jadwal->lastItem() }} dari {{ $jadwal->total() }}
-                    data</span>
-                <div class="pagination-links">
-                    @if($jadwal->onFirstPage())
-                        <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
-                    @else
-                        <a href="{{ $jadwal->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
-                    @endif
-                    @foreach(range(1, $jadwal->lastPage()) as $p)
-                        <a href="{{ $jadwal->url($p) }}"
-                            class="page-link {{ $jadwal->currentPage() == $p ? 'active' : '' }}">{{ $p }}</a>
-                    @endforeach
-                    @if($jadwal->hasMorePages())
-                        <a href="{{ $jadwal->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
-                    @else
-                        <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
-                    @endif
-                </div>
+            <x-pagination :paginator="$jadwal" />
             </div>
         </div>
     </main>
@@ -218,10 +214,32 @@
 
 @push('scripts')
     <script>
-        function toggleBatal(id) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        // Buka baris detail (dropdown) sekaligus tampilkan form batalkan,
+        // tanpa perlu klik dropdown-nya dulu.
+        function bukaBatalkan(uid, formId) {
+            document.querySelectorAll('tr.accordion-detail.open').forEach(function (d) {
+                d.classList.remove('open');
+                d.querySelectorAll('.inline-confirm-form').forEach(function (f) {
+                    f.style.display = 'none';
+                });
+            });
+            document.querySelectorAll('tr.accordion-row.open').forEach(function (r) {
+                r.classList.remove('open');
+            });
+
+            var detail = document.getElementById(uid);
+            var row    = document.querySelector('tr.accordion-row[data-target="' + uid + '"]');
+            if (detail) detail.classList.add('open');
+            if (row) row.classList.add('open');
+
+            var form = document.getElementById(formId);
+            if (form) form.style.display = 'block';
+        }
+
+        // Tutup form batalkan saja (baris detail tetap terbuka).
+        function tutupBatalkan(formId) {
+            var form = document.getElementById(formId);
+            if (form) form.style.display = 'none';
         }
     </script>
 @endpush

@@ -9,7 +9,6 @@ class PeralatanController extends Controller
 {
     public function index(Request $request)
     {
-     auth()->user()->gedung;
         $userRole   = auth()->user()->role; 
         $peralatan = Peralatan::query()
             ->when($request->search, function ($q, $s) use ($userRole) {
@@ -31,11 +30,7 @@ class PeralatanController extends Controller
             ->orderBy('nama_peralatan')
             ->paginate(12)
             ->withQueryString();
-        $gedungQuery = Peralatan::distinct()->orderBy('gedung');
-        if ($userRole !== 'admin') {
-            $gedungQuery->where('gedung', auth()->user()->gedung);
-        }
-        $gedungList = $gedungQuery->pluck('gedung');
+        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
         return view('inventaris.peralatan.index', compact('peralatan', 'gedungList'));
     }
     public function create()

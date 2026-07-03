@@ -31,7 +31,7 @@
                             value="{{ old('nama_user') }}" placeholder="cth: Budi Santoso" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">No. HP <span class="req">*</span> <small>(untuk WA)</small></label>
+                        <label class="form-label">No. HP <span class="req">*</span> <small>(untuk WhatsApp)</small></label>
                         <input type="text" name="nohp" class="form-input {{ $errors->has('nohp') ? 'error' : '' }}"
                             value="{{ old('nohp') }}" placeholder="08xxxxxxxxxx" required>
                     </div>
@@ -55,14 +55,6 @@
                             <option value="inventaris" {{ old('role') == 'inventaris' ? 'selected' : '' }}>Inventaris</option>
                         </select>
                     </div>
-                    {{-- <div class="form-group" id="gedung-field"
-                        style="display:{{ old('role')=='inventaris'?'flex':'none' }};">
-                        <label class="form-label">Gedung <span class="req">*</span> <small>(wajib untuk
-                                Inventaris)</small></label>
-                        <input type="text" name="gedung" class="form-input {{ $errors->has('gedung')?'error':'' }}"
-                            value="{{ old('gedung') }}" placeholder="cth: Gedung A">
-                        <span class="form-hint">Harus cocok persis dengan nama gedung di data peralatan.</span>
-                    </div> --}}
                 </div>
             </div>
             <div class="form-actions">

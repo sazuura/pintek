@@ -14,18 +14,19 @@ class User extends Authenticatable
     protected $fillable = [
         'id_user',
         'nama_user',
+        'jenis_kelamin',
+        'alamat',
         'nohp',
         'email',
         'password',
         'role',
         'status',
-        'gedung', 
     ];
     protected $hidden = ['password', 'remember_token'];
 
-    public function absensi()
+    public function jadwalDitugaskan()
     {
-        return $this->hasMany(Absensi::class, 'id_user', 'id_user');
+        return $this->belongsToMany(Penjadwalan::class, 'jadwal_operator', 'id_user', 'id_penjadwalan');
     }
 
     public function peminjaman()

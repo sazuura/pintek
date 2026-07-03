@@ -6,6 +6,7 @@ use App\Models\PeminjamanItem;
 use App\Models\Peralatan;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\IdGenerator;
 
 class PeminjamanService
 {
@@ -15,7 +16,10 @@ class PeminjamanService
     {
         $this->validasiStok($peralatanIds, $jumlahArr);
         $peminjaman = DB::transaction(function () use ($header, $peralatanIds, $jumlahArr) {
-            $peminjaman = Peminjaman::create($header);
+            $idPeminjaman = IdGenerator::next(Peminjaman::class, 'id_peminjaman', 'PMJ-');
+            $peminjaman = Peminjaman::create(array_merge($header, [
+                'id_peminjaman' => $idPeminjaman
+            ]));
             $this->simpanItem($peminjaman, $peralatanIds, $jumlahArr);
             return $peminjaman;
         });
@@ -137,11 +141,15 @@ class PeminjamanService
 
     private function kirimNotifKeInventaris(Peminjaman $peminjaman): void
     {
-        $peminjaman->load(['items.peralatan', 'user']);
-        
+        $peminjaman->load(['items.peralatan', 'user', 'penjadwalan']);
+
         // Kelompokkan daftar berdasarkan gedung asal PERALATAN
         $itemPerGedung = $peminjaman->items->groupBy(fn($item) => $item->peralatan->gedung);
         $daftarInventaris = User::where('role', 'inventaris')->where('status', 'active')->get();
+
+        $terkaitJadwal = $peminjaman->penjadwalan
+            ? "{$peminjaman->penjadwalan->judul_kegiatan} ({$peminjaman->penjadwalan->tanggal->format('d/m/Y')})"
+            : null;
 
         foreach ($itemPerGedung as $gedungPeralatan => $items) {
             $daftarPeralatan = $items->map(function ($item) {
@@ -150,7 +158,7 @@ class PeminjamanService
 
             foreach ($daftarInventaris as $inventaris) {
                 if (!$inventaris->nohp) continue;
-                
+
                 $pesan = $this->wa->templatePeminjamanBaru(
                     namaInventaris: $inventaris->nama_user,
                     namaOperator: $peminjaman->user->nama_user,
@@ -159,6 +167,7 @@ class PeminjamanService
                     tanggalKembali: $peminjaman->tanggal_kembali_rencana->format('d/m/Y'),
                     keperluan: $peminjaman->keperluan,
                     daftarPeralatan: $daftarPeralatan,
+                    terkaitJadwal: $terkaitJadwal,
                 );
                 $this->wa->kirim($inventaris->nohp, $pesan);
             }

@@ -23,11 +23,6 @@ class Peralatan extends Model
         'foto',
     ];
 
-    public function jadwalPeralatan()
-    {
-        return $this->hasMany(JadwalPeralatan::class, 'id_peralatan', 'id_peralatan');
-    }
-
     public function peminjamanItems()
     {
         return $this->hasMany(PeminjamanItem::class, 'id_peralatan', 'id_peralatan');

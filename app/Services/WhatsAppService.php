@@ -103,13 +103,14 @@ class WhatsAppService
     }
 
     /**
-     * @param  string  $namaInventaris   Nama petugas inventaris gedung tersebut
-     * @param  string  $namaOperator     Nama operator yang mengajukan
-     * @param  string  $gedung           Gedung yang peralatannya dipinjam
-     * @param  string  $tanggalPinjam    Tanggal mulai pinjam
-     * @param  string  $tanggalKembali   Rencana tanggal kembali
-     * @param  string  $keperluan        Keperluan peminjaman
-     * @param  string  $daftarPeralatan  Daftar peralatan dari gedung ini (sudah diformat)
+     * @param  string       $namaInventaris   Nama petugas inventaris gedung tersebut
+     * @param  string       $namaOperator     Nama operator yang mengajukan
+     * @param  string       $gedung           Gedung yang peralatannya dipinjam
+     * @param  string       $tanggalPinjam    Tanggal mulai pinjam
+     * @param  string       $tanggalKembali   Rencana tanggal kembali
+     * @param  string       $keperluan        Keperluan peminjaman
+     * @param  string       $daftarPeralatan  Daftar peralatan dari gedung ini (sudah diformat)
+     * @param  string|null  $terkaitJadwal    Judul + tanggal rapat terkait, kalau peminjaman ini dikaitkan ke jadwal
      */
     public function templatePeminjamanBaru(
         string $namaInventaris,
@@ -118,17 +119,22 @@ class WhatsAppService
         string $tanggalPinjam,
         string $tanggalKembali,
         string $keperluan,
-        string $daftarPeralatan
+        string $daftarPeralatan,
+        ?string $terkaitJadwal = null
     ): string {
-        return "📦 *PENGAJUAN PEMINJAMAN PERALATAN*\n\n"
+        $baris = "📦 *PENGAJUAN PEMINJAMAN PERALATAN*\n\n"
             . "Halo *{$namaInventaris}*,\n"
             . "Ada pengajuan peminjaman peralatan dari *{$gedung}*:\n\n"
             . "👤 Pemohon  : {$namaOperator}\n"
             . "📅 Tanggal  : {$tanggalPinjam} - {$tanggalKembali}\n"
-            . "📋 Keperluan: {$keperluan}\n\n"
-            . "*Peralatan yang dipinjam:*\n{$daftarPeralatan}\n\n"
+            . "📋 Keperluan: {$keperluan}\n";
+        if ($terkaitJadwal) {
+            $baris .= "🗓️ Terkait Rapat: {$terkaitJadwal}\n";
+        }
+        $baris .= "\n*Peralatan yang dipinjam:*\n{$daftarPeralatan}\n\n"
             . "Silakan login ke sistem untuk menyetujui atau menolak pengajuan ini.\n"
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
+        return $baris;
     }
 
     public function templatePeminjamanDibatalkan(

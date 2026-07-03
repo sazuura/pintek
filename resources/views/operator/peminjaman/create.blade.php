@@ -27,14 +27,29 @@
                 <h3><i class="bx bx-info-circle"></i> Detail Pengajuan</h3>
                 <div class="form-grid">
                     <div class="form-group span-2">
+                        <label class="form-label">Kaitkan ke Jadwal <small>(opsional)</small></label>
+                        <select name="id_penjadwalan" id="id_penjadwalan" class="form-select {{ $errors->has('id_penjadwalan') ? 'error' : '' }}">
+                            <option value="">-- Tidak terkait jadwal tertentu --</option>
+                            @foreach($jadwalAktif as $j)
+                                <option value="{{ $j->id_penjadwalan }}"
+                                    data-judul="{{ $j->judul_kegiatan }}"
+                                    data-tanggal="{{ $j->tanggal->format('Y-m-d') }}"
+                                    {{ old('id_penjadwalan') == $j->id_penjadwalan ? 'selected' : '' }}>
+                                    {{ $j->judul_kegiatan }} - {{ $j->tanggal->translatedFormat('D, d M Y') }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <span class="form-hint">Pilih kalau peminjaman ini untuk salah satu rapat yang kamu tugaskan - Keperluan & Tanggal Pinjam akan terisi otomatis (tetap bisa diedit).</span>
+                    </div>
+                    <div class="form-group span-2">
                         <label class="form-label">Keperluan <span class="req">*</span></label>
-                        <input type="text" name="keperluan"
+                        <input type="text" name="keperluan" id="keperluan"
                             class="form-input {{ $errors->has('keperluan') ? 'error' : '' }}" value="{{ old('keperluan') }}"
                             placeholder="cth: Rapat dinas luar kota bersama Kemendagri" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tanggal Pinjam <span class="req">*</span></label>
-                        <input type="date" name="tanggal_pinjam"
+                        <input type="date" name="tanggal_pinjam" id="tanggal_pinjam"
                             class="form-input {{ $errors->has('tanggal_pinjam') ? 'error' : '' }}"
                             value="{{ old('tanggal_pinjam') }}" min="{{ now()->format('Y-m-d') }}" required>
                     </div>
@@ -66,7 +81,7 @@
                                         <option value="{{ $alat->id_peralatan }}"
                                             data-stok="{{ $alat->stok_tersedia }}"
                                             {{ (isset($selectedPeralatanId) && $selectedPeralatanId == $alat->id_peralatan) ? 'selected' : '' }}>
-                                            {{ $alat->nama_peralatan }} — stok: {{ $alat->stok_tersedia }}
+                                            {{ $alat->nama_peralatan }} - stok: {{ $alat->stok_tersedia }}
                                         </option>
                                     @endforeach
                                 </optgroup>
@@ -96,6 +111,14 @@
 
 @push('scripts')
     <script>
+        // ── Kaitkan ke Jadwal: auto-isi Keperluan & Tanggal Pinjam ──────────────────
+        document.getElementById('id_penjadwalan').addEventListener('change', function () {
+            var opt = this.options[this.selectedIndex];
+            if (!opt.value) return;
+            document.getElementById('keperluan').value = opt.dataset.judul;
+            document.getElementById('tanggal_pinjam').value = opt.dataset.tanggal;
+        });
+
         function getSelectedPeralatan() {
             return Array.from(document.querySelectorAll('.peralatan-select'))
                 .map(function (s) { return s.value; }).filter(function (v) { return v !== ''; });

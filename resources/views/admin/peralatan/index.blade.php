@@ -94,26 +94,7 @@
             </div>
 
             <div style="margin-top:20px;" class="data-table-wrap">
-                <div class="pagination-wrap">
-                    <span>Menampilkan {{ $peralatan->firstItem() }}–{{ $peralatan->lastItem() }} dari {{ $peralatan->total() }}
-                        peralatan</span>
-                    <div class="pagination-links">
-                        @if($peralatan->onFirstPage())
-                            <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
-                        @else
-                            <a href="{{ $peralatan->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
-                        @endif
-                        @foreach(range(1, $peralatan->lastPage()) as $p)
-                            <a href="{{ $peralatan->url($p) }}"
-                                class="page-link {{ $peralatan->currentPage() == $p ? 'active' : '' }}">{{ $p }}</a>
-                        @endforeach
-                        @if($peralatan->hasMorePages())
-                            <a href="{{ $peralatan->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
-                        @else
-                            <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
-                        @endif
-                    </div>
-                </div>
+                <x-pagination :paginator="$peralatan" label="peralatan" />
             </div>
         @else
             <div class="data-table-wrap" style="padding:60px;text-align:center;color:var(--dark-grey);">

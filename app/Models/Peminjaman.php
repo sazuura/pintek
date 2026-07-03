@@ -6,8 +6,12 @@ class Peminjaman extends Model
 {
     protected $table      = 'peminjaman';
     protected $primaryKey = 'id_peminjaman';
+    public    $incrementing = false;
+    protected $keyType      = 'string';
     protected $fillable = [
+        'id_peminjaman',
         'id_user',
+        'id_penjadwalan',
         'tanggal_pinjam',
         'tanggal_kembali_rencana',
         'tanggal_kembali_aktual',
@@ -25,6 +29,11 @@ class Peminjaman extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function penjadwalan()
+    {
+        return $this->belongsTo(Penjadwalan::class, 'id_penjadwalan', 'id_penjadwalan');
     }
 
     public function items()

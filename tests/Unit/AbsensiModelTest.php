@@ -7,7 +7,7 @@ use Tests\TestCase;
 
 /**
  * Test helper status dan accessor badge di Model Absensi.
- * Tidak perlu DB — pakai instance langsung.
+ * Tidak perlu DB - pakai instance langsung.
  */
 class AbsensiModelTest extends TestCase
 {

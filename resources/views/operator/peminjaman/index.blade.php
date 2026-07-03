@@ -90,6 +90,12 @@
                                             <p>{{ $p->items->map(fn($i) => $i->peralatan->nama_peralatan . ' (x' . $i->jumlah . ')')->join(', ') }}
                                             </p>
                                         </div>
+                                        @if($p->penjadwalan)
+                                            <div class="detail-item">
+                                                <label>Terkait Jadwal</label>
+                                                <p>{{ $p->penjadwalan->judul_kegiatan }} ({{ $p->penjadwalan->tanggal->format('d/m/Y') }})</p>
+                                            </div>
+                                        @endif
                                         <div class="detail-item">
                                             <label>Catatan Inventaris</label>
                                             <p>{{ $p->catatan_inventaris ?? '-' }}</p>
@@ -102,7 +108,7 @@
                                         @endif
                                     </div>
 
-                                    {{-- Tombol batalkan — hanya jika masih diajukan --}}
+                                    {{-- Tombol batalkan - hanya jika masih diajukan --}}
                                     @if($p->isMenunggu())
                                         <div style="padding:12px 16px;border-top:1px solid var(--grey);">
                                             <button type="button" class="toolbar-btn danger" style="height:32px;font-size:12px;"
@@ -113,7 +119,7 @@
                                         <div id="batal-pm-{{ $p->id_peminjaman }}"
                                             style="display:none;padding:12px 16px;background:#fdecea;border-top:1px solid var(--grey);">
                                             <div style="font-size:13px;font-weight:600;color:#c0392b;margin-bottom:10px;">
-                                                <i class="bx bx-error"></i> Batalkan pengajuan — notif WA akan dikirim ke inventaris
+                                                <i class="bx bx-error"></i> Batalkan pengajuan - notif WA akan dikirim ke inventaris
                                             </div>
                                             <form action="{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}"
                                                 method="POST" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -142,24 +148,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="pagination-wrap">
-                <span>{{ $peminjaman->total() }} total pengajuan</span>
-                <div class="pagination-links">
-                    @if($peminjaman->onFirstPage())
-                        <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
-                    @else
-                        <a href="{{ $peminjaman->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
-                    @endif
-                    @foreach(range(1, $peminjaman->lastPage()) as $p)
-                        <a href="{{ $peminjaman->url($p) }}"
-                            class="page-link {{ $peminjaman->currentPage() == $p ? 'active' : '' }}">{{ $p }}</a>
-                    @endforeach
-                    @if($peminjaman->hasMorePages())
-                        <a href="{{ $peminjaman->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
-                    @else
-                        <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
-                    @endif
-                </div>
+            <x-pagination :paginator="$peminjaman">{{ $peminjaman->total() }} total pengajuan</x-pagination>
             </div>
         </div>
     </main>

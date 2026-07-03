@@ -7,7 +7,7 @@ use Tests\TestCase;
 
 /**
  * Test accessor/helper di Model Peralatan.
- * Tidak perlu DB — pakai instance langsung.
+ * Tidak perlu DB - pakai instance langsung.
  */
 class PeralatanModelTest extends TestCase
 {

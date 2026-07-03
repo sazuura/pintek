@@ -22,11 +22,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::resource('jadwal', PenjadwalanController::class)->names('jadwal');
     Route::get('/peralatan', [AdminController::class, 'peralatanIndex'])->name('peralatan.index');
     Route::resource('users', UserController::class)->names('users');
-    Route::prefix('absensi')->name('absensi.')->group(function () {
-        Route::get('/',            [AdminController::class, 'absensiIndex'])->name('index');
-        Route::get('/{id}',        [AdminController::class, 'absensiShow'])->name('show');
-        Route::post('/{id}/status',[AdminController::class, 'absensiUpdateStatus'])->name('updateStatus');
-    });
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/',            [AdminController::class, 'laporanIndex'])->name('index');
         Route::get('/export/pdf',  [AdminController::class, 'laporanExportPdf'])->name('exportPdf');
@@ -38,13 +33,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator'])->group(function () {
     Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
     Route::get('/jadwal', [OperatorController::class, 'jadwalIndex'])->name('jadwal.index');
-    Route::prefix('absensi')->name('absensi.')->group(function () {
-        Route::get('/',       [OperatorController::class, 'absensiIndex'])->name('index');
-        Route::post('/',      [OperatorController::class, 'absensiStore'])->name('store');
-    });
     Route::prefix('peralatan')->name('peralatan.')->group(function () {
-        Route::get('/',          [OperatorController::class, 'peralatanIndex'])->name('index');
-        Route::patch('/{id}',    [OperatorController::class, 'peralatanKonfirmasi'])->name('konfirmasi');
+        Route::get('/', [OperatorController::class, 'peralatanIndex'])->name('index');
     });
     Route::prefix('peminjaman')->name('peminjaman.')->group(function () {
         Route::get('/',       [PeminjamanController::class, 'operatorIndex'])->name('index');

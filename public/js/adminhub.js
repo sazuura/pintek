@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var switchMode = document.getElementById('switch-mode');
     var themeIcon  = document.getElementById('theme-icon');
     var isDark     = document.body.classList.contains('dark');
-    //   ^ baca dari body — sudah di-set oleh document.write di <head>,
+    //   ^ baca dari body - sudah di-set oleh document.write di <head>,
     //     tidak perlu baca localStorage lagi, sudah sinkron.
 
     // Sinkronkan checkbox dan icon dengan state body saat ini
@@ -93,6 +93,26 @@ document.addEventListener('DOMContentLoaded', function () {
             el.style.opacity    = '0';
             setTimeout(function () { el.remove(); }, 400);
         }, 4000);
+    });
+
+
+    // ── 6. Show/hide password ───────────────────────────────────────────────
+    document.querySelectorAll('.password-wrap').forEach(function (wrap) {
+        var input   = wrap.querySelector('input');
+        var eyeBtn  = wrap.querySelector('.eye-btn');
+        var eyeIcon = eyeBtn ? eyeBtn.querySelector('i') : null;
+
+        if (!input || !eyeBtn || !eyeIcon) return;
+
+        eyeBtn.addEventListener('click', function () {
+            var isHidden = input.type === 'password';
+
+            input.type = isHidden ? 'text' : 'password';
+
+            // Ganti ikon bx-hide ↔ bx-show
+            eyeIcon.classList.toggle('bx-hide', !isHidden);
+            eyeIcon.classList.toggle('bx-show',  isHidden);
+        });
     });
 
 });

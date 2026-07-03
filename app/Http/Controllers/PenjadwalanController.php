@@ -1,6 +1,5 @@
 <?php
 namespace App\Http\Controllers;
-use App\Models\Peralatan;
 use App\Models\Penjadwalan;
 use App\Models\User;
 use App\Services\PenjadwalanService;
@@ -10,10 +9,11 @@ use Carbon\Carbon;
 class PenjadwalanController extends Controller
 {
     public function __construct(private PenjadwalanService $service) {}
+
     public function index(Request $request)
     {
         $this->updateJadwalSelesai();
-        $jadwal = Penjadwalan::with(['absensi.user', 'jadwalPeralatan.peralatan'])
+        $jadwal = Penjadwalan::with('operators')
             ->when($request->search, fn($q, $s) =>
                 $q->where('judul_kegiatan', 'like', "%{$s}%")
                   ->orWhere('platform', 'like', "%{$s}%")
@@ -29,22 +29,21 @@ class PenjadwalanController extends Controller
             ->withQueryString();
         return view('admin.jadwal.index', compact('jadwal'));
     }
+
     public function create()
     {
         return view('admin.jadwal.create', [
-            'operators'  => User::where('role', 'operator')->where('status', 'active')->orderBy('nama_user')->get(),
-            'peralatans' => Peralatan::orderBy('gedung')->orderBy('nama_peralatan')->get(),
+            'operators' => $this->operatorsWithJadwalDates(),
         ]);
     }
+
     public function store(Request $request)
     {
         $data = $this->validasiForm($request);
         try {
             $this->service->buat(
-                data:         $data['jadwal'],
-                operatorIds:  $data['operator_ids'],
-                peralatanIds: $request->input('peralatan_ids', []),
-                jumlahArr:    $request->input('peralatan_jumlah', []),
+                data:        $data['jadwal'],
+                operatorIds: $data['operator_ids'],
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -52,37 +51,32 @@ class PenjadwalanController extends Controller
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil ditambahkan dan notifikasi WA telah dikirim.');
     }
+
     public function show(string $id)
     {
-        $jadwal = Penjadwalan::with([
-            'absensi.user',
-            'jadwalPeralatan.peralatan',
-            'pemateri',
-        ])->findOrFail($id);
+        $jadwal = Penjadwalan::with(['operators', 'peminjaman.user'])->findOrFail($id);
         return view('admin.jadwal.show', compact('jadwal'));
     }
+
     public function edit(string $id)
     {
-        $jadwal = Penjadwalan::with(['absensi.user', 'jadwalPeralatan.peralatan'])->findOrFail($id);
+        $jadwal = Penjadwalan::with('operators')->findOrFail($id);
         return view('admin.jadwal.edit', [
             'jadwal'            => $jadwal,
-            'operators'         => User::where('role', 'operator')->where('status', 'active')->orderBy('nama_user')->get(),
-            'peralatans'        => Peralatan::orderBy('gedung')->orderBy('nama_peralatan')->get(),
-            'selectedOperators' => $jadwal->absensi->pluck('id_user')->toArray(),
-            'selectedPeralatan' => $jadwal->jadwalPeralatan->keyBy('id_peralatan'),
+            'operators'         => $this->operatorsWithJadwalDates(),
+            'selectedOperators' => $jadwal->operators->pluck('id_user')->toArray(),
         ]);
     }
+
     public function update(Request $request, string $id)
     {
         $jadwal = Penjadwalan::findOrFail($id);
         $data   = $this->validasiForm($request, isUpdate: true);
         try {
             $this->service->ubah(
-                jadwal:       $jadwal,
-                data:         $data['jadwal'],
-                operatorIds:  $data['operator_ids'],
-                peralatanIds: $request->input('peralatan_ids', []),
-                jumlahArr:    $request->input('peralatan_jumlah', []),
+                jadwal:      $jadwal,
+                data:        $data['jadwal'],
+                operatorIds: $data['operator_ids'],
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -90,12 +84,23 @@ class PenjadwalanController extends Controller
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil diperbarui.');
     }
+
+    private function operatorsWithJadwalDates()
+    {
+        return User::where('role', 'operator')
+            ->where('status', 'active')
+            ->orderBy('nama_user')
+            ->with('jadwalDitugaskan:id_penjadwalan,tanggal')
+            ->get();
+    }
+
     public function destroy(string $id)
     {
         $this->service->hapus(Penjadwalan::findOrFail($id));
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil dihapus.');
     }
+
     private function validasiForm(Request $request, bool $isUpdate = false): array
     {
         $request->merge([
@@ -103,18 +108,14 @@ class PenjadwalanController extends Controller
             'waktu_selesai' => substr($request->waktu_selesai ?? '', 0, 5),
         ]);
         $validated = $request->validate([
-            'judul_kegiatan' => 'required|string|max:150',
-            'tanggal'        => 'required|date' . ($isUpdate ? '' : '|after_or_equal:today'),
-            'waktu_mulai'    => 'required|date_format:H:i',
-            'waktu_selesai'  => 'required|date_format:H:i|after:waktu_mulai',
-            'platform'       => 'required|string|max:100',
-            'keterangan'     => 'nullable|string|max:255',
-            'id_pemateri'    => 'nullable|exists:users,id_user',
-            'operator_ids'   => 'required|array|min:1',
-            'operator_ids.*' => 'required|exists:users,id_user',
-        ], [
-            'operator_ids.required' => 'Pilih minimal 1 operator.',
-            'waktu_selesai.after'   => 'Waktu selesai harus setelah waktu mulai.',
+            'judul_kegiatan'  => 'required|string|max:150',
+            'tanggal'         => 'required|date' . ($isUpdate ? '' : '|after_or_equal:today'),
+            'waktu_mulai'     => 'required|date_format:H:i',
+            'waktu_selesai'   => 'required|date_format:H:i|after:waktu_mulai',
+            'platform'        => 'required|string|max:100',
+            'keterangan'      => 'nullable|string|max:255',
+            'operator_ids'    => 'required|array|min:1',
+            'operator_ids.*'  => 'exists:users,id_user',
         ]);
         return [
             'jadwal' => [
@@ -124,11 +125,11 @@ class PenjadwalanController extends Controller
                 'waktu_selesai'  => $validated['waktu_selesai'],
                 'platform'       => $validated['platform'],
                 'keterangan'     => $validated['keterangan'] ?? null,
-                'id_pemateri'    => $validated['id_pemateri'] ?? null,
             ],
             'operator_ids' => $validated['operator_ids'],
         ];
     }
+
     public function batalkan(Request $request, string $id)
     {
         $request->validate([
@@ -136,7 +137,7 @@ class PenjadwalanController extends Controller
         ], [
             'alasan_batal.required' => 'Alasan pembatalan wajib diisi.',
         ]);
-        $jadwal = Penjadwalan::with('absensi.user')->findOrFail($id);
+        $jadwal = Penjadwalan::with('operators')->findOrFail($id);
         try {
             $this->service->batalkan($jadwal, $request->alasan_batal);
         } catch (\RuntimeException $e) {
@@ -145,6 +146,7 @@ class PenjadwalanController extends Controller
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil dibatalkan dan notifikasi WA telah dikirim ke operator.');
     }
+
     private function updateJadwalSelesai()
     {
         Penjadwalan::where('status', 'aktif')

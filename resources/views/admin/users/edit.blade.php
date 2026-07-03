@@ -26,16 +26,13 @@
                 <h3><i class="bx bxs-user-detail"></i> Edit: {{ $user->nama_user }}</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">ID User</label>
-                        <input type="text" class="form-input" value="{{ $user->id_user }}" readonly>
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Nama Lengkap <span class="req">*</span></label>
                         <input type="text" name="nama_user" class="form-input"
                             value="{{ old('nama_user', $user->nama_user) }}" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">No. HP <span class="req">*</span></label>
+
+                        <label class="form-label">No. HP <span class="req">* </span><small>(untuk WhatsApp)</small></label>
                         <input type="text" name="nohp" class="form-input {{ $errors->has('nohp') ? 'error' : '' }}"
                             value="{{ old('nohp', $user->nohp) }}" required>
                     </div>
@@ -45,8 +42,25 @@
                             value="{{ old('email', $user->email) }}" required>
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Jenis Kelamin <span class="req">*</span></label>
+                        <select name="jenis_kelamin" class="form-select {{ $errors->has('jenis_kelamin') ? 'error' : '' }}" required>
+                            <option value="L" {{ old('jenis_kelamin', $user->jenis_kelamin) == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="P" {{ old('jenis_kelamin', $user->jenis_kelamin) == 'P' ? 'selected' : '' }}>Perempuan</option>
+                        </select>
+                    </div>
+                    <div class="form-group span-2">
+                        <label class="form-label">Alamat <span class="req">*</span></label>
+                        <textarea name="alamat" class="form-textarea {{ $errors->has('alamat') ? 'error' : '' }}"
+                            required>{{ old('alamat', $user->alamat) }}</textarea>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Password Baru <small>(kosongkan jika tidak berubah)</small></label>
-                        <input type="password" name="password" class="form-input" placeholder="Min. 6 karakter">
+                        <div class="password-wrap">
+                            <input type="password" name="password" class="form-input" placeholder="Min. 6 karakter">
+                            <button type="button" class="eye-btn" aria-label="Tampilkan password">
+                                <i class="bx bx-hide"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Role <span class="req">*</span></label>

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Presensi — Diskominfotik</title>
+    <title>Laporan Presensi - Diskominfotik</title>
     <style>
         * {
             margin: 0;
@@ -108,7 +108,7 @@
 
 <body>
     <div class="header">
-        <h2>LAPORAN PRESENSI OPERATOR</h2>
+        <h2>LAPORAN JADWAL & OPERATOR</h2>
         <p>Diskominfotik Kabupaten Bandung Barat</p>
         <p>Dicetak: {{ now()->translatedFormat('l, d F Y H:i') }} WIB</p>
     </div>
@@ -117,21 +117,26 @@
             <tr>
                 <th>#</th>
                 <th>Operator</th>
-                <th>Kegiatan</th>
+                <th>Judul Rapat</th>
                 <th>Tanggal</th>
                 <th>Platform</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($absensi as $index => $a)
+            @forelse($jadwal as $index => $j)
+                @php
+                    $sudahLewat = \Carbon\Carbon::parse($j->tanggal->format('Y-m-d') . ' ' . $j->waktu_selesai)->isPast();
+                    $status     = $j->isDibatalkan() ? 'ditolak' : ($sudahLewat ? 'hadir' : 'pending');
+                    $label      = $j->isDibatalkan() ? 'Dibatalkan' : ($sudahLewat ? 'Selesai' : 'Aktif');
+                @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $a->user->nama_user }}</td>
-                    <td>{{ $a->penjadwalan->judul_kegiatan }}</td>
-                    <td>{{ $a->tanggal->format('d/m/Y') }}</td>
-                    <td>{{ str_contains($a->penjadwalan->platform, 'Online') ? 'Online' : 'Offline' }}</td>
-                    <td><span class="badge {{ $a->status }}">{{ $a->badge['label'] }}</span></td>
+                    <td>{{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}</td>
+                    <td>{{ $j->judul_kegiatan }}</td>
+                    <td>{{ $j->tanggal->translatedFormat('D, d/m/Y') }}</td>
+                    <td>{{ str_contains($j->platform, 'Online') ? 'Online' : 'Offline' }}</td>
+                    <td><span class="badge {{ $status }}">{{ $label }}</span></td>
                 </tr>
             @empty
                 <tr>
@@ -140,7 +145,7 @@
             @endforelse
         </tbody>
     </table>
-    <div class="footer">Sistem Penjadwalan Zoom — Diskominfotik</div>
+    <div class="footer">Sistem Penjadwalan Zoom - Diskominfotik</div>
 </body>
 
 </html>
