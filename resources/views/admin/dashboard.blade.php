@@ -14,14 +14,13 @@
             {{-- Stat cards --}}
             <div class="stat-cards">
                 <div class="stat-card">
-                    @if($trenRapat['label'])
-                        <span class="stat-trend {{ $trenRapat['arah'] }}" title="Dibanding jumlah rapat 7 hari sebelumnya">
-                            @if($trenRapat['arah'] === 'up') <i class="bx bx-up-arrow-alt"></i>
-                            @elseif($trenRapat['arah'] === 'down') <i class="bx bx-down-arrow-alt"></i>
-                            @endif
-                            {{ $trenRapat['label'] }}
-                        </span>
-                    @endif
+                    <span class="stat-trend {{ $trenRapat['arah'] }}" title="Dibanding jumlah rapat 30 hari sebelumnya">
+                        @if($trenRapat['arah'] === 'up') <i class="bx bx-up-arrow-alt"></i>
+                        @elseif($trenRapat['arah'] === 'down') <i class="bx bx-down-arrow-alt"></i>
+                        @else <i class="bx bx-minus"></i>
+                        @endif
+                        {{ $trenRapat['label'] }}
+                    </span>
                     <div class="stat-card-icon purple"><i class="bx bxs-calendar-event"></i></div>
                     <div class="stat-card-info">
                         <h3>{{ $jumlahRapatMendatang }}</h3>
@@ -39,14 +38,13 @@
                 </div>
 
                 <div class="stat-card">
-                    @if($trenPeralatan['label'])
-                        <span class="stat-trend {{ $trenPeralatan['arah'] }}" title="Dibanding peminjaman baru 7 hari sebelumnya">
-                            @if($trenPeralatan['arah'] === 'up') <i class="bx bx-up-arrow-alt"></i>
-                            @elseif($trenPeralatan['arah'] === 'down') <i class="bx bx-down-arrow-alt"></i>
-                            @endif
-                            {{ $trenPeralatan['label'] }}
-                        </span>
-                    @endif
+                    <span class="stat-trend {{ $trenPeralatan['arah'] }}" title="Dibanding peminjaman baru 7 hari sebelumnya">
+                        @if($trenPeralatan['arah'] === 'up') <i class="bx bx-up-arrow-alt"></i>
+                        @elseif($trenPeralatan['arah'] === 'down') <i class="bx bx-down-arrow-alt"></i>
+                        @else <i class="bx bx-minus"></i>
+                        @endif
+                        {{ $trenPeralatan['label'] }}
+                    </span>
                     <div class="stat-card-icon orange"><i class="bx bxs-wrench"></i></div>
                     <div class="stat-card-info">
                         <h3>{{ $jumlahPeralatanDipinjam }}</h3>
@@ -55,14 +53,13 @@
                 </div>
 
                 <div class="stat-card">
-                    @if($trenJadwal['label'])
-                        <span class="stat-trend {{ $trenJadwal['arah'] }}" title="Dibanding jumlah rapat 7 hari sebelumnya">
-                            @if($trenJadwal['arah'] === 'up') <i class="bx bx-up-arrow-alt"></i>
-                            @elseif($trenJadwal['arah'] === 'down') <i class="bx bx-down-arrow-alt"></i>
-                            @endif
-                            {{ $trenJadwal['label'] }}
-                        </span>
-                    @endif
+                    <span class="stat-trend {{ $trenJadwal['arah'] }}" title="Dibanding jumlah rapat 7 hari sebelumnya">
+                        @if($trenJadwal['arah'] === 'up') <i class="bx bx-up-arrow-alt"></i>
+                        @elseif($trenJadwal['arah'] === 'down') <i class="bx bx-down-arrow-alt"></i>
+                        @else <i class="bx bx-minus"></i>
+                        @endif
+                        {{ $trenJadwal['label'] }}
+                    </span>
                     <div class="stat-card-icon green"><i class="bx bxs-calendar-check"></i></div>
                     <div class="stat-card-info">
                         <h3>{{ $jumlahJadwal }}</h3>
@@ -118,9 +115,32 @@
                     <span class="legend-item"><span class="legend-swatch past"></span> Sudah lewat</span>
                 </div>
 
+                @php
+                    $namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                @endphp
                 <div class="calendar-header">
                     <a href="{{ route('admin.dashboard', ['bulan' => $kalender['bulanSebelumnya']]) }}" class="calendar-nav"><i class="bx bx-chevron-left"></i></a>
-                    <h4><span class="calendar-month">{{ $kalender['labelBulan'] }}</span> <span class="calendar-year">{{ $kalender['tahun'] }}</span></h4>
+
+                    <div class="calendar-picker-wrap">
+                        <button type="button" class="calendar-title-btn" id="calendarTitleBtn">
+                            <span class="calendar-month">{{ $kalender['labelBulan'] }}</span>
+                            <span class="calendar-year">{{ $kalender['tahun'] }}</span>
+                            <i class="bx bx-chevron-down"></i>
+                        </button>
+                        <div class="calendar-picker" id="calendarPicker">
+                            <select id="pilihBulan" class="form-select">
+                                @foreach($namaBulan as $i => $nama)
+                                    <option value="{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}" {{ $kalender['bulanAngka'] == $i + 1 ? 'selected' : '' }}>{{ $nama }}</option>
+                                @endforeach
+                            </select>
+                            <select id="pilihTahun" class="form-select" size="5">
+                                @for($tahun = $kalender['tahunAngka'] - 6; $tahun <= $kalender['tahunAngka'] + 5; $tahun++)
+                                    <option value="{{ $tahun }}" {{ $tahun == $kalender['tahunAngka'] ? 'selected' : '' }}>{{ $tahun }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                    </div>
+
                     <a href="{{ route('admin.dashboard', ['bulan' => $kalender['bulanBerikutnya']]) }}" class="calendar-nav"><i class="bx bx-chevron-right"></i></a>
                 </div>
 
@@ -190,13 +210,13 @@
     </div>
 
     {{-- Modal: daftar jadwal pada tanggal yang diklik di kalender --}}
-    <div id="modalJadwalTanggal" class="jadwal-modal-overlay">
-        <div class="jadwal-modal">
-            <div class="jadwal-modal-header">
+    <div id="modalJadwalTanggal" class="detail-modal-overlay">
+        <div class="detail-modal">
+            <div class="detail-modal-header">
                 <h3 id="modalJadwalTanggalLabel">Jadwal Rapat</h3>
-                <button type="button" class="jadwal-modal-close" onclick="tutupModalJadwal()"><i class="bx bx-x"></i></button>
+                <button type="button" class="detail-modal-close" onclick="tutupModalJadwal()"><i class="bx bx-x"></i></button>
             </div>
-            <div id="modalJadwalTanggalBody" class="jadwal-modal-body"></div>
+            <div id="modalJadwalTanggalBody" class="detail-modal-body"></div>
         </div>
     </div>
 
@@ -371,19 +391,19 @@ function bukaModalJadwal(tanggalKey, label) {
     document.getElementById('modalJadwalTanggalLabel').textContent = label;
 
     if (daftar.length === 0) {
-        body.innerHTML = '<div class="jadwal-modal-empty"><i class="bx bx-calendar-x"></i><p>Tidak ada jadwal rapat di tanggal ini</p></div>';
+        body.innerHTML = '<div class="detail-modal-empty"><i class="bx bx-calendar-x"></i><p>Tidak ada jadwal rapat di tanggal ini</p></div>';
     } else {
         body.innerHTML = daftar.map(function (j) {
             return '' +
-                '<div class="jadwal-modal-item">' +
-                    '<div class="jadwal-modal-item-top">' +
+                '<div class="detail-modal-item">' +
+                    '<div class="detail-modal-item-top">' +
                         '<strong>' + escapeHtml(j.judul) + '</strong>' +
                     '</div>' +
-                    '<div class="jadwal-modal-item-meta">' +
+                    '<div class="detail-modal-item-meta">' +
                         '<span><i class="bx bx-time-five"></i> ' + escapeHtml(j.waktu) + ' WIB</span>' +
                         '<span><i class="bx bx-desktop"></i> ' + escapeHtml(j.platform) + '</span>' +
                     '</div>' +
-                    '<div class="jadwal-modal-item-meta">' +
+                    '<div class="detail-modal-item-meta">' +
                         '<span><i class="bx bx-group"></i> ' + escapeHtml(j.operators) + '</span>' +
                     '</div>' +
                 '</div>';
@@ -411,6 +431,29 @@ document.addEventListener('click', function (e) {
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') tutupModalJadwal();
 });
+
+// Picker bulan & tahun - klik judul kalender untuk lompat langsung, bukan cuma next/prev satu-satu.
+var calendarTitleBtn = document.getElementById('calendarTitleBtn');
+var calendarPicker = document.getElementById('calendarPicker');
+var pilihBulan = document.getElementById('pilihBulan');
+var pilihTahun = document.getElementById('pilihTahun');
+
+calendarTitleBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    calendarPicker.classList.toggle('open');
+});
+
+document.addEventListener('click', function (e) {
+    if (calendarPicker.classList.contains('open') && !calendarPicker.contains(e.target) && e.target !== calendarTitleBtn) {
+        calendarPicker.classList.remove('open');
+    }
+});
+
+function navigasiKalender() {
+    window.location.href = '{{ route('admin.dashboard') }}?bulan=' + pilihTahun.value + '-' + pilihBulan.value;
+}
+pilihBulan.addEventListener('change', navigasiKalender);
+pilihTahun.addEventListener('change', navigasiKalender);
 
 // Tooltip kustom (position:fixed) untuk sel kalender — tidak pernah terpotong oleh overflow:hidden.
 var calendarTooltip = document.getElementById('calendarTooltip');

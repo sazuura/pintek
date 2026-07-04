@@ -86,6 +86,10 @@
                                     <label>Operator Bertugas</label>
                                     <p>{{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}</p>
                                 </div>
+                                <div class="detail-item">
+                                    <label>Alat yang Perlu Disiapkan</label>
+                                    <p>{{ $j->peralatanReferensi->pluck('nama_peralatan')->join(', ') ?: 'Tidak ada catatan alat' }}</p>
+                                </div>
                             </div>
                         </td>
                     </tr>

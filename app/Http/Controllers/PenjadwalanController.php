@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Penjadwalan;
+use App\Models\Peralatan;
 use App\Models\User;
 use App\Services\PenjadwalanService;
 use Illuminate\Http\Request;
@@ -33,7 +34,8 @@ class PenjadwalanController extends Controller
     public function create()
     {
         return view('admin.jadwal.create', [
-            'operators' => $this->operatorsWithJadwalDates(),
+            'operators'      => $this->operatorsWithJadwalDates(),
+            'daftarPeralatan' => $this->peralatanUntukReferensi(),
         ]);
     }
 
@@ -42,8 +44,9 @@ class PenjadwalanController extends Controller
         $data = $this->validasiForm($request);
         try {
             $this->service->buat(
-                data:        $data['jadwal'],
-                operatorIds: $data['operator_ids'],
+                data:          $data['jadwal'],
+                operatorIds:   $data['operator_ids'],
+                peralatanSync: $data['peralatan_sync'],
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -54,17 +57,19 @@ class PenjadwalanController extends Controller
 
     public function show(string $id)
     {
-        $jadwal = Penjadwalan::with(['operators', 'peminjaman.user'])->findOrFail($id);
+        $jadwal = Penjadwalan::with(['operators', 'peminjaman.user', 'peralatanReferensi'])->findOrFail($id);
         return view('admin.jadwal.show', compact('jadwal'));
     }
 
     public function edit(string $id)
     {
-        $jadwal = Penjadwalan::with('operators')->findOrFail($id);
+        $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])->findOrFail($id);
         return view('admin.jadwal.edit', [
-            'jadwal'            => $jadwal,
-            'operators'         => $this->operatorsWithJadwalDates(),
-            'selectedOperators' => $jadwal->operators->pluck('id_user')->toArray(),
+            'jadwal'             => $jadwal,
+            'operators'          => $this->operatorsWithJadwalDates(),
+            'selectedOperators'  => $jadwal->operators->pluck('id_user')->toArray(),
+            'daftarPeralatan'    => $this->peralatanUntukReferensi(),
+            'selectedPeralatan'  => $jadwal->peralatanReferensi,
         ]);
     }
 
@@ -74,9 +79,10 @@ class PenjadwalanController extends Controller
         $data   = $this->validasiForm($request, isUpdate: true);
         try {
             $this->service->ubah(
-                jadwal:      $jadwal,
-                data:        $data['jadwal'],
-                operatorIds: $data['operator_ids'],
+                jadwal:        $jadwal,
+                data:          $data['jadwal'],
+                operatorIds:   $data['operator_ids'],
+                peralatanSync: $data['peralatan_sync'],
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -94,6 +100,11 @@ class PenjadwalanController extends Controller
             ->get();
     }
 
+    private function peralatanUntukReferensi()
+    {
+        return Peralatan::orderBy('nama_peralatan')->get(['id_peralatan', 'nama_peralatan', 'gedung']);
+    }
+
     public function destroy(string $id)
     {
         $this->service->hapus(Penjadwalan::findOrFail($id));
@@ -108,14 +119,18 @@ class PenjadwalanController extends Controller
             'waktu_selesai' => substr($request->waktu_selesai ?? '', 0, 5),
         ]);
         $validated = $request->validate([
-            'judul_kegiatan'  => 'required|string|max:150',
-            'tanggal'         => 'required|date' . ($isUpdate ? '' : '|after_or_equal:today'),
-            'waktu_mulai'     => 'required|date_format:H:i',
-            'waktu_selesai'   => 'required|date_format:H:i|after:waktu_mulai',
-            'platform'        => 'required|string|max:100',
-            'keterangan'      => 'nullable|string|max:255',
-            'operator_ids'    => 'required|array|min:1',
-            'operator_ids.*'  => 'exists:users,id_user',
+            'judul_kegiatan'   => 'required|string|max:150',
+            'tanggal'          => 'required|date' . ($isUpdate ? '' : '|after_or_equal:today'),
+            'waktu_mulai'      => 'required|date_format:H:i',
+            'waktu_selesai'    => 'required|date_format:H:i|after:waktu_mulai',
+            'platform'         => 'required|string|max:100',
+            'keterangan'       => 'nullable|string|max:255',
+            'operator_ids'       => 'required|array|min:1',
+            'operator_ids.*'     => 'exists:users,id_user',
+            'peralatan_ids'      => 'nullable|array',
+            'peralatan_ids.*'    => 'nullable|exists:peralatan,id_peralatan',
+            'peralatan_jumlah'   => 'nullable|array',
+            'peralatan_jumlah.*' => 'nullable|integer|min:1',
         ]);
         return [
             'jadwal' => [
@@ -126,8 +141,20 @@ class PenjadwalanController extends Controller
                 'platform'       => $validated['platform'],
                 'keterangan'     => $validated['keterangan'] ?? null,
             ],
+            'peralatan_sync' => $this->buildPeralatanSync($validated['peralatan_ids'] ?? [], $validated['peralatan_jumlah'] ?? []),
             'operator_ids' => $validated['operator_ids'],
         ];
+    }
+
+    private function buildPeralatanSync(array $peralatanIds, array $peralatanJumlah): array
+    {
+        $sync = [];
+        foreach ($peralatanIds as $i => $id) {
+            if (!$id) continue;
+            $jumlah = (int) ($peralatanJumlah[$i] ?? 1);
+            $sync[$id] = ['jumlah' => $jumlah > 0 ? $jumlah : 1];
+        }
+        return $sync;
     }
 
     public function batalkan(Request $request, string $id)

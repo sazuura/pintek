@@ -34,6 +34,16 @@ use Illuminate\Database\Eloquent\Model;
         return $this->hasMany(Peminjaman::class, 'id_penjadwalan', 'id_penjadwalan');
     }
 
+    /**
+     * Alat yang dibutuhkan - murni acuan/checklist buat operator, bukan peminjaman
+     * sungguhan (operator tetap harus ajukan lewat modul Peminjaman kalau mau pakai).
+     */
+    public function peralatanReferensi()
+    {
+        return $this->belongsToMany(Peralatan::class, 'jadwal_peralatan_referensi', 'id_penjadwalan', 'id_peralatan')
+            ->withPivot('jumlah');
+    }
+
     public function isDibatalkan(): bool
     {
         return $this->status === 'dibatalkan' || !empty($this->alasan_batal);

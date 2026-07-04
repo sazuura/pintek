@@ -31,19 +31,21 @@
                         <input type="text" name="judul_kegiatan" class="form-input"
                             value="{{ old('judul_kegiatan', $jadwal->judul_kegiatan) }}" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Tanggal <span class="req">*</span></label>
-                        <input type="date" name="tanggal" class="form-input"
-                            value="{{ old('tanggal', $jadwal->tanggal->format('Y-m-d')) }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Platform <span class="req">*</span></label>
-                        <select name="platform" class="form-select" required>
-                            @foreach(['Online (Zoom)', 'Online (Google Meet)', 'Offline', 'Hybrid'] as $p)
-                                <option value="{{ $p }}" {{ old('platform', $jadwal->platform) == $p ? 'selected' : '' }}>{{ $p }}
-                                </option>
-                            @endforeach
-                        </select>
+                    <div class="form-group span-2 form-row-wrap">
+                        <div class="form-group">
+                            <label class="form-label">Tanggal <span class="req">*</span></label>
+                            <input type="date" name="tanggal" class="form-input"
+                                value="{{ old('tanggal', $jadwal->tanggal->format('Y-m-d')) }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Platform <span class="req">*</span></label>
+                            <select name="platform" class="form-select" required>
+                                @foreach(['Online (Zoom)', 'Online (Google Meet)', 'Offline', 'Hybrid'] as $p)
+                                    <option value="{{ $p }}" {{ old('platform', $jadwal->platform) == $p ? 'selected' : '' }}>{{ $p }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Waktu Mulai <span class="req">*</span></label>
@@ -60,20 +62,63 @@
                         <input type="text" name="keterangan" class="form-input"
                             value="{{ old('keterangan', $jadwal->keterangan) }}">
                     </div>
+                    <div class="form-group span-2">
+                        <label class="form-label">Alat yang Dibutuhkan <small>(opsional)</small></label>
+                        <p class="form-hint" style="margin-bottom:12px;">
+                            Ini cuma catatan acuan buat operator, bukan pengajuan peminjaman. Operator tetap harus
+                            ajukan sendiri lewat menu Peminjaman kalau mau benar-benar memakai alatnya.
+                        </p>
+                        <div class="dynamic-list" id="peralatan-list">
+                            @forelse($selectedPeralatan as $alatTerpilih)
+                                <div class="dynamic-item">
+                                    <select name="peralatan_ids[]" class="form-select peralatan-select searchable"
+                                        data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
+                                        <option value="">-- Pilih Alat --</option>
+                                        @foreach($daftarPeralatan as $alat)
+                                            <option value="{{ $alat->id_peralatan }}" {{ $alat->id_peralatan == $alatTerpilih->id_peralatan ? 'selected' : '' }}>{{ $alat->nama_peralatan }} ({{ $alat->gedung }})</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="number" name="peralatan_jumlah[]" class="form-input peralatan-jumlah" min="1"
+                                        value="{{ $alatTerpilih->pivot->jumlah }}" placeholder="Jml" style="flex:0 0 80px;">
+                                    <button type="button" class="btn-remove" onclick="removePeralatan(this)">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </div>
+                            @empty
+                                <div class="dynamic-item">
+                                    <select name="peralatan_ids[]" class="form-select peralatan-select searchable"
+                                        data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
+                                        <option value="" selected>-- Pilih Alat --</option>
+                                        @foreach($daftarPeralatan as $alat)
+                                            <option value="{{ $alat->id_peralatan }}">{{ $alat->nama_peralatan }} ({{ $alat->gedung }})</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="number" name="peralatan_jumlah[]" class="form-input peralatan-jumlah" min="1"
+                                        placeholder="Jml" style="flex:0 0 80px;display:none;">
+                                    <button type="button" class="btn-remove" onclick="removePeralatan(this)">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </div>
+                            @endforelse
+                        </div>
+                        <button type="button" class="btn-add-item" id="add-peralatan">
+                            <i class="bx bx-plus"></i> Tambah Alat
+                        </button>
+                    </div>
                 </div>
             </div>
 
         <div class="form-card">
             <h3><i class="bx bxs-group"></i> Operator Bertugas <span class="req">*</span></h3>
-            <p class="form-hint" style="margin-bottom:12px;">
+            <p class="form-hint" style="margin-bottom:6px;">
                 Operator yang sudah dipilih di baris lain otomatis tersembunyi.
                 Operator yang sudah punya jadwal di tanggal ini akan di-disable.
             </p>
             <div class="dynamic-list" id="operator-list">
                 @foreach($selectedOperators as $idUser)
                     <div class="dynamic-item">
-                        <select name="operator_ids[]" class="form-select operator-select" required
-                            onchange="refreshOperatorOptions()">
+                        <select name="operator_ids[]" class="form-select operator-select searchable" required
+                            data-placeholder="Cari operator..." onchange="refreshOperatorOptions()">
                             <option value="" disabled selected>-- Pilih Operator --</option>
                             @foreach($operators as $op)
                                 <option value="{{ $op->id_user }}"
@@ -144,6 +189,7 @@
                     }
                 });
             });
+            window.SearchableSelect && window.SearchableSelect.refreshAll();
         }
 
         var tglEl = document.getElementById('tanggal');
@@ -177,7 +223,8 @@
             var select = clone.querySelector('select');
             select.value = '';
             select.onchange = refreshOperatorOptions;
-            
+            window.SearchableSelect && window.SearchableSelect.reinitRow(clone);
+
             clone.querySelector('.btn-remove').disabled = false;
             clone.querySelector('.btn-remove').onclick = function () { removeOperator(this); };
             
@@ -194,9 +241,73 @@
         }
 
         document.getElementById('add-operator').addEventListener('click', addOperator);
+
+        // ── Alat yang dibutuhkan: cuma cegah alat yang sama dipilih dobel ──────────
+        function refreshPeralatanOptions() {
+            var selected = Array.from(document.querySelectorAll('.peralatan-select'))
+                .map(function (s) { return s.value; })
+                .filter(function (v) { return v !== ''; });
+
+            document.querySelectorAll('.peralatan-select').forEach(function (select) {
+                var currentVal = select.value;
+                Array.from(select.options).forEach(function (opt) {
+                    if (!opt.value) return;
+                    opt.hidden = selected.includes(opt.value) && opt.value !== currentVal;
+                });
+
+                var jumlahInput = select.closest('.dynamic-item').querySelector('.peralatan-jumlah');
+                if (currentVal) {
+                    jumlahInput.style.display = '';
+                    if (!jumlahInput.value) jumlahInput.value = 1;
+                } else {
+                    jumlahInput.style.display = 'none';
+                    jumlahInput.value = '';
+                }
+            });
+            window.SearchableSelect && window.SearchableSelect.refreshAll();
+        }
+
+        function removePeralatan(btn) {
+            var list = document.getElementById('peralatan-list');
+            var item = btn.closest('.dynamic-item');
+            if (list.children.length > 1) {
+                item.remove();
+            } else {
+                // Baris terakhir: reset ke kosong daripada dihapus, biar selalu ada minimal 1 baris template.
+                item.querySelector('select').value = '';
+            }
+            refreshPeralatanOptions();
+            updatePeralatanRemoveButtons();
+        }
+
+        function addPeralatan() {
+            var list = document.getElementById('peralatan-list');
+            var first = list.querySelector('.dynamic-item');
+            var clone = first.cloneNode(true);
+            clone.querySelectorAll('option').forEach(function (opt) { opt.hidden = false; });
+            clone.querySelector('select').value = '';
+            clone.querySelector('select').onchange = refreshPeralatanOptions;
+            window.SearchableSelect && window.SearchableSelect.reinitRow(clone);
+            clone.querySelector('.btn-remove').disabled = false;
+            clone.querySelector('.btn-remove').onclick = function () { removePeralatan(this); };
+            list.appendChild(clone);
+            refreshPeralatanOptions();
+            updatePeralatanRemoveButtons();
+        }
+
+        function updatePeralatanRemoveButtons() {
+            document.querySelectorAll('#peralatan-list .btn-remove').forEach(function (btn) {
+                btn.disabled = false;
+            });
+        }
+
+        document.getElementById('add-peralatan').addEventListener('click', addPeralatan);
+
         document.addEventListener("DOMContentLoaded", function() {
             refreshOperatorOptions();
             updateRemoveButtons();
+            refreshPeralatanOptions();
+            updatePeralatanRemoveButtons();
         });
     </script>
 @endpush

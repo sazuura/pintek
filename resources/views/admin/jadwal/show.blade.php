@@ -33,7 +33,7 @@
         </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
         <div class="form-card">
             <h3><i class="bx bxs-group"></i> Operator Bertugas</h3>
             @forelse($jadwal->operators as $op)
@@ -45,6 +45,22 @@
             </div>
             @empty
             <p style="color:var(--dark-grey);text-align:center;padding:20px 0;">Tidak ada operator</p>
+            @endforelse
+        </div>
+
+        <div class="form-card">
+            <h3><i class="bx bx-wrench"></i> Alat yang Dibutuhkan</h3>
+            <p class="form-hint" style="margin-bottom:12px;">Acuan buat operator - bukan peminjaman yang sudah pasti terjadi.</p>
+            @forelse($jadwal->peralatanReferensi as $alat)
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--grey);">
+                <div>
+                    <div style="font-weight:500;color:var(--dark);">{{ $alat->nama_peralatan }}</div>
+                    <div style="font-size:12px;color:var(--dark-grey);">{{ $alat->gedung }}</div>
+                </div>
+                <span class="badge badge-info">{{ $alat->pivot->jumlah }} unit</span>
+            </div>
+            @empty
+            <p style="color:var(--dark-grey);text-align:center;padding:20px 0;">Belum ada catatan alat</p>
             @endforelse
         </div>
 

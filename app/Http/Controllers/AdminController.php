@@ -15,7 +15,7 @@ class AdminController extends Controller
         $stats = [
             'jumlahRapatMendatang' => Penjadwalan::where('status', '!=', 'dibatalkan')
                 ->whereRaw("TIMESTAMP(tanggal, waktu_selesai) >= NOW()")
-                ->whereDate('tanggal', '<=', now()->addDays(7))
+                ->whereDate('tanggal', '<=', now()->addDays(30))
                 ->count(),
             'jumlahOperator' => User::where('role', 'operator')->where('status', 'active')->count(),
             'jumlahPeralatanDipinjam' => PeminjamanItem::whereHas('peminjaman', fn($q) => $q->where('status', 'disetujui'))->sum('jumlah'),
@@ -42,18 +42,18 @@ class AdminController extends Controller
         $kalender   = $this->jadwalKalender($request->query('bulan'));
 
         // Detail tambahan tiap stat card: tren dihitung dari data asli (bukan angka karangan).
-        $rapatMingguLalu = Penjadwalan::where('status', '!=', 'dibatalkan')
-            ->whereBetween('tanggal', [now()->subDays(7)->format('Y-m-d'), now()->subDay()->format('Y-m-d')])
+        $rapatBulanLalu = Penjadwalan::where('status', '!=', 'dibatalkan')
+            ->whereBetween('tanggal', [now()->subDays(30)->format('Y-m-d'), now()->subDay()->format('Y-m-d')])
             ->count();
-        $trenRapat = $this->hitungTren($stats['jumlahRapatMendatang'], $rapatMingguLalu);
+        $trenRapat = $this->hitungTrenSelisih($stats['jumlahRapatMendatang'], $rapatBulanLalu);
 
         $jadwalMingguIni  = Penjadwalan::whereBetween('tanggal', [now()->subDays(7)->format('Y-m-d'), now()->format('Y-m-d')])->count();
         $jadwalMingguLalu = Penjadwalan::whereBetween('tanggal', [now()->subDays(14)->format('Y-m-d'), now()->subDays(7)->format('Y-m-d')])->count();
-        $trenJadwal = $this->hitungTren($jadwalMingguIni, $jadwalMingguLalu);
+        $trenJadwal = $this->hitungTrenSelisih($jadwalMingguIni, $jadwalMingguLalu);
 
         $dipinjamMingguIni  = PeminjamanItem::whereHas('peminjaman', fn($q) => $q->where('status', 'disetujui')->where('created_at', '>=', now()->subDays(7)))->sum('jumlah');
         $dipinjamMingguLalu = PeminjamanItem::whereHas('peminjaman', fn($q) => $q->where('status', 'disetujui')->whereBetween('created_at', [now()->subDays(14), now()->subDays(7)]))->sum('jumlah');
-        $trenPeralatan = $this->hitungTren($dipinjamMingguIni, $dipinjamMingguLalu);
+        $trenPeralatan = $this->hitungTrenSelisih($dipinjamMingguIni, $dipinjamMingguLalu);
 
         $totalOperatorAkun = User::where('role', 'operator')->count();
 
@@ -64,26 +64,18 @@ class AdminController extends Controller
     }
 
     /**
-     * Hitung persentase perubahan dari dua angka nyata (minggu ini vs minggu lalu).
-     * Tidak pernah mengarang angka: kalau tidak ada data pembanding, badge tidak ditampilkan.
+     * Hitung selisih angka mentah (bukan persentase) antara dua periode.
+     * Dipakai untuk kartu yang angkanya kecil, di mana persentase jadi terkesan
+     * berlebihan/menyesatkan (mis. dari 1 ke 2 rapat itu "100%" tapi tidak berarti apa-apa).
+     * Ditampilkan cukup lewat ikon panah + angka, tanpa teks penjelas.
      */
-    private function hitungTren(int $sekarang, int $sebelumnya): array
+    private function hitungTrenSelisih(int $sekarang, int $sebelumnya): array
     {
-        if ($sebelumnya === 0) {
-            return $sekarang > 0
-                ? ['arah' => 'up', 'label' => 'Baru']
-                : ['arah' => 'flat', 'label' => null];
-        }
-
-        $pct = round((($sekarang - $sebelumnya) / $sebelumnya) * 100, 1);
-
-        if ($pct == 0) {
-            return ['arah' => 'flat', 'label' => '0%'];
-        }
+        $selisih = $sekarang - $sebelumnya;
 
         return [
-            'arah'  => $pct > 0 ? 'up' : 'down',
-            'label' => abs($pct) . '%',
+            'arah'  => $selisih > 0 ? 'up' : ($selisih < 0 ? 'down' : 'flat'),
+            'label' => (string) abs($selisih),
         ];
     }
 
@@ -173,6 +165,8 @@ class AdminController extends Controller
         return [
             'labelBulan'       => $bulanAktif->translatedFormat('F'),
             'tahun'            => $bulanAktif->format('Y'),
+            'bulanAngka'       => $bulanAktif->month,
+            'tahunAngka'       => (int) $bulanAktif->format('Y'),
             'bulanSebelumnya'  => $bulanAktif->copy()->subMonth()->format('Y-m'),
             'bulanBerikutnya'  => $bulanAktif->copy()->addMonth()->format('Y-m'),
             'hariHeader'       => ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
@@ -259,18 +253,18 @@ class AdminController extends Controller
      * Helper method untuk query pemakaian peralatan (monitoring) via Peminjaman -
      * sumber kebenaran alat dipakai sekarang, bukan alokasi manual admin ke jadwal.
      */
+    /**
+     * Laporan peralatan dikelompokkan per peminjaman (bukan per item), supaya peminjam &
+     * tanggal pinjam yang sama tidak duplikat jadi banyak baris - daftar alatnya ditampilkan
+     * lewat dropdown per baris.
+     */
     private function queryPeralatanLaporan(Request $request)
     {
-        return PeminjamanItem::with(['peralatan', 'peminjaman.user', 'peminjaman.penjadwalan'])
-            ->when($request->start, fn($q, $v) =>
-                $q->whereHas('peminjaman', fn($p) => $p->whereDate('tanggal_pinjam', '>=', $v))
-            )
-            ->when($request->end, fn($q, $v) =>
-                $q->whereHas('peminjaman', fn($p) => $p->whereDate('tanggal_pinjam', '<=', $v))
-            )
-            ->when($request->operator, fn($q, $v) =>
-                $q->whereHas('peminjaman', fn($p) => $p->where('id_user', $v))
-            )
-            ->orderByDesc('id_item');
+        return Peminjaman::with(['user', 'penjadwalan', 'items.peralatan'])
+            ->whereHas('items')
+            ->when($request->start, fn($q, $v) => $q->whereDate('tanggal_pinjam', '>=', $v))
+            ->when($request->end, fn($q, $v) => $q->whereDate('tanggal_pinjam', '<=', $v))
+            ->when($request->operator, fn($q, $v) => $q->where('id_user', $v))
+            ->orderByDesc('tanggal_pinjam');
     }
 }

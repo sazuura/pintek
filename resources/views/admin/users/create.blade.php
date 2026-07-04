@@ -41,6 +41,19 @@
                             value="{{ old('email') }}" placeholder="nama@diskominfotik.go.id" required>
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Jenis Kelamin <span class="req">*</span></label>
+                        <select name="jenis_kelamin" class="form-select {{ $errors->has('jenis_kelamin') ? 'error' : '' }}" required>
+                            <option value="">-- Pilih Jenis Kelamin --</option>
+                            <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
+                        </select>
+                    </div>
+                    <div class="form-group span-2">
+                        <label class="form-label">Alamat <span class="req">*</span></label>
+                        <textarea name="alamat" class="form-textarea {{ $errors->has('alamat') ? 'error' : '' }}"
+                            placeholder="Alamat lengkap" required>{{ old('alamat') }}</textarea>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Password <span class="req">*</span></label>
                         <input type="password" name="password" class="form-input {{ $errors->has('password') ? 'error' : '' }}"
                             placeholder="Min. 6 karakter" required>

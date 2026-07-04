@@ -147,7 +147,7 @@
                 </div>
             </div>
 
-            {{-- Panel 2: Peralatan --}}
+            {{-- Panel 2: Peralatan - dikelompokkan per peminjaman, daftar alatnya di dropdown --}}
             <div class="tab-panel {{ request('tab') === 'panel-peralatan' ? 'active' : '' }}"
                  id="panel-peralatan">
                 <div class="data-table-wrap">
@@ -157,61 +157,62 @@
                                 <tr>
                                     <th style="width:32px;"></th>
                                     <th style="width:40px;">#</th>
-                                    <th class="sortable">Peralatan <span class="sort-icon">⇅</span></th>
+                                    <th class="sortable">Judul Rapat <span class="sort-icon">⇅</span></th>
                                     <th class="hide-mobile sortable">Peminjam <span class="sort-icon">⇅</span></th>
                                     <th class="hide-mobile sortable">Tanggal Pinjam <span class="sort-icon">⇅</span></th>
-                                    <th>Jml</th>
-                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($peralatan as $i => $item)
-                                @php $uid = 'prl-'.$item->id_item; @endphp
+                                @forelse($peralatan as $i => $p)
+                                @php $uid = 'prl-'.$p->id_peminjaman; @endphp
                                 <tr class="accordion-row" data-target="{{ $uid }}">
                                     <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
                                     <td>{{ $peralatan->firstItem() + $i }}</td>
                                     <td>
-                                        <div style="font-weight:500;">{{ $item->peralatan->nama_peralatan }}</div>
+                                        <div style="font-weight:500;">{{ $p->penjadwalan->judul_kegiatan ?? $p->keperluan }}</div>
                                         <div style="font-size:12px;color:var(--dark-grey);margin-top:2px;">
-                                            {{ $item->peralatan->gedung }}
+                                            {{ $p->items->count() }} peralatan
                                         </div>
                                     </td>
-                                    <td class="hide-mobile">{{ $item->peminjaman->user->nama_user ?? '-' }}</td>
-                                    <td class="hide-mobile">{{ $item->peminjaman->tanggal_pinjam->translatedFormat('D, d/m/Y') }}</td>
-                                    <td>{{ $item->jumlah }}</td>
-                                    <td>
-                                        <div style="display:flex;align-items:center;gap:6px;">
-                                            <span class="badge {{ $item->peminjaman->badge['class'] }}">{{ $item->peminjaman->badge['label'] }}</span>
-                                        </div>
-                                    </td>
+                                    <td class="hide-mobile">{{ $p->user->nama_user ?? '-' }}</td>
+                                    <td class="hide-mobile">{{ $p->tanggal_pinjam->translatedFormat('D, d/m/Y') }}</td>
                                 </tr>
                                 <tr class="accordion-detail" id="{{ $uid }}">
-                                    <td colspan="7">
-                                        <div class="detail-panel">
-                                            <div class="detail-row">
-                                                <i class="bx bx-id-card"></i>
-                                                <div><label>Nomor Seri</label><p>{{ $item->peralatan->kode_barang ?? '-' }}</p></div>
+                                    <td colspan="5">
+                                        <div class="nested-table-section">
+                                            <div class="nested-table-heading">
+                                                <span><i class="bx bx-wrench"></i> Daftar Peralatan</span>
+                                                <span class="badge badge-info">{{ $p->items->count() }} alat</span>
                                             </div>
-                                            <div class="detail-row">
-                                                <i class="bx bx-calendar-check"></i>
-                                                <div><label>Rencana Kembali</label><p>{{ $item->peminjaman->tanggal_kembali_rencana->translatedFormat('D, d/m/Y') }}</p></div>
+                                            <div class="nested-table-wrap">
+                                                <table class="data-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Nama Alat</th>
+                                                            <th style="width:90px;text-align:center;">Jumlah</th>
+                                                            <th style="width:130px;text-align:center;">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($p->items as $item)
+                                                            <tr>
+                                                                <td>
+                                                                    <div style="font-weight:500;">{{ $item->peralatan->nama_peralatan ?? '-' }}</div>
+                                                                    <div style="font-size:12px;color:var(--dark-grey);margin-top:2px;">{{ $item->peralatan->gedung ?? '-' }}</div>
+                                                                </td>
+                                                                <td style="text-align:center;font-weight:600;">{{ $item->jumlah }}</td>
+                                                                <td style="text-align:center;"><span class="badge {{ $p->badge['class'] }}">{{ $p->badge['label'] }}</span></td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                            <div class="detail-row full">
-                                                <i class="bx bx-note"></i>
-                                                <div><label>Keperluan</label><p>{{ $item->peminjaman->keperluan }}</p></div>
-                                            </div>
-                                            @if($item->peminjaman->penjadwalan)
-                                                <div class="detail-row full">
-                                                    <i class="bx bx-calendar"></i>
-                                                    <div><label>Terkait Jadwal</label><p>{{ $item->peminjaman->penjadwalan->judul_kegiatan }} ({{ $item->peminjaman->penjadwalan->tanggal->format('d/m/Y') }})</p></div>
-                                                </div>
-                                            @endif
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" style="text-align:center;padding:40px;color:var(--dark-grey);">
+                                    <td colspan="5" style="text-align:center;padding:40px;color:var(--dark-grey);">
                                         <i class="bx bx-package" style="font-size:36px;display:block;margin-bottom:8px;"></i>
                                         Tidak ada data
                                     </td>

@@ -37,7 +37,7 @@
             </form>
         </div>
 
-        <div class="data-table-wrap">
+        <div class="data-table-wrap table-desktop-only">
             <div class="data-table-head">
                 <h3>Daftar Jadwal</h3>
                 <small style="color:var(--dark-grey);">Tap baris untuk detail</small>
@@ -209,6 +209,89 @@
             <x-pagination :paginator="$jadwal" />
             </div>
         </div>
+
+        {{-- Kartu jadwal - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
+        <div class="mobile-card-list">
+            @forelse($jadwal as $j)
+                @php
+                    $sudahLewat = \Carbon\Carbon::parse($j->tanggal->format('Y-m-d') . ' ' . $j->waktu_selesai)->isPast();
+                    $dibatalkan = $j->isDibatalkan();
+                @endphp
+                <div class="mobile-card"
+                     data-judul="{{ $j->judul_kegiatan }}"
+                     data-tanggal-full="{{ $j->tanggal->translatedFormat('l, d F Y') }}"
+                     data-waktu="{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }} WIB"
+                     data-platform="{{ $j->platform }}"
+                     data-keterangan="{{ $j->keterangan ?? '-' }}"
+                     data-operator="{{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}"
+                     data-dibatalkan="{{ $dibatalkan ? '1' : '' }}"
+                     data-alasan-batal="{{ $j->alasan_batal }}"
+                     @if(!$dibatalkan && !$sudahLewat) data-batalkan-url="{{ route('admin.jadwal.batalkan', $j->id_penjadwalan) }}" @endif>
+                    <div class="mobile-card-top" data-open-jadwal-modal>
+                        <div class="mobile-card-info">
+                            <div class="mobile-card-name">{{ $j->judul_kegiatan }}</div>
+                            <div class="mobile-card-sub">{{ $j->operators->count() }} operator</div>
+                        </div>
+                        <i class="bx bx-chevron-right mobile-card-arrow"></i>
+                    </div>
+                    <div class="mobile-card-meta">
+                        <div class="mobile-card-meta-row">
+                            <span>Tanggal</span>
+                            <span>{{ $j->tanggal->translatedFormat('D, d M Y') }}</span>
+                        </div>
+                        <div class="mobile-card-meta-row">
+                            <span>Platform</span>
+                            @if(str_contains($j->platform, 'Online'))
+                                <span class="badge badge-info"><i class="bx bx-wifi"></i> Online</span>
+                            @else
+                                <span class="badge badge-active"><i class="bx bx-building"></i> Offline</span>
+                            @endif
+                        </div>
+                        <div class="mobile-card-meta-row">
+                            <span>Status</span>
+                            @if($dibatalkan)
+                                <span class="badge badge-danger"><i class="bx bx-x-circle"></i> Dibatalkan</span>
+                            @elseif($sudahLewat)
+                                <span class="badge badge-active"><i class="bx bx-check-double"></i> Selesai</span>
+                            @else
+                                <span class="badge badge-info"><i class="bx bx-check-circle"></i> Aktif</span>
+                            @endif
+                        </div>
+                    </div>
+                    @if(!$dibatalkan)
+                        <div class="mobile-card-actions">
+                            @if($sudahLewat)
+                                <a href="{{ route('admin.jadwal.show', $j->id_penjadwalan) }}" class="btn-icon view"><i class="bx bx-show"></i></a>
+                            @else
+                                <a href="{{ route('admin.jadwal.edit', $j->id_penjadwalan) }}" class="btn-icon edit"><i class="bx bx-edit"></i></a>
+                                <button type="button" class="btn-icon delete" data-open-jadwal-modal data-batalkan-trigger title="Batalkan Jadwal">
+                                    <i class="bx bx-block"></i>
+                                </button>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <div class="data-table-wrap" style="padding:40px;text-align:center;color:var(--dark-grey);">
+                    <i class="bx bx-calendar-x" style="font-size:36px;display:block;margin-bottom:8px;"></i>
+                    Belum ada jadwal
+                </div>
+            @endforelse
+        </div>
+        <div class="data-table-wrap mobile-pagination">
+            <x-pagination :paginator="$jadwal" />
+        </div>
+
+        {{-- Modal detail jadwal, dipakai kartu mobile --}}
+        <div id="modalJadwalDetail" class="detail-modal-overlay">
+            <div class="detail-modal">
+                <div class="detail-modal-header">
+                    <h3 id="modalJadwalDetailLabel">Detail Jadwal</h3>
+                    <button type="button" class="detail-modal-close" onclick="document.getElementById('modalJadwalDetail').classList.remove('open')"><i class="bx bx-x"></i></button>
+                </div>
+                <div class="detail-modal-body" id="modalJadwalDetailBody"></div>
+            </div>
+        </div>
     </main>
 @endsection
 
@@ -241,5 +324,60 @@
             var form = document.getElementById(formId);
             if (form) form.style.display = 'none';
         }
+
+        // Modal detail jadwal untuk kartu mobile - isinya sama dengan dropdown detail di tabel desktop,
+        // ditambah form batalkan kalau dibuka lewat tombol Batalkan.
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        function bukaModalJadwalMobile(card, tampilkanFormBatal) {
+            var d = card.dataset;
+            document.getElementById('modalJadwalDetailLabel').textContent = d.judul;
+
+            var html = '<div class="detail-panel">' +
+                '<div class="detail-row"><i class="bx bx-calendar"></i><div><label>Tanggal</label><p>' + escapeHtml(d.tanggalFull) + '</p></div></div>' +
+                '<div class="detail-row"><i class="bx bx-time-five"></i><div><label>Waktu</label><p>' + escapeHtml(d.waktu) + '</p></div></div>' +
+                '<div class="detail-row"><i class="bx bx-desktop"></i><div><label>Platform</label><p>' + escapeHtml(d.platform) + '</p></div></div>' +
+                '<div class="detail-row full"><i class="bx bx-note"></i><div><label>Keterangan</label><p>' + escapeHtml(d.keterangan) + '</p></div></div>' +
+                '<div class="detail-row full"><i class="bx bx-group"></i><div><label>Operator</label><p>' + escapeHtml(d.operator) + '</p></div></div>';
+
+            if (d.dibatalkan) {
+                html += '<div class="detail-row full danger"><i class="bx bx-error-circle"></i><div><label>Alasan Pembatalan</label><p>' + escapeHtml(d.alasanBatal) + '</p></div></div>';
+            }
+            html += '</div>';
+
+            if (d.batalkanUrl) {
+                html += '<div class="jadwal-cancel-form" id="jadwalCancelFormMobile"' + (tampilkanFormBatal ? '' : ' style="display:none;"') + '>' +
+                    '<div class="jadwal-cancel-form-title"><i class="bx bx-error"></i> Batalkan Jadwal - notif WA akan dikirim ke semua operator</div>' +
+                    '<form action="' + d.batalkanUrl + '" method="POST" style="display:flex;gap:8px;flex-wrap:wrap;">' +
+                        '<input type="hidden" name="_token" value="' + csrfToken + '">' +
+                        '<input type="text" name="alasan_batal" class="form-input" placeholder="Alasan pembatalan (wajib)" required style="flex:1;min-width:180px;height:36px;">' +
+                        '<button type="submit" class="toolbar-btn danger" style="height:36px;"><i class="bx bx-block"></i> Batalkan</button>' +
+                    '</form>' +
+                '</div>';
+            }
+
+            document.getElementById('modalJadwalDetailBody').innerHTML = html;
+            document.getElementById('modalJadwalDetail').classList.add('open');
+        }
+
+        document.querySelectorAll('[data-open-jadwal-modal]').forEach(function (el) {
+            el.addEventListener('click', function () {
+                var card = el.closest('.mobile-card');
+                if (card) bukaModalJadwalMobile(card, el.hasAttribute('data-batalkan-trigger'));
+            });
+        });
+
+        document.getElementById('modalJadwalDetail').addEventListener('click', function (e) {
+            if (e.target.id === 'modalJadwalDetail') e.currentTarget.classList.remove('open');
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') document.getElementById('modalJadwalDetail').classList.remove('open');
+        });
     </script>
 @endpush

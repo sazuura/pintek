@@ -96,6 +96,7 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="{{ asset('js/adminhub.js') }}"></script>
         <script src="{{ asset('js/content.js') }}"></script>
+        <script src="{{ asset('js/searchable-select.js') }}"></script>
         @stack('scripts')
     </body>
 

@@ -91,6 +91,7 @@
         <thead>
             <tr>
                 <th>#</th>
+                <th>Judul Rapat</th>
                 <th>Peralatan</th>
                 <th>Nomor Seri</th>
                 <th>Gedung</th>
@@ -101,20 +102,24 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($peralatan as $index => $item)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $item->peralatan->nama_peralatan }}</td>
-                    <td>{{ $item->peralatan->kode_barang ?? '-' }}</td>
-                    <td>{{ $item->peralatan->gedung }}</td>
-                    <td>{{ $item->peminjaman->user->nama_user ?? '-' }}</td>
-                    <td>{{ $item->peminjaman->tanggal_pinjam->format('d/m/Y') }}</td>
-                    <td>{{ $item->jumlah }}</td>
-                    <td><span class="badge {{ $item->peminjaman->badge['class'] }}">{{ $item->peminjaman->badge['label'] }}</span></td>
-                </tr>
+            @php $no = 1; @endphp
+            @forelse($peralatan as $p)
+                @foreach($p->items as $item)
+                    <tr>
+                        <td>{{ $no++ }}</td>
+                        <td>{{ $p->penjadwalan->judul_kegiatan ?? $p->keperluan }}</td>
+                        <td>{{ $item->peralatan->nama_peralatan ?? '-' }}</td>
+                        <td>{{ $item->peralatan->kode_barang ?? '-' }}</td>
+                        <td>{{ $item->peralatan->gedung ?? '-' }}</td>
+                        <td>{{ $p->user->nama_user ?? '-' }}</td>
+                        <td>{{ $p->tanggal_pinjam->format('d/m/Y') }}</td>
+                        <td>{{ $item->jumlah }}</td>
+                        <td><span class="badge {{ $p->badge['class'] }}">{{ $p->badge['label'] }}</span></td>
+                    </tr>
+                @endforeach
             @empty
                 <tr>
-                    <td colspan="8" style="text-align:center;padding:15px;">Tidak ada data</td>
+                    <td colspan="9" style="text-align:center;padding:15px;">Tidak ada data</td>
                 </tr>
             @endforelse
         </tbody>

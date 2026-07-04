@@ -28,7 +28,7 @@ class OperatorController extends Controller
 
     public function jadwalIndex()
     {
-        $jadwal = Penjadwalan::with('operators')
+        $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])
             ->whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
             ->orderByDesc('tanggal')
             ->paginate(10);

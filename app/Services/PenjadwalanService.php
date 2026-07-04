@@ -17,25 +17,27 @@ class PenjadwalanService
 {
     public function __construct(private WhatsAppService $wa) {}
 
-    public function buat(array $data, array $operatorIds): Penjadwalan
+    public function buat(array $data, array $operatorIds, array $peralatanSync = []): Penjadwalan
     {
         $this->validasiBentrokOperator($operatorIds, $data['tanggal'], $data['waktu_mulai'], $data['waktu_selesai']);
 
-        return DB::transaction(function () use ($data, $operatorIds) {
+        return DB::transaction(function () use ($data, $operatorIds, $peralatanSync) {
             $jadwal = $this->simpanJadwal($data);
             $jadwal->operators()->sync($operatorIds);
+            $jadwal->peralatanReferensi()->sync($peralatanSync);
             $this->kirimNotifKeOperator($jadwal, $operatorIds);
             return $jadwal;
         });
     }
 
-    public function ubah(Penjadwalan $jadwal, array $data, array $operatorIds): Penjadwalan
+    public function ubah(Penjadwalan $jadwal, array $data, array $operatorIds, array $peralatanSync = []): Penjadwalan
     {
         $this->validasiBentrokOperator($operatorIds, $data['tanggal'], $data['waktu_mulai'], $data['waktu_selesai'], $jadwal->id_penjadwalan);
 
-        return DB::transaction(function () use ($jadwal, $data, $operatorIds) {
+        return DB::transaction(function () use ($jadwal, $data, $operatorIds, $peralatanSync) {
             $jadwal->update($data);
             $jadwal->operators()->sync($operatorIds);
+            $jadwal->peralatanReferensi()->sync($peralatanSync);
             $this->kirimNotifKeOperator($jadwal, $operatorIds);
             return $jadwal->fresh();
         });
@@ -108,7 +110,7 @@ class PenjadwalanService
                 $jadwal->waktu_selesai,
                 $jadwal->judul_kegiatan,
                 $jadwal->platform,
-                $jadwal->keterangan
+                $jadwal->keterangan ?? '-'
             );
             $this->wa->kirim($operator->nohp, $pesan);
         }
