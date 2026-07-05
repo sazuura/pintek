@@ -35,6 +35,24 @@ use Illuminate\Database\Eloquent\Model;
     }
 
     /**
+     * ID peralatan yang sudah diajukan operator manapun untuk jadwal ini (lewat modul
+     * Peminjaman, status diajukan/disetujui/dikembalikan - bukan yang ditolak/dibatalkan).
+     * Dipakai buat kasih peringatan (bukan blokir) kalau operator lain mau mengajukan alat
+     * yang sama utk jadwal yang sama - operator tetap boleh lanjut setelah konfirmasi.
+     */
+    public function peralatanSudahDiajukan(): array
+    {
+        return $this->peminjaman()
+            ->whereIn('status', ['diajukan', 'disetujui', 'dikembalikan'])
+            ->with('items')
+            ->get()
+            ->flatMap(fn ($p) => $p->items->pluck('id_peralatan'))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
      * Alat yang dibutuhkan - murni acuan/checklist buat operator, bukan peminjaman
      * sungguhan (operator tetap harus ajukan lewat modul Peminjaman kalau mau pakai).
      */

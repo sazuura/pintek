@@ -3,43 +3,50 @@
 @section('sidebar-menu') <x-sidebar-admin /> @endsection
 
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Edit Jadwal</h1>
+    <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div>
+                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Edit Jadwal</h1>
             </div>
-            <a href="{{ route('admin.jadwal.index') }}" class="toolbar-btn neutral">
+            <a href="{{ route('admin.jadwal.index') }}"
+                class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                 <i class="bx bx-arrow-back"></i> Kembali
             </a>
         </div>
 
         @if($errors->any())
-            <div
-                style="background:#fdecea;border-left:4px solid #e74c3c;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;color:#c0392b;">
-                <ul style="margin:0;padding-left:18px;">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+            <div class="bg-danger dark:bg-danger-dark border-l-4 border-danger-text py-3 px-4 rounded-lg mb-4 text-sm text-[#c0392b]">
+                <ul class="m-0 pl-[18px]">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
             </div>
         @endif
 
         <form action="{{ route('admin.jadwal.update', $jadwal->id_penjadwalan) }}" method="POST">
             @csrf @method('PUT')
 
-            <div class="form-card">
-                <h3><i class="bx bx-info-circle"></i> Informasi Jadwal</h3>
-                <div class="form-grid">
-                    <div class="form-group span-2">
-                        <label class="form-label">Judul Rapat <span class="req">*</span></label>
-                        <input type="text" name="judul_kegiatan" class="form-input"
+            @php
+                $inputClass = 'h-10 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
+                $labelClass = 'text-[13px] font-medium text-text dark:text-text-dark';
+                $hintClass = 'text-xs text-text-muted mt-0.5';
+            @endphp
+
+            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
+                    <i class="bx bx-info-circle"></i> Informasi Jadwal</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="{{ $labelClass }}">Judul Rapat <span class="text-[#e74c3c] ml-0.5">*</span></label>
+                        <input type="text" name="judul_kegiatan" class="{{ $inputClass }}"
                             value="{{ old('judul_kegiatan', $jadwal->judul_kegiatan) }}" required>
                     </div>
-                    <div class="form-group span-2 form-row-wrap">
-                        <div class="form-group">
-                            <label class="form-label">Tanggal <span class="req">*</span></label>
-                            <input type="date" name="tanggal" class="form-input"
+                    <div class="md:col-span-2 flex flex-wrap gap-4">
+                        <div class="flex flex-col gap-1.5 flex-1 basis-[200px]">
+                            <label class="{{ $labelClass }}">Tanggal <span class="text-[#e74c3c] ml-0.5">*</span></label>
+                            <input type="date" name="tanggal" class="{{ $inputClass }}"
                                 value="{{ old('tanggal', $jadwal->tanggal->format('Y-m-d')) }}" required>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Platform <span class="req">*</span></label>
-                            <select name="platform" class="form-select" required>
+                        <div class="flex flex-col gap-1.5 flex-1 basis-[200px]">
+                            <label class="{{ $labelClass }}">Platform <span class="text-[#e74c3c] ml-0.5">*</span></label>
+                            <select name="platform" class="{{ $inputClass }}" required>
                                 @foreach(['Online (Zoom)', 'Online (Google Meet)', 'Offline', 'Hybrid'] as $p)
                                     <option value="{{ $p }}" {{ old('platform', $jadwal->platform) == $p ? 'selected' : '' }}>{{ $p }}
                                     </option>
@@ -47,101 +54,111 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Waktu Mulai <span class="req">*</span></label>
-                        <input type="time" name="waktu_mulai" class="form-input"
+                    <div class="flex flex-col gap-1.5">
+                        <label class="{{ $labelClass }}">Waktu Mulai <span class="text-[#e74c3c] ml-0.5">*</span></label>
+                        <input type="time" name="waktu_mulai" class="{{ $inputClass }}"
                             value="{{ old('waktu_mulai', substr($jadwal->waktu_mulai, 0, 5)) }}" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Waktu Selesai <span class="req">*</span></label>
-                        <input type="time" name="waktu_selesai" class="form-input"
+                    <div class="flex flex-col gap-1.5">
+                        <label class="{{ $labelClass }}">Waktu Selesai <span class="text-[#e74c3c] ml-0.5">*</span></label>
+                        <input type="time" name="waktu_selesai" class="{{ $inputClass }}"
                             value="{{ old('waktu_selesai', substr($jadwal->waktu_selesai, 0, 5)) }}" required>
                     </div>
-                    <div class="form-group span-2">
-                        <label class="form-label">Keterangan</label>
-                        <input type="text" name="keterangan" class="form-input"
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="{{ $labelClass }}">Keterangan</label>
+                        <input type="text" name="keterangan" class="{{ $inputClass }}"
                             value="{{ old('keterangan', $jadwal->keterangan) }}">
                     </div>
-                    <div class="form-group span-2">
-                        <label class="form-label">Alat yang Dibutuhkan <small>(opsional)</small></label>
-                        <p class="form-hint" style="margin-bottom:12px;">
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="{{ $labelClass }}">Alat yang Dibutuhkan <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
+                        <p class="{{ $hintClass }} mb-3">
                             Ini cuma catatan acuan buat operator, bukan pengajuan peminjaman. Operator tetap harus
                             ajukan sendiri lewat menu Peminjaman kalau mau benar-benar memakai alatnya.
                         </p>
-                        <div class="dynamic-list" id="peralatan-list">
+                        <div class="dynamic-list flex flex-col gap-2.5" id="peralatan-list">
                             @forelse($selectedPeralatan as $alatTerpilih)
-                                <div class="dynamic-item">
-                                    <select name="peralatan_ids[]" class="form-select peralatan-select searchable"
+                                <div class="dynamic-item flex gap-2.5 items-center">
+                                    <select name="peralatan_ids[]" class="peralatan-select searchable"
                                         data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
                                         <option value="">-- Pilih Alat --</option>
                                         @foreach($daftarPeralatan as $alat)
-                                            <option value="{{ $alat->id_peralatan }}" {{ $alat->id_peralatan == $alatTerpilih->id_peralatan ? 'selected' : '' }}>{{ $alat->nama_peralatan }} ({{ $alat->gedung }})</option>
+                                            <option value="{{ $alat->id_peralatan }}" data-subtitle="{{ $alat->gedung }}" {{ $alat->id_peralatan == $alatTerpilih->id_peralatan ? 'selected' : '' }}>{{ $alat->nama_peralatan }}</option>
                                         @endforeach
                                     </select>
-                                    <input type="number" name="peralatan_jumlah[]" class="form-input peralatan-jumlah" min="1"
-                                        value="{{ $alatTerpilih->pivot->jumlah }}" placeholder="Jml" style="flex:0 0 80px;">
-                                    <button type="button" class="btn-remove" onclick="removePeralatan(this)">
+                                    <input type="number" name="peralatan_jumlah[]" class="peralatan-jumlah {{ $inputClass }} flex-[0_0_80px]" min="1"
+                                        value="{{ $alatTerpilih->pivot->jumlah }}" placeholder="Jml">
+                                    <button type="button" onclick="removePeralatan(this)"
+                                        class="btn-remove w-9 h-9 rounded-lg border-none bg-danger dark:bg-danger-dark text-danger-text cursor-pointer flex items-center justify-center shrink-0 text-base transition-colors duration-200 hover:bg-danger-text hover:text-white">
                                         <i class="bx bx-trash"></i>
                                     </button>
                                 </div>
                             @empty
-                                <div class="dynamic-item">
-                                    <select name="peralatan_ids[]" class="form-select peralatan-select searchable"
+                                <div class="dynamic-item flex gap-2.5 items-center">
+                                    <select name="peralatan_ids[]" class="peralatan-select searchable"
                                         data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
                                         <option value="" selected>-- Pilih Alat --</option>
                                         @foreach($daftarPeralatan as $alat)
-                                            <option value="{{ $alat->id_peralatan }}">{{ $alat->nama_peralatan }} ({{ $alat->gedung }})</option>
+                                            <option value="{{ $alat->id_peralatan }}" data-subtitle="{{ $alat->gedung }}">{{ $alat->nama_peralatan }}</option>
                                         @endforeach
                                     </select>
-                                    <input type="number" name="peralatan_jumlah[]" class="form-input peralatan-jumlah" min="1"
-                                        placeholder="Jml" style="flex:0 0 80px;display:none;">
-                                    <button type="button" class="btn-remove" onclick="removePeralatan(this)">
+                                    <input type="number" name="peralatan_jumlah[]" class="peralatan-jumlah {{ $inputClass }} flex-[0_0_80px]" min="1"
+                                        placeholder="Jml" style="display:none;">
+                                    <button type="button" onclick="removePeralatan(this)"
+                                        class="btn-remove w-9 h-9 rounded-lg border-none bg-danger dark:bg-danger-dark text-danger-text cursor-pointer flex items-center justify-center shrink-0 text-base transition-colors duration-200 hover:bg-danger-text hover:text-white">
                                         <i class="bx bx-trash"></i>
                                     </button>
                                 </div>
                             @endforelse
                         </div>
-                        <button type="button" class="btn-add-item" id="add-peralatan">
+                        <button type="button" id="add-peralatan"
+                            class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-1 w-fit hover:bg-primary-50">
                             <i class="bx bx-plus"></i> Tambah Alat
                         </button>
                     </div>
                 </div>
             </div>
 
-        <div class="form-card">
-            <h3><i class="bx bxs-group"></i> Operator Bertugas <span class="req">*</span></h3>
-            <p class="form-hint" style="margin-bottom:6px;">
+        <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
+            <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
+                <i class="bx bxs-group"></i> Operator Bertugas <span class="text-[#e74c3c] ml-0.5">*</span></h3>
+            <p class="text-xs text-text-muted mb-1.5">
                 Operator yang sudah dipilih di baris lain otomatis tersembunyi.
                 Operator yang sudah punya jadwal di tanggal ini akan di-disable.
             </p>
-            <div class="dynamic-list" id="operator-list">
+            <div class="dynamic-list flex flex-col gap-2.5" id="operator-list">
                 @foreach($selectedOperators as $idUser)
-                    <div class="dynamic-item">
-                        <select name="operator_ids[]" class="form-select operator-select searchable" required
+                    <div class="dynamic-item flex gap-2.5 items-center">
+                        <select name="operator_ids[]" class="operator-select searchable" required
                             data-placeholder="Cari operator..." onchange="refreshOperatorOptions()">
                             <option value="" disabled selected>-- Pilih Operator --</option>
                             @foreach($operators as $op)
-                                <option value="{{ $op->id_user }}"
+                                <option value="{{ $op->id_user }}" data-subtitle="{{ $op->nohp ?? '-' }}"
                                         data-jadwal='@json($op->jadwalDitugaskan->pluck("tanggal")->map(fn($t) => \Carbon\Carbon::parse($t)->format("Y-m-d")))'
                                         {{ $op->id_user == $idUser ? 'selected' : '' }}>
                                     {{ $op->nama_user }}
                                 </option>
                             @endforeach
                         </select>
-                        <button type="button" class="btn-remove" onclick="removeOperator(this)" disabled>
+                        <button type="button" onclick="removeOperator(this)" disabled
+                            class="btn-remove w-9 h-9 rounded-lg border-none bg-danger dark:bg-danger-dark text-danger-text cursor-pointer flex items-center justify-center shrink-0 text-base transition-colors duration-200 hover:bg-danger-text hover:text-white disabled:opacity-40 disabled:pointer-events-none">
                             <i class="bx bx-trash"></i>
                         </button>
                     </div>
                 @endforeach
             </div>
-            <button type="button" class="btn-add-item" id="add-operator">
+            <button type="button" id="add-operator"
+                class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-1 w-fit hover:bg-primary-50">
                 <i class="bx bx-plus"></i> Tambah Operator
             </button>
         </div>
 
-            <div class="form-actions">
-                <a href="{{ route('admin.jadwal.index') }}" class="btn-cancel">Batal</a>
-                <button type="submit" class="btn-submit"><i class="bx bx-save"></i> Simpan Perubahan</button>
+            <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
+                <a href="{{ route('admin.jadwal.index') }}"
+                    class="h-10 px-5 bg-page-bg dark:bg-page-bg-dark hover:bg-[#ddd] text-text dark:text-text-dark border-none rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                <button type="submit"
+                    class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
+                    <i class="bx bx-save"></i> Simpan Perubahan
+                </button>
             </div>
         </form>
     </main>
@@ -168,7 +185,7 @@
             document.querySelectorAll('.operator-select').forEach(function (select) {
                 var currentVal = select.value;
                 Array.from(select.options).forEach(function (opt) {
-                    if (!opt.value) return; 
+                    if (!opt.value) return;
 
                     var jadwalDates = [];
                     try { jadwalDates = JSON.parse(opt.dataset.jadwal || '[]'); } catch (e) { }
@@ -180,12 +197,9 @@
                     opt.disabled = isBentrok && !isSelectedElsewhere;
 
                     if (isBentrok && !isSelectedElsewhere) {
-                        if (!opt.dataset.origText) opt.dataset.origText = opt.textContent.replace(' (jadwal bentrok)', '');
-                        opt.textContent = opt.dataset.origText + ' (jadwal bentrok)';
+                        opt.dataset.badge = 'Jadwal Bentrok';
                     } else {
-                        if (opt.dataset.origText) {
-                            opt.textContent = opt.dataset.origText;
-                        }
+                        delete opt.dataset.badge;
                     }
                 });
             });
@@ -210,12 +224,9 @@
             var list = document.getElementById('operator-list');
             var first = list.querySelector('.dynamic-item');
             var clone = first.cloneNode(true);
-        
+
             clone.querySelectorAll('option').forEach(function(opt) {
-                if(opt.dataset.origText) {
-                    opt.textContent = opt.dataset.origText;
-                    delete opt.dataset.origText;
-                }
+                delete opt.dataset.badge;
                 opt.hidden = false;
                 opt.disabled = false;
             });
@@ -227,7 +238,7 @@
 
             clone.querySelector('.btn-remove').disabled = false;
             clone.querySelector('.btn-remove').onclick = function () { removeOperator(this); };
-            
+
             list.appendChild(clone);
             refreshOperatorOptions();
             updateRemoveButtons();

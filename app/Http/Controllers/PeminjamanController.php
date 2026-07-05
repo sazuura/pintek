@@ -79,6 +79,7 @@ class PeminjamanController extends Controller
         return Penjadwalan::whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
             ->where('status', '!=', 'dibatalkan')
             ->whereRaw("TIMESTAMP(tanggal, waktu_selesai) >= NOW()")
+            ->with('peralatanReferensi')
             ->orderBy('tanggal')
             ->get();
     }

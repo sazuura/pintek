@@ -1,3 +1,99 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* Dark mode di-toggle lewat class .dark di <body> (lihat public/js/adminhub.js),
+   bukan prefers-color-scheme -- custom variant ini yang bikin prefix dark: bekerja
+   berdasarkan class tersebut. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Reset global yang dulu ada di adminhub.css -- dipindah ke base layer Tailwind
+   supaya tidak perlu diulang lewat utility class (no-underline, text-sm) di tiap link/body. */
+@layer base {
+    a {
+        text-decoration: none;
+    }
+    body {
+        font-size: 14px;
+    }
+}
+
+@theme {
+    /* ── Font ─────────────────────────────────────────────────────────── */
+    --font-sans: 'Poppins', sans-serif;
+
+    /* ── Breakpoint custom (menggantikan/menambah skala breakpoint bawaan)
+       480/768/900/1100 dipakai di seluruh layout admin/operator/inventaris.
+       768 kebetulan sama persis dengan md: bawaan Tailwind. ────────────── */
+    --breakpoint-xs: 480px;
+    --breakpoint-tablet: 900px;
+    --breakpoint-wide: 1100px;
+
+    /* ── Primary -- skala baru "Digital Blue", menggantikan --blue lama
+       (#3C91E6). Base/default di shade 500. ─────────────────────────── */
+    --color-primary-50: #E5F0FF;
+    --color-primary-100: #CCE0FF;
+    --color-primary-200: #99C2FF;
+    --color-primary-300: #66A3FF;
+    --color-primary-400: #3385FF;
+    --color-primary-500: #0066FF;
+    --color-primary-600: #0052CC;
+    --color-primary-700: #003D99;
+    --color-primary-800: #002966;
+    --color-primary-900: #001433;
+    --color-primary-950: #000E24;
+    --color-primary: var(--color-primary-500);
+
+    /* ── Background & teks (light mode default, override dark lewat
+       dark: di markup, bukan value kondisional di sini) ─────────────── */
+    --color-surface: #F9F9F9;
+    --color-surface-dark: #0C0C1E;
+    --color-page-bg: #eee;
+    --color-page-bg-dark: #060714;
+    --color-text: #342E37;
+    --color-text-dark: #FBFBFB;
+    --color-text-muted: #AAAAAA;
+
+    /* ── Status/semantik -- nilai sama persis seperti CSS native
+       sebelumnya, cuma dipindah jadi token global. ──────────────────── */
+    --color-success: #e6f9f0;
+    --color-success-dark: #0d3326;
+    --color-success-text: #1abc9c;
+
+    --color-warning: #fff4e5;
+    --color-warning-dark: #3a2800;
+    --color-warning-text: #f39c12;
+
+    --color-danger: #fdecea;
+    --color-danger-dark: #3a0f0d;
+    --color-danger-text: #e74c3c;
+
+    --color-purple: #f3e8ff;
+    --color-purple-dark: #2a1a40;
+    --color-purple-text: #8b5cf6;
+
+    --color-inactive: #f1f1f1;
+    --color-inactive-dark: #2a2a2a;
+    --color-inactive-text: #888;
+    --color-inactive-text-dark: #666;
+
+    /* Variabel lain dari :root lama yang masih dipakai (sidebar logout,
+       notifikasi dot, ikon widget box-info dashboard) -- tetap dipertahankan
+       terpisah dari token di atas, bukan hasil konsolidasi. */
+    --color-red: #DB504A;
+    --color-yellow: #FFCE26;
+    --color-yellow-light: #FFF2C6;
+    --color-orange: #FD7238;
+    --color-orange-light: #FFE0D3;
+    --color-orange-bg: #FFF0E5;
+
+    /* Shadow kartu yang dipakai berulang di .form-card, .stat-card, dsb. */
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, .06);
+
+    /* Animasi masuk untuk flash toast (components/flash.blade.php) */
+    --animate-flash-in: flash-in .25s ease;
+}
+
+@keyframes flash-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

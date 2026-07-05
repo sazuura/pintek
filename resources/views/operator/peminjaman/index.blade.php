@@ -3,19 +3,21 @@
 @section('sidebar-menu') <x-sidebar-operator /> @endsection
 
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Peminjaman Saya</h1>
+    <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div>
+                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Peminjaman Saya</h1>
             </div>
-            <a href="{{ route('operator.peminjaman.create') }}" class="btn-download">
+            <a href="{{ route('operator.peminjaman.create') }}"
+                class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
                 <i class="bx bx-plus"></i><span class="text">Ajukan Peminjaman</span>
             </a>
         </div>
 
-        <div class="content-toolbar">
-            <form method="GET" action="{{ route('operator.peminjaman.index') }}" style="display:contents;">
-                <select name="status" class="toolbar-select">
+        <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <form method="GET" action="{{ route('operator.peminjaman.index') }}" class="contents">
+                <select name="status"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
                     <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu</option>
                     <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Disetujui</option>
@@ -24,123 +26,147 @@
                     </option>
                     <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                 </select>
-                <button type="submit" class="toolbar-btn primary"><i class="bx bx-filter"></i> Filter</button>
+                <button type="submit"
+                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
+                    <i class="bx bx-filter"></i> Filter</button>
                 @if(request('status'))
-                    <a href="{{ route('operator.peminjaman.index') }}" class="toolbar-btn neutral"><i class="bx bx-x"></i>
-                        Reset</a>
+                    <a href="{{ route('operator.peminjaman.index') }}"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
+                        <i class="bx bx-x"></i> Reset</a>
                 @endif
             </form>
         </div>
 
-        <div class="data-table-wrap">
-            <div class="data-table-head">
-                <h3>Riwayat Pengajuan</h3>
-                <small style="color:var(--dark-grey);">Tap baris untuk detail</small>
+        <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
+            <div class="py-4 px-5 flex items-center justify-between border-b border-page-bg dark:border-page-bg-dark">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark">Riwayat Pengajuan</h3>
+                <small class="text-text-muted">Tap baris untuk detail</small>
             </div>
-            <div style="overflow-x:auto;">
-                <table class="data-table">
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
                     <thead>
                         <tr>
-                            <th style="width:40px;">#</th>
-                            <th class="sortable">Keperluan <span class="sort-icon">⇅</span></th>
-                            <th class="hide-mobile sortable">Tgl Pinjam <span class="sort-icon">⇅</span></th>
-                            <th class="hide-mobile">Tgl Kembali</th>
-                            <th>Status</th>
+                            <th class="w-8 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap"></th>
+                            <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
+                            <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Keperluan <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                            <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tgl Pinjam <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rencana Kembali</th>
+                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Tgl Kembali</th>
+                            <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($peminjaman as $index => $p)
                             @php $uid = 'pm-' . $p->id_peminjaman; @endphp
-                            <tr class="accordion-row {{ $p->isDibatalkan() ? 'row-inactive' : '' }}" data-target="{{ $uid }}">
-                                <td>{{ $peminjaman->firstItem() + $index }}</td>
-                                <td>
-                                    <div style="font-weight:500;">{{ $p->keperluan }}</div>
-                                    <div style="font-size:12px;color:var(--dark-grey);margin-top:2px;">
+                            <tr class="group accordion-row cursor-pointer border-b border-page-bg dark:border-page-bg-dark transition-colors duration-150 hover:bg-page-bg dark:hover:bg-page-bg-dark {{ $p->isDibatalkan() ? 'opacity-60' : '' }}" data-target="{{ $uid }}">
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center"><i class="bx bx-chevron-down transition-transform duration-200 text-text-muted text-base group-[.open]:rotate-180 group-[.open]:text-primary"></i></td>
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $peminjaman->firstItem() + $index }}</td>
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
+                                    <div class="font-medium">{{ $p->keperluan }}</div>
+                                    <div class="text-xs text-text-muted mt-0.5">
                                         {{ $p->items->count() }} item peralatan
                                     </div>
                                 </td>
-                                <td class="hide-mobile">{{ $p->tanggal_pinjam->format('d/m/Y') }}</td>
-                                <td class="hide-mobile">{{ $p->tanggal_kembali_rencana->format('d/m/Y') }}</td>
-                                <td>
-                                    <div style="display:flex;align-items:center;gap:6px;">
-                                        <span class="badge {{ $p->badge['class'] }}">{{ $p->badge['label'] }}</span>
-                                        <i class="bx bx-chevron-down accordion-chevron"></i>
-                                    </div>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->tanggal_kembali_aktual?->translatedFormat('l, d F Y') ?? '-' }}</td>
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
+                                    <x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge>
                                 </td>
                             </tr>
-                            <tr class="accordion-detail" id="{{ $uid }}">
-                                <td colspan="5">
-                                    <div class="accordion-detail-inner">
-                                        <div class="detail-item">
-                                            <label>Tanggal Pinjam</label>
-                                            <p>{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</p>
-                                        </div>
-                                        <div class="detail-item">
-                                            <label>Rencana Kembali</label>
-                                            <p>{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}</p>
+                            <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row" id="{{ $uid }}">
+                                <td colspan="7" class="!p-0">
+                                    <div class="flex flex-wrap items-start gap-x-8 gap-y-2.5 py-[18px] px-4">
+                                        <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
+                                            <i class="bx bx-calendar-check text-lg text-primary mt-px shrink-0"></i>
+                                            <div>
+                                                <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Rencana Kembali</label>
+                                                <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}</p>
+                                            </div>
                                         </div>
                                         @if($p->tanggal_kembali_aktual)
-                                            <div class="detail-item">
-                                                <label>Dikembalikan</label>
-                                                <p>{{ $p->tanggal_kembali_aktual->translatedFormat('l, d F Y') }}</p>
+                                            <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
+                                                <i class="bx bx-undo text-lg text-primary mt-px shrink-0"></i>
+                                                <div>
+                                                    <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Dikembalikan</label>
+                                                    <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $p->tanggal_kembali_aktual->translatedFormat('l, d F Y') }}</p>
+                                                </div>
                                             </div>
                                         @endif
-                                        <div class="detail-item">
-                                            <label>Peralatan</label>
-                                            <p>{{ $p->items->map(fn($i) => $i->peralatan->nama_peralatan . ' (x' . $i->jumlah . ')')->join(', ') }}
-                                            </p>
-                                        </div>
                                         @if($p->penjadwalan)
-                                            <div class="detail-item">
-                                                <label>Terkait Jadwal</label>
-                                                <p>{{ $p->penjadwalan->judul_kegiatan }} ({{ $p->penjadwalan->tanggal->format('d/m/Y') }})</p>
+                                            <div class="flex items-start gap-2.5 min-w-0 flex-[2_1_260px]">
+                                                <i class="bx bx-calendar-event text-lg text-primary mt-px shrink-0"></i>
+                                                <div>
+                                                    <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Terkait Jadwal</label>
+                                                    <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $p->penjadwalan->judul_kegiatan }} ({{ $p->penjadwalan->tanggal->format('d/m/Y') }})</p>
+                                                </div>
                                             </div>
                                         @endif
-                                        <div class="detail-item">
-                                            <label>Catatan Inventaris</label>
-                                            <p>{{ $p->catatan_inventaris ?? '-' }}</p>
+                                        <div class="flex items-start gap-2.5 min-w-0 flex-[2_1_260px]">
+                                            <i class="bx bx-note text-lg text-primary mt-px shrink-0"></i>
+                                            <div>
+                                                <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Catatan Inventaris</label>
+                                                <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $p->catatan_inventaris ?? '-' }}</p>
+                                            </div>
                                         </div>
                                         @if($p->isDibatalkan())
-                                            <div class="detail-item" style="grid-column:span 2;">
-                                                <label>Alasan Pembatalan</label>
-                                                <p style="color:#e74c3c;">{{ $p->alasan_batal }}</p>
+                                            <div class="flex items-start gap-2.5 min-w-0 flex-[2_1_260px]">
+                                                <i class="bx bx-error-circle text-lg text-danger-text mt-px shrink-0"></i>
+                                                <div>
+                                                    <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Alasan Pembatalan</label>
+                                                    <p class="text-danger-text m-0 font-medium text-[13px] break-words">{{ $p->alasan_batal }}</p>
+                                                </div>
                                             </div>
                                         @endif
                                     </div>
 
+                                    {{-- Daftar Peralatan - tabel group, konsisten dengan tab Peralatan Digunakan di Laporan --}}
+                                    <div class="px-4 pb-4">
+                                        <div class="flex items-center justify-between mb-2.5 px-0.5">
+                                            <span class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-text dark:text-text-dark"><i class="bx bx-wrench text-primary text-[15px]"></i> Daftar Peralatan</span>
+                                            <x-badge variant="badge-info">{{ $p->items->count() }} alat</x-badge>
+                                        </div>
+                                        <div class="bg-surface dark:bg-surface-dark rounded-[10px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
+                                            <table class="w-full border-collapse">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="pl-5 py-3 px-5 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg/50 dark:bg-page-bg-dark/50 whitespace-nowrap">Nama Alat</th>
+                                                        <th class="w-[90px] py-3 px-5 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg/50 dark:bg-page-bg-dark/50 whitespace-nowrap">Jumlah</th>
+                                                        <th class="w-[130px] py-3 px-5 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg/50 dark:bg-page-bg-dark/50 whitespace-nowrap">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($p->items as $item)
+                                                        <tr class="border-b border-page-bg dark:border-page-bg-dark last:border-b-0 hover:bg-page-bg dark:hover:bg-page-bg-dark">
+                                                            <td class="pl-5 py-4 px-5 text-sm text-text dark:text-text-dark align-middle">
+                                                                <div class="font-medium mb-[3px]">{{ $item->peralatan->nama_peralatan ?? '-' }}</div>
+                                                                <div class="text-xs text-text-muted">{{ $item->peralatan->gedung ?? '-' }}</div>
+                                                            </td>
+                                                            <td class="py-4 px-5 text-sm text-text dark:text-text-dark align-middle text-center font-semibold">{{ $item->jumlah }}</td>
+                                                            <td class="py-4 px-5 text-sm align-middle text-center"><x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge></td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
                                     {{-- Tombol batalkan - hanya jika masih diajukan --}}
                                     @if($p->isMenunggu())
-                                        <div style="padding:12px 16px;border-top:1px solid var(--grey);">
-                                            <button type="button" class="toolbar-btn danger" style="height:32px;font-size:12px;"
-                                                onclick="toggleBatal('batal-pm-{{ $p->id_peminjaman }}')">
+                                        <div class="py-3 px-4 border-t border-page-bg dark:border-page-bg-dark">
+                                            <button type="button"
+                                                class="h-8 px-3.5 rounded-lg border-none text-xs font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white"
+                                                onclick="bukaBatalkanPengajuan('{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}')">
                                                 <i class="bx bx-block"></i> Batalkan Pengajuan
                                             </button>
-                                        </div>
-                                        <div id="batal-pm-{{ $p->id_peminjaman }}"
-                                            style="display:none;padding:12px 16px;background:#fdecea;border-top:1px solid var(--grey);">
-                                            <div style="font-size:13px;font-weight:600;color:#c0392b;margin-bottom:10px;">
-                                                <i class="bx bx-error"></i> Batalkan pengajuan - notif WA akan dikirim ke inventaris
-                                            </div>
-                                            <form action="{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}"
-                                                method="POST" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                                                @csrf
-                                                <input type="text" name="alasan_batal" class="form-input"
-                                                    placeholder="Alasan pembatalan (wajib)" required
-                                                    style="flex:1;min-width:200px;height:36px;">
-                                                <button type="submit" class="toolbar-btn danger" style="height:36px;">
-                                                    <i class="bx bx-block"></i> Konfirmasi Batalkan
-                                                </button>
-                                                <button type="button" class="toolbar-btn neutral" style="height:36px;"
-                                                    onclick="toggleBatal('batal-pm-{{ $p->id_peminjaman }}')">Batal</button>
-                                            </form>
                                         </div>
                                     @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" style="text-align:center;padding:40px;color:var(--dark-grey);">
-                                    <i class="bx bx-cart-alt" style="font-size:36px;display:block;margin-bottom:8px;"></i>
+                                <td colspan="7" class="text-center py-10 text-text-muted">
+                                    <i class="bx bx-cart-alt text-4xl block mb-2"></i>
                                     Belum ada pengajuan peminjaman
                                 </td>
                             </tr>
@@ -149,17 +175,178 @@
                 </table>
             </div>
             <x-pagination :paginator="$peminjaman">{{ $peminjaman->total() }} total pengajuan</x-pagination>
+        </div>
+
+        {{-- Kartu pengajuan - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
+        <div class="hidden max-xs:flex flex-col gap-3 mb-4">
+            @forelse($peminjaman as $p)
+                <div class="mobile-card bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-3.5 cursor-pointer {{ $p->isDibatalkan() ? 'opacity-60' : '' }}"
+                     data-open-peminjaman-modal
+                     data-keperluan="{{ $p->keperluan }}"
+                     data-tanggal-pinjam="{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}"
+                     data-tanggal-kembali="{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}"
+                     data-tanggal-kembali-aktual="{{ $p->tanggal_kembali_aktual?->translatedFormat('l, d F Y') }}"
+                     data-peralatan="{{ $p->items->map(fn($i) => $i->peralatan->nama_peralatan . ' (x' . $i->jumlah . ')')->join(', ') }}"
+                     data-jadwal="{{ $p->penjadwalan ? $p->penjadwalan->judul_kegiatan . ' (' . $p->penjadwalan->tanggal->format('d/m/Y') . ')' : '' }}"
+                     data-catatan="{{ $p->catatan_inventaris ?? '-' }}"
+                     data-dibatalkan="{{ $p->isDibatalkan() ? '1' : '' }}"
+                     data-alasan-batal="{{ $p->alasan_batal }}"
+                     @if($p->isMenunggu()) data-batalkan-url="{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}" @endif>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-[#0d2a40] text-primary flex items-center justify-center text-lg shrink-0">
+                            <i class="bx bx-cart-alt"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm text-text dark:text-text-dark truncate">{{ $p->keperluan }}</div>
+                            <div class="text-xs text-text-muted whitespace-nowrap overflow-hidden text-ellipsis">{{ $p->items->count() }} item peralatan</div>
+                        </div>
+                        <i class="bx bx-chevron-right text-text-muted text-xl shrink-0"></i>
+                    </div>
+                    <div class="flex flex-col gap-2 pt-3 border-t border-page-bg dark:border-page-bg-dark">
+                        <div class="flex items-center justify-between text-[13px] text-text-muted">
+                            <span><i class="bx bx-calendar"></i> Tgl Pinjam</span>
+                            <span class="text-text dark:text-text-dark font-medium">{{ $p->tanggal_pinjam->format('d/m/Y') }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[13px] text-text-muted">
+                            <span><i class="bx bx-calendar-check"></i> Tgl Kembali</span>
+                            <span class="text-text dark:text-text-dark font-medium">{{ $p->tanggal_kembali_rencana->format('d/m/Y') }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[13px] text-text-muted">
+                            <span><i class="bx bx-flag"></i> Status</span>
+                            <x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-10 text-center text-text-muted">
+                    <i class="bx bx-cart-alt text-4xl block mb-2"></i>
+                    Belum ada pengajuan peminjaman
+                </div>
+            @endforelse
+        </div>
+        <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
+            <x-pagination :paginator="$peminjaman">{{ $peminjaman->total() }} total pengajuan</x-pagination>
+        </div>
+
+        {{-- Modal detail pengajuan, dipakai kartu mobile --}}
+        <div id="modalPeminjamanDetail"
+            class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
+            <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
+                <div class="flex items-center justify-between gap-3 py-[18px] px-5 border-b border-page-bg dark:border-page-bg-dark">
+                    <h3 id="modalPeminjamanDetailLabel" class="m-0 text-[15px] font-semibold text-text dark:text-text-dark">Detail Pengajuan</h3>
+                    <button type="button"
+                        class="w-[30px] h-[30px] rounded-full flex items-center justify-center text-text-muted text-lg shrink-0 transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark hover:text-text dark:hover:text-text-dark"
+                        onclick="document.getElementById('modalPeminjamanDetail').classList.remove('open')"><i class="bx bx-x"></i></button>
+                </div>
+                <div class="pt-4 px-5 pb-5 overflow-y-auto flex flex-col gap-3" id="modalPeminjamanDetailBody"></div>
             </div>
         </div>
+
+        {{-- Modal konfirmasi batalkan pengajuan - satu instance dipakai bareng oleh semua baris/kartu --}}
+        <x-modal-konfirmasi id="modalBatalkanPengajuan" title="Batalkan Pengajuan" icon="bx-error" icon-class="text-danger-text">
+            <div class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
+                <div class="text-[13px] font-semibold text-[#c0392b]">
+                    <i class="bx bx-error"></i> Batalkan pengajuan - notif WA akan dikirim ke inventaris
+                </div>
+            </div>
+            <form id="formBatalkanPengajuan" method="POST">
+                @csrf
+                <input type="text" name="alasan_batal" id="inputAlasanBatalPengajuan"
+                    class="w-full h-9 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans focus:border-primary focus:outline-none"
+                    placeholder="Alasan pembatalan (wajib)" required>
+                <div class="flex justify-end gap-2.5 mt-3">
+                    <button type="button" data-modal-close
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                    <button type="submit"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white">
+                        <i class="bx bx-block"></i> Konfirmasi Batalkan
+                    </button>
+                </div>
+            </form>
+        </x-modal-konfirmasi>
     </main>
 @endsection
 
 @push('scripts')
     <script>
-        function toggleBatal(id) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        // Modal konfirmasi batalkan pengajuan (komponen global modal-konfirmasi) - satu
+        // instance dipakai bareng oleh baris tabel & kartu mobile, tinggal ganti action
+        // form-nya ke URL pengajuan yang mau dibatalkan tiap kali dibuka. Kalau dipanggil
+        // dari dalam modal detail (kartu mobile), tutup dulu modal detail-nya supaya tidak
+        // ada dua overlay bertumpuk.
+        function bukaBatalkanPengajuan(url) {
+            var detailModal = document.getElementById('modalPeminjamanDetail');
+            if (detailModal) detailModal.classList.remove('open');
+
+            document.getElementById('formBatalkanPengajuan').action = url;
+            document.getElementById('inputAlasanBatalPengajuan').value = '';
+            bukaModalKonfirmasi('modalBatalkanPengajuan');
         }
+
+        // Modal detail pengajuan untuk kartu mobile - isinya sama dengan dropdown detail di tabel desktop.
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        function bukaModalPeminjamanMobile(card) {
+            var d = card.dataset;
+            document.getElementById('modalPeminjamanDetailLabel').textContent = d.keperluan;
+
+            var detailRowClass = 'flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]';
+            var detailRowFullClass = 'flex items-start gap-2.5 min-w-0 flex-[2_1_260px]';
+            var iconClass = 'bx text-lg text-primary mt-px shrink-0';
+            var labelClass = 'text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5';
+            var pClass = 'text-text dark:text-text-dark m-0 font-medium text-[13px] break-words';
+
+            var html = '<div class="flex flex-wrap items-start gap-x-8 gap-y-2.5">' +
+                '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-calendar"></i><div><label class="' + labelClass + '">Tanggal Pinjam</label><p class="' + pClass + '">' + escapeHtml(d.tanggalPinjam) + '</p></div></div>' +
+                '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-calendar-check"></i><div><label class="' + labelClass + '">Rencana Kembali</label><p class="' + pClass + '">' + escapeHtml(d.tanggalKembali) + '</p></div></div>';
+
+            if (d.tanggalKembaliAktual) {
+                html += '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-undo"></i><div><label class="' + labelClass + '">Dikembalikan</label><p class="' + pClass + '">' + escapeHtml(d.tanggalKembaliAktual) + '</p></div></div>';
+            }
+
+            html += '<div class="' + detailRowFullClass + '"><i class="bx bxs-wrench text-lg text-primary mt-px shrink-0"></i><div><label class="' + labelClass + '">Peralatan</label><p class="' + pClass + '">' + escapeHtml(d.peralatan) + '</p></div></div>';
+
+            if (d.jadwal) {
+                html += '<div class="' + detailRowFullClass + '"><i class="' + iconClass + ' bx-calendar-event"></i><div><label class="' + labelClass + '">Terkait Jadwal</label><p class="' + pClass + '">' + escapeHtml(d.jadwal) + '</p></div></div>';
+            }
+
+            html += '<div class="' + detailRowFullClass + '"><i class="' + iconClass + ' bx-note"></i><div><label class="' + labelClass + '">Catatan Inventaris</label><p class="' + pClass + '">' + escapeHtml(d.catatan) + '</p></div></div>';
+
+            if (d.dibatalkan) {
+                html += '<div class="' + detailRowFullClass + '"><i class="bx bx-error-circle text-lg text-danger-text mt-px shrink-0"></i><div><label class="' + labelClass + '">Alasan Pembatalan</label><p class="text-danger-text m-0 font-medium text-[13px] break-words">' + escapeHtml(d.alasanBatal) + '</p></div></div>';
+            }
+            html += '</div>';
+
+            if (d.batalkanUrl) {
+                html += '<div><button type="button" id="btnBatalkanPengajuanMobile" class="h-8 px-3.5 rounded-lg border-none text-xs font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white"><i class="bx bx-block"></i> Batalkan Pengajuan</button></div>';
+            }
+
+            document.getElementById('modalPeminjamanDetailBody').innerHTML = html;
+            document.getElementById('modalPeminjamanDetail').classList.add('open');
+
+            var btnBatal = document.getElementById('btnBatalkanPengajuanMobile');
+            if (btnBatal) {
+                btnBatal.addEventListener('click', function () {
+                    bukaBatalkanPengajuan(d.batalkanUrl);
+                });
+            }
+        }
+
+        document.querySelectorAll('[data-open-peminjaman-modal]').forEach(function (el) {
+            el.addEventListener('click', function () {
+                bukaModalPeminjamanMobile(el);
+            });
+        });
+
+        document.getElementById('modalPeminjamanDetail').addEventListener('click', function (e) {
+            if (e.target.id === 'modalPeminjamanDetail') e.currentTarget.classList.remove('open');
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') document.getElementById('modalPeminjamanDetail').classList.remove('open');
+        });
     </script>
 @endpush

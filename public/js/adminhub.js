@@ -1,13 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── 1. Active state ───────────────────────────────────────────────────────
-    document.querySelectorAll('#sidebar .side-menu.top li a').forEach(function (link) {
-        var linkPath = new URL(link.href, window.location.origin).pathname;
-        if (linkPath !== '/' && window.location.pathname.startsWith(linkPath)) {
-            link.closest('li').classList.add('active');
-        }
-    });
-
 
     // ── 2 + 3. Sidebar toggle ─────────────────────────────────────────────────
     var sidebar        = document.getElementById('sidebar');

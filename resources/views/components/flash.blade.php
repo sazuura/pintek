@@ -11,92 +11,31 @@
         'warning' => 'bx-error',
         'info' => 'bx-info-circle',
     ];
+    // Warna toast ini berbeda dari token badge (success/danger/warning) di tema global --
+    // memang set warna terpisah, dipertahankan persis seperti CSS aslinya, bukan dikonsolidasi.
+    $styles = [
+        'success' => 'bg-[#d4edda] text-[#1a6b30] border-l-4 border-[#28a745]',
+        'error'   => 'bg-[#f8d7da] text-[#842029] border-l-4 border-[#dc3545]',
+        'warning' => 'bg-[#fff3cd] text-[#856404] border-l-4 border-[#ffc107]',
+        'info'    => 'bg-[#d0e8ff] text-[#0a4a8a] border-l-4 border-primary',
+    ];
+    $toastBase = 'fixed top-5 right-5 z-[9999] flex items-center gap-[0.6rem] py-3 px-[1.1rem] rounded-[10px] text-sm font-medium shadow-[0_4px_16px_rgba(0,0,0,0.12)] animate-flash-in max-w-[360px]';
 @endphp
 
 @foreach($messages as $type => $message)
     @if($message)
-        <div class="flash-toast flash-{{ $type }}" role="alert">
+        <div class="{{ $toastBase }} {{ $styles[$type] }}" role="alert" data-flash-toast>
             <i class="bx {{ $icons[$type] }}"></i>
             <span>{{ $message }}</span>
-            <button onclick="this.parentElement.remove()" class="flash-close">&times;</button>
+            <button onclick="this.parentElement.remove()"
+                class="ml-auto bg-transparent border-0 text-[1.1rem] cursor-pointer opacity-60 hover:opacity-100 text-inherit leading-none p-0 pl-2">&times;</button>
         </div>
     @endif
 @endforeach
 
-<style>
-    .flash-toast {
-        position: fixed;
-        top: 1.25rem;
-        right: 1.25rem;
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        gap: .6rem;
-        padding: .75rem 1.1rem;
-        border-radius: 10px;
-        font-size: .875rem;
-        font-weight: 500;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
-        animation: flash-in .25s ease;
-        max-width: 360px;
-    }
-
-    .flash-success {
-        background: #d4edda;
-        color: #1a6b30;
-        border-left: 4px solid #28a745;
-    }
-
-    .flash-error {
-        background: #f8d7da;
-        color: #842029;
-        border-left: 4px solid #dc3545;
-    }
-
-    .flash-warning {
-        background: #fff3cd;
-        color: #856404;
-        border-left: 4px solid #ffc107;
-    }
-
-    .flash-info {
-        background: #d0e8ff;
-        color: #0a4a8a;
-        border-left: 4px solid #3c91e6;
-    }
-
-    .flash-close {
-        margin-left: auto;
-        background: none;
-        border: none;
-        font-size: 1.1rem;
-        cursor: pointer;
-        opacity: .6;
-        color: inherit;
-        line-height: 1;
-        padding: 0 0 0 .5rem;
-    }
-
-    .flash-close:hover {
-        opacity: 1;
-    }
-
-    @keyframes flash-in {
-        from {
-            opacity: 0;
-            transform: translateY(-8px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
-
 <script>
     // Auto dismiss setelah 4 detik
-    document.querySelectorAll('.flash-toast').forEach(function (el) {
+    document.querySelectorAll('[data-flash-toast]').forEach(function (el) {
         setTimeout(function () {
             el.style.transition = 'opacity .4s';
             el.style.opacity = '0';

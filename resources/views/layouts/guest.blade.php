@@ -8,18 +8,17 @@
     <title>Login - {{ config('app.name', 'Diskominfotik') }}</title>
 
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/adminhub.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+    @vite(['resources/css/app.css'])
 </head>
 
-<body>
-    <div class="login-card">
+<body class="flex justify-center items-center min-h-screen bg-page-bg font-sans">
+    <div class="w-full max-w-[420px] bg-surface rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.10)] pt-7 px-5 pb-6 xs:pt-9 xs:px-8 xs:pb-8 m-4">
 
         {{-- Header: logo besar + nama sistem --}}
-        <div class="login-header">
-            <img src="{{ asset('img/logo.png') }}" alt="Logo Diskominfotik">
-            <h2>DISKOMINFOTIK</h2>
-            <small>Kabupaten Bandung Barat</small>
+        <div class="flex flex-col items-center text-center mb-7 gap-2">
+            <img src="{{ asset('img/logo.png') }}" alt="Logo Diskominfotik" class="h-[200px] w-auto object-contain">
+            <h2 class="text-lg font-bold text-primary m-0">DISKOMINFOTIK</h2>
+            <small class="text-xs text-text-muted">Kabupaten Bandung Barat</small>
         </div>
 
         {{-- Konten login form dari login.blade.php --}}

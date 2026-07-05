@@ -21,10 +21,12 @@
         }
         $pages->push($last);
     }
+
+    $pageLinkBase = 'min-w-8 h-8 px-2 inline-flex items-center justify-center rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark no-underline text-[13px] border border-transparent transition-colors duration-150 hover:bg-transparent hover:text-primary';
 @endphp
 
 @if($paginator->hasPages())
-    <div class="pagination-wrap">
+    <div class="py-4 px-5 flex items-center justify-between flex-wrap gap-2.5 border-t border-page-bg dark:border-page-bg-dark text-[13px] text-text-muted">
         <span>
             @if($slot->isNotEmpty())
                 {{ $slot }}
@@ -32,25 +34,26 @@
                 Menampilkan {{ $paginator->firstItem() }}–{{ $paginator->lastItem() }} dari {{ $paginator->total() }} {{ $label }}
             @endif
         </span>
-        <div class="pagination-links">
+        <div class="flex gap-1">
             @if($paginator->onFirstPage())
-                <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
+                <span class="{{ $pageLinkBase }} opacity-40 pointer-events-none"><i class="bx bx-chevron-left"></i></span>
             @else
-                <a href="{{ $paginator->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
+                <a href="{{ $paginator->previousPageUrl() }}" class="{{ $pageLinkBase }}"><i class="bx bx-chevron-left"></i></a>
             @endif
 
             @foreach($pages as $p)
                 @if($p === '...')
-                    <span class="page-link ellipsis">…</span>
+                    <span class="{{ $pageLinkBase }} bg-transparent border-transparent cursor-default text-text-muted hover:bg-transparent hover:text-text-muted">…</span>
                 @else
-                    <a href="{{ $paginator->url($p) }}" class="page-link {{ $current == $p ? 'active' : '' }}">{{ $p }}</a>
+                    <a href="{{ $paginator->url($p) }}"
+                        class="{{ $pageLinkBase }} {{ $current == $p ? 'bg-primary dark:bg-primary text-white font-semibold hover:bg-primary hover:text-white' : '' }}">{{ $p }}</a>
                 @endif
             @endforeach
 
             @if($paginator->hasMorePages())
-                <a href="{{ $paginator->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
+                <a href="{{ $paginator->nextPageUrl() }}" class="{{ $pageLinkBase }}"><i class="bx bx-chevron-right"></i></a>
             @else
-                <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
+                <span class="{{ $pageLinkBase }} opacity-40 pointer-events-none"><i class="bx bx-chevron-right"></i></span>
             @endif
         </div>
     </div>

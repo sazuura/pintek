@@ -3,11 +3,11 @@
 @section('sidebar-menu') <x-sidebar-inventaris /> @endsection
 
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Dashboard</h1>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:13px;color:var(--dark-grey);">
+    <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div>
+                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Dashboard</h1>
+                <div class="flex items-center gap-1.5 mt-1 text-[13px] text-text-muted">
                     <i class="bx bx-building"></i>
                     <span>Semua Lokasi</span>
                 </div>
@@ -15,132 +15,132 @@
         </div>
 
         {{-- Stat cards --}}
-        <div class="stat-cards">
-            <div class="stat-card">
-                <div class="stat-card-icon blue"><i class="bx bxs-data"></i></div>
-                <div class="stat-card-info">
-                    <h3>{{ $totalPeralatan }}</h3>
-                    <p>Total Peralatan</p>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:grid-cols-1 gap-4 mb-6">
+            <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
+                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] text-[#3C91E6]"><i class="bx bxs-data"></i></div>
+                <div>
+                    <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $totalPeralatan }}</h3>
+                    <p class="text-[13px] text-text-muted m-0">Total Peralatan</p>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-card-icon green"><i class="bx bxs-check-circle"></i></div>
-                <div class="stat-card-info">
-                    <h3>{{ $totalTersedia }}</h3>
-                    <p>Stok Tersedia</p>
+            <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
+                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e6f9f0] text-[#1abc9c]"><i class="bx bxs-check-circle"></i></div>
+                <div>
+                    <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $totalTersedia }}</h3>
+                    <p class="text-[13px] text-text-muted m-0">Stok Tersedia</p>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-card-icon red"><i class="bx bxs-error"></i></div>
-                <div class="stat-card-info">
-                    <h3>{{ $totalRusak }}</h3>
-                    <p>Unit Rusak</p>
+            <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
+                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#fdecea] text-[#e74c3c]"><i class="bx bxs-error"></i></div>
+                <div>
+                    <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $totalRusak }}</h3>
+                    <p class="text-[13px] text-text-muted m-0">Unit Rusak</p>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-card-icon yellow"><i class="bx bxs-time"></i></div>
-                <div class="stat-card-info">
-                    <h3>{{ $totalMenunggu }}</h3>
-                    <p>Menunggu Persetujuan</p>
+            <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
+                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#fff4e5] text-[#f39c12]"><i class="bx bxs-time"></i></div>
+                <div>
+                    <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $totalMenunggu }}</h3>
+                    <p class="text-[13px] text-text-muted m-0">Menunggu Persetujuan</p>
                 </div>
             </div>
         </div>
 
-        <div class="chart-grid">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4 mb-6">
             {{-- Donut: komposisi stok --}}
-            <div class="chart-card">
-                <h3><i class="bx bx-doughnut-chart" style="color:var(--blue);"></i> Komposisi Stok</h3>
-                <canvas id="chartStok"></canvas>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:12px;">
-                    <span class="badge badge-active">Tersedia: {{ $totalTersedia }}</span>
-                    <span class="badge badge-danger">Rusak: {{ $totalRusak }}</span>
-                    <span class="badge badge-inactive">Tidak Tersedia: {{ $totalPeralatan - $totalTersedia }}</span>
+            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-doughnut-chart text-primary"></i> Komposisi Stok</h3>
+                <canvas id="chartStok" class="max-h-[240px]"></canvas>
+                <div class="flex flex-wrap gap-2 mt-3 text-xs">
+                    <x-badge variant="badge-active">Tersedia: {{ $totalTersedia }}</x-badge>
+                    <x-badge variant="badge-danger">Rusak: {{ $totalRusak }}</x-badge>
+                    <x-badge variant="badge-inactive">Tidak Tersedia: {{ $totalPeralatan - $totalTersedia }}</x-badge>
                 </div>
             </div>
 
             {{-- Peralatan kritis --}}
-            <div class="chart-card">
-                <h3><i class="bx bx-error" style="color:#f39c12;"></i> Peralatan Kritis
-                    <span class="badge badge-warning" style="margin-left:4px;">Stok ≤ 2</span>
+            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-error text-[#f39c12]"></i> Peralatan Kritis
+                    <x-badge variant="badge-warning" class="ml-1">Stok ≤ 2</x-badge>
                 </h3>
                 @forelse($peralatanKritis as $p)
-                    <div style="display:flex;align-items:center;justify-content:space-between;
-                                                padding:10px 0;border-bottom:1px solid var(--grey);">
+                    <div class="flex items-center justify-between py-2.5 border-b border-page-bg dark:border-page-bg-dark">
                         <div>
-                            <div style="font-weight:500;font-size:13px;color:var(--dark);">{{ $p->nama_peralatan }}</div>
+                            <div class="font-medium text-[13px] text-text dark:text-text-dark">{{ $p->nama_peralatan }}</div>
                             {{-- PERBAIKAN: Menampilkan nama gedung/lokasi asal peralatan --}}
-                            <div style="font-size:12px;color:var(--dark-grey);">Gedung: {{ $p->gedung }}
+                            <div class="text-xs text-text-muted">Gedung: {{ $p->gedung }}
                                 {{ $p->lokasi_detail ? '(' . $p->lokasi_detail . ')' : '' }}
                             </div>
                         </div>
-                        <span
-                            class="badge {{ ($p->stok - ($p->rusak ?? 0) - ($p->perbaikan ?? 0)) == 0 ? 'badge-danger' : 'badge-warning' }}">
+                        <x-badge :variant="($p->stok - ($p->rusak ?? 0) - ($p->perbaikan ?? 0)) == 0 ? 'badge-danger' : 'badge-warning'">
                             {{ ($p->stok - ($p->rusak ?? 0) - ($p->perbaikan ?? 0)) }} unit
-                        </span>
+                        </x-badge>
                     </div>
                 @empty
-                    <div style="text-align:center;padding:90px 0;color:var(--dark-grey);">
-                        <i class="bx bx-check-shield" style="font-size:32px;display:block;margin-bottom:8px;color:#1abc9c;"></i>
+                    <div class="text-center py-[90px] text-text-muted">
+                        <i class="bx bx-check-shield text-3xl block mb-2 text-[#1abc9c]"></i>
                         All stocks secured
                     </div>
                 @endforelse
-                <div style="padding-top:10px;">
-                    <a href="{{ route('inventaris.peralatan.index') }}" style="font-size:13px;color:var(--blue);">
+                <div class="pt-2.5">
+                    <a href="{{ route('inventaris.peralatan.index') }}" class="text-[13px] text-primary">
                         Lihat semua peralatan →
                     </a>
                 </div>
             </div>
 
             {{-- Pengajuan peminjaman menunggu --}}
-            <div class="chart-card" style="grid-column:span 3;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <h3 style="margin:0;">
-                        <i class="bx bx-cart" style="color:var(--blue);"></i> Pengajuan Menunggu Persetujuan
+            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card col-span-3">
+                <div class="flex items-center justify-between mb-3.5">
+                    <h3 class="m-0 text-[15px] font-semibold text-text dark:text-text-dark">
+                        <i class="bx bx-cart text-primary"></i> Pengajuan Menunggu Persetujuan
                         @if($totalMenunggu > 0)
-                            <span class="badge badge-warning" style="margin-left:6px;">{{ $totalMenunggu }}</span>
+                            <x-badge variant="badge-warning" class="ml-1.5">{{ $totalMenunggu }}</x-badge>
                         @endif
                     </h3>
-                    <a href="{{ route('inventaris.peminjaman.index') }}" class="toolbar-btn primary"
-                        style="height:32px;padding:0 12px;font-size:13px;">
+                    <a href="{{ route('inventaris.peminjaman.index') }}"
+                        class="h-8 px-3 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
                         Kelola Semua
                     </a>
                 </div>
 
                 @forelse($peminjamanMenunggu as $p)
-                    <div style="background:var(--grey);border-radius:10px;padding:14px;margin-bottom:10px;">
-                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;color:var(--dark);margin-bottom:4px;">
+                    <div class="bg-page-bg dark:bg-page-bg-dark rounded-[10px] p-3.5 mb-2.5">
+                        <div class="flex items-start justify-between gap-3 flex-wrap">
+                            <div class="flex-1">
+                                <div class="font-semibold text-text dark:text-text-dark mb-1">
                                     {{ $p->user->nama_user }}
                                 </div>
-                                <div style="font-size:13px;color:var(--dark-grey);margin-bottom:6px;">
+                                <div class="text-[13px] text-text-muted mb-1.5">
                                     {{ $p->keperluan }}
                                 </div>
-                                <div style="font-size:12px;color:var(--dark-grey);">
+                                <div class="text-xs text-text-muted">
                                     <i class="bx bx-calendar"></i>
                                     {{ $p->tanggal_pinjam->format('d/m/Y') }} →
                                     {{ $p->tanggal_kembali_rencana->format('d/m/Y') }}
                                 </div>
                                 {{-- Item dari gedung ini saja --}}
-                                <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">
+                                <div class="mt-2 flex flex-wrap gap-1.5">
                                     @foreach($p->items as $item)
-                                        <span class="badge badge-info">
+                                        <x-badge variant="badge-info">
                                             {{ $item->peralatan->nama_peralatan }} ({{ $item->peralatan->gedung }})
                                             x{{ $item->jumlah }}
-                                        </span>
+                                        </x-badge>
                                     @endforeach
                                 </div>
                             </div>
                             {{-- Aksi cepat --}}
-                            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+                            <div class="flex gap-2 items-center shrink-0">
                                 <form action="{{ route('inventaris.peminjaman.approve', $p->id_peminjaman) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="toolbar-btn success" style="height:34px;"
+                                    <button type="submit"
+                                        class="h-[34px] px-3 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-[#1abc9c] text-white"
                                         onclick="return confirm('Setujui pengajuan dari {{ $p->user->nama_user }}?')">
                                         <i class="bx bx-check"></i> Setujui
                                     </button>
                                 </form>
-                                <button type="button" class="toolbar-btn danger" style="height:34px;"
+                                <button type="button"
+                                    class="h-[34px] px-3 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white"
                                     onclick="toggleTolak('tolak-{{ $p->id_peminjaman }}')">
                                     <i class="bx bx-x"></i> Tolak
                                 </button>
@@ -148,21 +148,24 @@
                         </div>
                         {{-- Form tolak (tersembunyi) --}}
                         <div id="tolak-{{ $p->id_peminjaman }}"
-                            style="display:none;margin-top:12px;border-top:1px solid var(--grey);padding-top:10px;">
+                            class="hidden mt-3 pt-2.5 border-t border-page-bg dark:border-page-bg-dark">
                             <form action="{{ route('inventaris.peminjaman.reject', $p->id_peminjaman) }}" method="POST"
-                                style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                class="flex gap-2 items-center flex-wrap">
                                 @csrf
-                                <input type="text" name="catatan_inventaris" class="form-input"
-                                    placeholder="Alasan penolakan (wajib)" required style="flex:1;min-width:200px;height:36px;">
-                                <button type="submit" class="toolbar-btn danger" style="height:36px;">Kirim Penolakan</button>
-                                <button type="button" class="toolbar-btn neutral" style="height:36px;"
+                                <input type="text" name="catatan_inventaris"
+                                    class="flex-1 min-w-[200px] h-9 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans focus:border-primary focus:outline-none"
+                                    placeholder="Alasan penolakan (wajib)" required>
+                                <button type="submit"
+                                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white">Kirim Penolakan</button>
+                                <button type="button"
+                                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark"
                                     onclick="toggleTolak('tolak-{{ $p->id_peminjaman }}')">Batal</button>
                             </form>
                         </div>
                     </div>
                 @empty
-                    <div style="text-align:center;padding:30px 0;color:var(--dark-grey);">
-                        <i class="bx bx-cart-alt" style="font-size:36px;display:block;margin-bottom:8px;"></i>
+                    <div class="text-center py-[30px] text-text-muted">
+                        <i class="bx bx-cart-alt text-4xl block mb-2"></i>
                         Tidak ada pengajuan yang menunggu
                     </div>
                 @endforelse
@@ -174,6 +177,7 @@
 
 @push('scripts')
     <script>
+        Chart.defaults.font.family = "'Poppins', sans-serif";
         new Chart(document.getElementById('chartStok'), {
             type: 'doughnut',
             data: {
@@ -193,7 +197,7 @@
 
         function toggleTolak(id) {
             var el = document.getElementById(id);
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            el.classList.toggle('hidden');
         }
     </script>
 @endpush

@@ -115,9 +115,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var icon = th.querySelector('.sort-icon');
         if (icon) icon.textContent = asc ? '↑' : '↓';
 
-        // Ambil baris data (bukan baris detail accordion)
-        var rows = Array.from(tbody.querySelectorAll('tr')).filter(function (r) {
-            return !r.classList.contains('accordion-detail');
+        // Ambil baris data (bukan baris detail accordion). Pakai tbody.children (bukan
+        // querySelectorAll('tr')) supaya baris dari tabel BERSARANG di dalam kolom detail
+        // (mis. tabel "Daftar Peralatan" di laporan) tidak ikut tertarik keluar saat sort.
+        var rows = Array.from(tbody.children).filter(function (r) {
+            return r.tagName === 'TR' && !r.classList.contains('accordion-detail');
         });
 
         rows.sort(function (a, b) {
@@ -147,4 +149,42 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+});
+
+
+// ═══════════════════════════════════════════════════
+// 4. MODAL KONFIRMASI (global, reusable)
+//    Dipakai oleh <x-modal-konfirmasi> - dibuka/ditutup lewat class 'open', tombol
+//    [data-modal-close], klik backdrop, atau Escape. Fungsi buka/tutup ditaruh di
+//    scope global (bukan di dalam DOMContentLoaded) supaya bisa dipanggil langsung
+//    dari onclick="" di Blade file manapun.
+// ═══════════════════════════════════════════════════
+function bukaModalKonfirmasi(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.classList.add('open');
+}
+
+function tutupModalKonfirmasi(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.classList.remove('open');
+}
+
+document.addEventListener('click', function (e) {
+    var closeBtn = e.target.closest('[data-modal-close]');
+    if (closeBtn) {
+        var modal = closeBtn.closest('.modal-konfirmasi');
+        if (modal) modal.classList.remove('open');
+        return;
+    }
+    var backdrop = e.target.closest('.modal-konfirmasi.open');
+    if (backdrop && e.target === backdrop) {
+        backdrop.classList.remove('open');
+    }
+});
+
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.modal-konfirmasi.open').forEach(function (m) {
+        m.classList.remove('open');
+    });
 });

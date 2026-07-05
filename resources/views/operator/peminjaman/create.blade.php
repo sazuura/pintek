@@ -3,120 +3,222 @@
 @section('sidebar-menu') <x-sidebar-operator /> @endsection
 
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Ajukan Peminjaman Peralatan</h1>
+    <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div>
+                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Ajukan Peminjaman Peralatan</h1>
             </div>
-            <a href="{{ route('operator.peminjaman.index') }}" class="toolbar-btn neutral">
+            <a href="{{ route('operator.peminjaman.index') }}"
+                class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                 <i class="bx bx-arrow-back"></i> Kembali
             </a>
         </div>
 
         @if($errors->any())
-            <div
-                style="background:#fdecea;border-left:4px solid #e74c3c;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;color:#c0392b;">
-                <ul style="margin:0;padding-left:18px;">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+            <div class="bg-danger dark:bg-danger-dark border-l-4 border-danger-text py-3 px-4 rounded-lg mb-4 text-sm text-[#c0392b]">
+                <ul class="m-0 pl-[18px]">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
             </div>
         @endif
 
-        <form action="{{ route('operator.peminjaman.store') }}" method="POST">
+        <form action="{{ route('operator.peminjaman.store') }}" method="POST" id="form-peminjaman">
             @csrf
 
-            <div class="form-card">
-                <h3><i class="bx bx-info-circle"></i> Detail Pengajuan</h3>
-                <div class="form-grid">
-                    <div class="form-group span-2">
-                        <label class="form-label">Kaitkan ke Jadwal <small>(opsional)</small></label>
-                        <select name="id_penjadwalan" id="id_penjadwalan" class="form-select {{ $errors->has('id_penjadwalan') ? 'error' : '' }}">
+            @php
+                $inputClass = 'h-10 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
+                $labelClass = 'text-[13px] font-medium text-text dark:text-text-dark';
+                $hintClass = 'text-xs text-text-muted mt-0.5';
+            @endphp
+
+            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
+                    <i class="bx bx-info-circle"></i> Detail Pengajuan</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="{{ $labelClass }}">Kaitkan ke Jadwal <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
+                        <select name="id_penjadwalan" id="id_penjadwalan" class="{{ $inputClass }} {{ $errors->has('id_penjadwalan') ? '!border-danger-text' : '' }}">
                             <option value="">-- Tidak terkait jadwal tertentu --</option>
                             @foreach($jadwalAktif as $j)
                                 <option value="{{ $j->id_penjadwalan }}"
                                     data-judul="{{ $j->judul_kegiatan }}"
                                     data-tanggal="{{ $j->tanggal->format('Y-m-d') }}"
+                                    data-sudah-diajukan='@json($j->peralatanSudahDiajukan())'
+                                    data-referensi='@json($j->peralatanReferensi->map(fn($p) => ["id" => $p->id_peralatan, "nama" => $p->nama_peralatan, "jumlah" => $p->pivot->jumlah]))'
                                     {{ old('id_penjadwalan') == $j->id_penjadwalan ? 'selected' : '' }}>
                                     {{ $j->judul_kegiatan }} - {{ $j->tanggal->translatedFormat('D, d M Y') }}
                                 </option>
                             @endforeach
                         </select>
-                        <span class="form-hint">Pilih kalau peminjaman ini untuk salah satu rapat yang kamu tugaskan - Keperluan & Tanggal Pinjam akan terisi otomatis (tetap bisa diedit).</span>
+                        <span class="{{ $hintClass }}">Pilih kalau peminjaman ini untuk salah satu rapat yang kamu tugaskan - Keperluan & Tanggal Pinjam akan terisi otomatis (tetap bisa diedit). Kalau operator lain di jadwal yang sama sudah mengajukan alat tertentu, kamu tetap bisa mengajukan alat yang sama, tapi akan muncul konfirmasi dulu supaya tidak sengaja duplikat.</span>
+                        <div id="referensi-hint" class="hidden bg-primary-50 dark:bg-[#0d2a40] rounded-lg py-2.5 px-3.5 mt-1">
+                            <p class="text-[13px] text-primary font-medium m-0"><i class="bx bx-info-circle"></i> Alat yang direkomendasikan admin untuk jadwal ini sudah otomatis ditambahkan di bawah (tetap bisa diubah/dihapus):</p>
+                            <p id="referensi-hint-list" class="text-[13px] text-primary m-0 mt-1"></p>
+                        </div>
                     </div>
-                    <div class="form-group span-2">
-                        <label class="form-label">Keperluan <span class="req">*</span></label>
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="{{ $labelClass }}">Keperluan <span class="text-[#e74c3c] ml-0.5">*</span></label>
                         <input type="text" name="keperluan" id="keperluan"
-                            class="form-input {{ $errors->has('keperluan') ? 'error' : '' }}" value="{{ old('keperluan') }}"
+                            class="{{ $inputClass }} {{ $errors->has('keperluan') ? '!border-danger-text' : '' }}" value="{{ old('keperluan') }}"
                             placeholder="cth: Rapat dinas luar kota bersama Kemendagri" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Tanggal Pinjam <span class="req">*</span></label>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="{{ $labelClass }}">Tanggal Pinjam <span class="text-[#e74c3c] ml-0.5">*</span></label>
                         <input type="date" name="tanggal_pinjam" id="tanggal_pinjam"
-                            class="form-input {{ $errors->has('tanggal_pinjam') ? 'error' : '' }}"
+                            class="{{ $inputClass }} {{ $errors->has('tanggal_pinjam') ? '!border-danger-text' : '' }}"
                             value="{{ old('tanggal_pinjam') }}" min="{{ now()->format('Y-m-d') }}" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Rencana Kembali <span class="req">*</span></label>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="{{ $labelClass }}">Rencana Kembali <span class="text-[#e74c3c] ml-0.5">*</span></label>
                         <input type="date" name="tanggal_kembali_rencana"
-                            class="form-input {{ $errors->has('tanggal_kembali_rencana') ? 'error' : '' }}"
+                            class="{{ $inputClass }} {{ $errors->has('tanggal_kembali_rencana') ? '!border-danger-text' : '' }}"
                             value="{{ old('tanggal_kembali_rencana') }}" required>
-                        <span class="form-hint">Harus setelah tanggal pinjam.</span>
+                        <span class="{{ $hintClass }}">Harus setelah tanggal pinjam.</span>
                     </div>
                 </div>
             </div>
 
-            <div class="form-card">
-                <h3><i class="bx bxs-wrench"></i> Pilih Peralatan <span class="req">*</span></h3>
-                <p class="form-hint" style="margin-bottom:14px;">
+            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
+                    <i class="bx bxs-wrench"></i> Pilih Peralatan <span class="text-[#e74c3c] ml-0.5">*</span></h3>
+                <p class="{{ $hintClass }} mb-3.5">
                     Peralatan dari gedung berbeda akan mengirim notifikasi ke masing-masing inventaris secara otomatis.
                     Peralatan yang sudah dipilih di baris lain tersembunyi otomatis.
                 </p>
 
-                <div class="dynamic-list" id="peralatan-list">
-                    <div class="dynamic-item">
-                        <select name="peralatan_ids[]" class="form-select peralatan-select"
-                            onchange="refreshPeralatanOptions()" required>
+                <div class="dynamic-list flex flex-col gap-2.5" id="peralatan-list">
+                    <div class="dynamic-item flex gap-2.5 items-center">
+                        <select name="peralatan_ids[]" class="{{ $inputClass }} peralatan-select searchable"
+                            data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()" required>
                             <option value="" disabled selected>-- Pilih Peralatan --</option>
                             @foreach($peralatan as $gedung => $items)
                                 <optgroup label="{{ $gedung }}">
                                     @foreach($items as $alat)
                                         <option value="{{ $alat->id_peralatan }}"
-                                            data-stok="{{ $alat->stok_tersedia }}"
+                                            data-subtitle="Stok: {{ $alat->stok_tersedia }}"
+                                            data-nama="{{ $alat->nama_peralatan }}"
                                             {{ (isset($selectedPeralatanId) && $selectedPeralatanId == $alat->id_peralatan) ? 'selected' : '' }}>
-                                            {{ $alat->nama_peralatan }} - stok: {{ $alat->stok_tersedia }}
+                                            {{ $alat->nama_peralatan }}
                                         </option>
                                     @endforeach
                                 </optgroup>
                             @endforeach
                         </select>
-                        <input type="number" name="peralatan_jumlah[]" class="form-input" min="1" placeholder="Jml"
-                            style="flex:0 0 80px;" required>
-                        <button type="button" class="btn-remove" onclick="removeItem(this)" disabled>
+                        <input type="number" name="peralatan_jumlah[]" class="{{ $inputClass }} flex-[0_0_80px]" min="1" placeholder="Jml" required>
+                        <button type="button" onclick="removeItem(this)" disabled
+                            class="btn-remove w-9 h-9 rounded-lg border-none bg-danger dark:bg-danger-dark text-danger-text cursor-pointer flex items-center justify-center shrink-0 text-base transition-colors duration-200 hover:bg-danger-text hover:text-white disabled:opacity-40 disabled:pointer-events-none">
                             <i class="bx bx-trash"></i>
                         </button>
                     </div>
                 </div>
-                <button type="button" class="btn-add-item" id="add-peralatan">
+                <button type="button" id="add-peralatan"
+                    class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-1 w-fit hover:bg-primary-50">
                     <i class="bx bx-plus"></i> Tambah Peralatan
                 </button>
             </div>
 
-            <div class="form-actions">
-                <a href="{{ route('operator.peminjaman.index') }}" class="btn-cancel">Batal</a>
-                <button type="submit" class="btn-submit">
+            <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
+                <a href="{{ route('operator.peminjaman.index') }}"
+                    class="h-10 px-5 bg-page-bg dark:bg-page-bg-dark hover:bg-[#ddd] text-text dark:text-text-dark border-none rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                <button type="submit"
+                    class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
                     <i class="bx bx-send"></i> Kirim Pengajuan
                 </button>
             </div>
         </form>
+
+        {{-- Modal konfirmasi duplikasi alat - dipakai saat submit, menggantikan window.confirm() bawaan browser --}}
+        <x-modal-konfirmasi id="modalKonfirmasiDuplikat" title="Konfirmasi Duplikasi Alat" icon="bx-error" icon-class="text-warning-text">
+            <p class="text-[13px] text-text dark:text-text-dark m-0 mb-2">Alat berikut sudah dipinjam/diajukan operator lain untuk jadwal ini:</p>
+            <ul id="modalKonfirmasiDuplikatList" class="text-[13px] text-text dark:text-text-dark m-0 pl-[18px] flex flex-col gap-1"></ul>
+            <p class="text-[13px] text-text-muted m-0">Apakah Anda yakin tetap ingin mengajukan peminjaman ini?</p>
+            <div class="flex justify-end gap-2.5 mt-1">
+                <button type="button" data-modal-close
+                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                <button type="button" onclick="konfirmasiTetapAjukan()"
+                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-warning-text text-white">
+                    <i class="bx bx-check"></i> Ya, Tetap Ajukan
+                </button>
+            </div>
+        </x-modal-konfirmasi>
     </main>
 @endsection
 
 @push('scripts')
     <script>
-        // ── Kaitkan ke Jadwal: auto-isi Keperluan & Tanggal Pinjam ──────────────────
+        // ── Kaitkan ke Jadwal: auto-isi Keperluan & Tanggal Pinjam, cek peralatan yang
+        //    sudah diajukan operator lain (utk peringatan+konfirmasi, bukan blokir), dan
+        //    auto-isi baris peralatan dari rekomendasi admin (peralatanReferensi) ──
+        var jadwalSudahDiajukan = [];
+        var jadwalReferensi     = [];
+        var jadwalGantiTerakhir = null; // cegah auto-isi ulang kalau jadwal yang sama dipilih lagi
+
+        function updateJadwalDuplikasiState(jadwalBerubah) {
+            var select = document.getElementById('id_penjadwalan');
+            var opt = select.options[select.selectedIndex];
+            if (!opt || !opt.value) {
+                jadwalSudahDiajukan = [];
+                jadwalReferensi = [];
+            } else {
+                try { jadwalSudahDiajukan = JSON.parse(opt.dataset.sudahDiajukan || '[]'); } catch (e) { jadwalSudahDiajukan = []; }
+                try { jadwalReferensi = JSON.parse(opt.dataset.referensi || '[]'); } catch (e) { jadwalReferensi = []; }
+            }
+            updateReferensiHint();
+            if (jadwalBerubah) autoIsiDariReferensi();
+            refreshPeralatanOptions();
+        }
+
+        // Isi ulang daftar peralatan pakai rekomendasi admin utk jadwal ini (alat yang
+        // sudah diajukan operator lain dilewati - tetap disebut di keterangan). Kalau
+        // jadwal tidak punya rekomendasi sama sekali, baris yang sudah ada tidak diubah.
+        function autoIsiDariReferensi() {
+            if (jadwalReferensi.length === 0) return;
+
+            var bisaDiisi = jadwalReferensi.filter(function (r) { return jadwalSudahDiajukan.indexOf(r.id) === -1; });
+            if (bisaDiisi.length === 0) return;
+
+            var list = document.getElementById('peralatan-list');
+            // Sisakan baris pertama sebagai "template" buat baris berikutnya, buang sisanya.
+            while (list.children.length > 1) list.removeChild(list.lastElementChild);
+
+            var firstRow  = list.querySelector('.dynamic-item');
+            var firstItem = bisaDiisi[0];
+            var select    = firstRow.querySelector('select');
+            select.value  = firstItem.id;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            firstRow.querySelector('input[type=number]').value = firstItem.jumlah;
+
+            bisaDiisi.slice(1).forEach(function (r) {
+                addPeralatanRow(r.id, r.jumlah);
+            });
+            updateRemoveButtons();
+            window.SearchableSelect && window.SearchableSelect.refreshAll();
+        }
+
+        function updateReferensiHint() {
+            var box  = document.getElementById('referensi-hint');
+            var list = document.getElementById('referensi-hint-list');
+            if (jadwalReferensi.length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            var teks = jadwalReferensi.map(function (r) {
+                var sudah = jadwalSudahDiajukan.indexOf(r.id) !== -1;
+                return r.nama + ' (x' + r.jumlah + ')' + (sudah ? ' - sudah diajukan, tidak diisi otomatis' : '');
+            }).join(', ');
+
+            list.textContent = teks;
+            box.classList.remove('hidden');
+        }
+
         document.getElementById('id_penjadwalan').addEventListener('change', function () {
             var opt = this.options[this.selectedIndex];
-            if (!opt.value) return;
-            document.getElementById('keperluan').value = opt.dataset.judul;
-            document.getElementById('tanggal_pinjam').value = opt.dataset.tanggal;
+            if (opt.value) {
+                document.getElementById('keperluan').value = opt.dataset.judul;
+                document.getElementById('tanggal_pinjam').value = opt.dataset.tanggal;
+            }
+            var berubah = jadwalGantiTerakhir !== opt.value;
+            jadwalGantiTerakhir = opt.value;
+            updateJadwalDuplikasiState(berubah);
         });
 
         function getSelectedPeralatan() {
@@ -131,8 +233,21 @@
                 Array.from(select.options).forEach(function (opt) {
                     if (!opt.value) return;
                     opt.hidden = selected.includes(opt.value) && opt.value !== currentVal;
+
+                    var sudahDiajukan = jadwalSudahDiajukan.indexOf(opt.value) !== -1;
+
+                    // Alat yang sudah diajukan operator lain tetap bisa dipilih (tidak diblokir),
+                    // cuma diberi tanda peringatan - konfirmasi tetap muncul sebelum submit.
+                    if (sudahDiajukan) {
+                        opt.dataset.badge = 'Sudah Diajukan';
+                        opt.dataset.badgeVariant = 'warning';
+                    } else {
+                        delete opt.dataset.badge;
+                        delete opt.dataset.badgeVariant;
+                    }
                 });
             });
+            window.SearchableSelect && window.SearchableSelect.refreshAll();
         }
 
         function removeItem(btn) {
@@ -152,19 +267,73 @@
         }
 
         document.getElementById('add-peralatan').addEventListener('click', function () {
+            addPeralatanRow();
+            refreshPeralatanOptions();
+            updateRemoveButtons();
+        });
+
+        // Bikin satu baris baru (dipakai tombol "Tambah Peralatan" & auto-isi dari rekomendasi jadwal).
+        // Kalau value/jumlah diisi, langsung di-set & dipicu event change-nya.
+        function addPeralatanRow(value, jumlah) {
             var list = document.getElementById('peralatan-list');
             var clone = list.querySelector('.dynamic-item').cloneNode(true);
+            clone.querySelectorAll('option').forEach(function (opt) { opt.hidden = false; opt.disabled = false; delete opt.dataset.badge; delete opt.dataset.badgeVariant; });
             clone.querySelector('select').value = '';
             clone.querySelector('input[type=number]').value = '';
             clone.querySelector('select').onchange = refreshPeralatanOptions;
             clone.querySelector('.btn-remove').disabled = false;
             clone.querySelector('.btn-remove').onclick = function () { removeItem(this); };
             list.appendChild(clone);
-            refreshPeralatanOptions();
-            updateRemoveButtons();
-        });
+            window.SearchableSelect && window.SearchableSelect.reinitRow(clone);
+
+            if (value) {
+                var select = clone.querySelector('select');
+                select.value = value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                window.SearchableSelect && window.SearchableSelect.refreshAll();
+            }
+            if (jumlah) {
+                clone.querySelector('input[type=number]').value = jumlah;
+            }
+            return clone;
+        }
         document.addEventListener('DOMContentLoaded', function () {
-            refreshPeralatanOptions();
+            updateJadwalDuplikasiState();
         });
+
+        // ── Konfirmasi sebelum submit kalau operator memilih alat yang sudah
+        //    diajukan/dipinjam operator lain untuk jadwal yang sama - pakai modal custom
+        //    di tengah layar, bukan window.confirm() bawaan browser ──
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        document.getElementById('form-peminjaman').addEventListener('submit', function (e) {
+            if (jadwalSudahDiajukan.length === 0) return;
+
+            var namaBentrok = [];
+            document.querySelectorAll('.peralatan-select').forEach(function (select) {
+                if (jadwalSudahDiajukan.indexOf(select.value) === -1) return;
+                var opt = select.options[select.selectedIndex];
+                namaBentrok.push(opt.dataset.nama || select.value);
+            });
+
+            if (namaBentrok.length === 0) return;
+
+            e.preventDefault();
+            document.getElementById('modalKonfirmasiDuplikatList').innerHTML = namaBentrok.map(function (n) {
+                return '<li>' + escapeHtml(n) + '</li>';
+            }).join('');
+            bukaModalKonfirmasi('modalKonfirmasiDuplikat');
+        });
+
+        // form.submit() tidak memicu ulang event 'submit' (beda dengan klik tombol submit),
+        // jadi aman dipanggil langsung di sini tanpa terjebak infinite loop pengecekan duplikasi.
+        function konfirmasiTetapAjukan() {
+            tutupModalKonfirmasi('modalKonfirmasiDuplikat');
+            document.getElementById('form-peminjaman').submit();
+        }
     </script>
 @endpush
