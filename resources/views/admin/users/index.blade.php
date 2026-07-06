@@ -18,25 +18,22 @@
             <form method="GET" action="{{ route('admin.users.index') }}" class="contents">
                 <div class="relative flex-1 min-w-[180px] max-w-[300px]">
                     <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
-                    <input type="text" name="search" placeholder="Cari nama / email..." value="{{ request('search') }}"
+                    <input type="text" name="search" data-live-search="#hasil-users" autocomplete="off" placeholder="Cari nama / email..." value="{{ request('search') }}"
                         class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
                 </div>
-                <select name="role"
+                <select name="role" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Role</option>
                     <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                     <option value="operator" {{ request('role') == 'operator' ? 'selected' : '' }}>Operator</option>
                     <option value="inventaris" {{ request('role') == 'inventaris' ? 'selected' : '' }}>Inventaris</option>
                 </select>
-                <select name="status"
+                <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
-                <button type="submit"
-                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
-                    <i class="bx bx-filter"></i> Filter</button>
                 @if(request()->hasAny(['search', 'role', 'status']))
                     <a href="{{ route('admin.users.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
@@ -49,6 +46,7 @@
             $actionClass = 'w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80';
         @endphp
 
+        <div id="hasil-users">
         <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
             <div class="py-4 px-5 flex items-center justify-between border-b border-page-bg dark:border-page-bg-dark">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark">Daftar User</h3>
@@ -96,14 +94,11 @@
                                             class="{{ $actionClass }} bg-warning dark:bg-warning-dark text-warning-text">
                                             <i class="bx bx-edit"></i>
                                         </a>
-                                        <form action="{{ route('admin.users.destroy', $user->id_user) }}" method="POST" class="contents"
-                                            onsubmit="return confirm('{{ $user->isActive() ? 'Nonaktifkan' : 'Aktifkan' }} user ini?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit"
-                                                class="{{ $actionClass }} {{ $user->isActive() ? 'bg-danger dark:bg-danger-dark text-danger-text' : 'bg-success dark:bg-success-dark text-success-text' }}">
-                                                <i class="bx {{ $user->isActive() ? 'bx-user-x' : 'bx-user-check' }}"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                            onclick="bukaKonfirmasiStatusUser('{{ route('admin.users.destroy', $user->id_user) }}', {{ $user->isActive() ? 'true' : 'false' }}, '{{ addslashes($user->nama_user) }}')"
+                                            class="{{ $actionClass }} {{ $user->isActive() ? 'bg-danger dark:bg-danger-dark text-danger-text' : 'bg-success dark:bg-success-dark text-success-text' }}">
+                                            <i class="bx {{ $user->isActive() ? 'bx-user-x' : 'bx-user-check' }}"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -198,18 +193,16 @@
                             @endif
                         </div>
                     </div>
-                    <div class="flex gap-2 pt-3 border-t border-page-bg dark:border-page-bg-dark [&>form]:contents">
+                    <div class="flex gap-2 pt-3 border-t border-page-bg dark:border-page-bg-dark">
                         <a href="{{ route('admin.users.edit', $user->id_user) }}"
                             class="{{ $actionClass }} bg-warning dark:bg-warning-dark text-warning-text">
                             <i class="bx bx-edit"></i>
                         </a>
-                        <form action="{{ route('admin.users.destroy', $user->id_user) }}" method="POST"
-                            onsubmit="return confirm('{{ $user->isActive() ? 'Nonaktifkan' : 'Aktifkan' }} user ini?')">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="{{ $actionClass }} {{ $user->isActive() ? 'bg-danger dark:bg-danger-dark text-danger-text' : 'bg-success dark:bg-success-dark text-success-text' }}">
-                                <i class="bx {{ $user->isActive() ? 'bx-user-x' : 'bx-user-check' }}"></i>
-                            </button>
-                        </form>
+                        <button type="button"
+                            onclick="bukaKonfirmasiStatusUser('{{ route('admin.users.destroy', $user->id_user) }}', {{ $user->isActive() ? 'true' : 'false' }}, '{{ addslashes($user->nama_user) }}')"
+                            class="{{ $actionClass }} {{ $user->isActive() ? 'bg-danger dark:bg-danger-dark text-danger-text' : 'bg-success dark:bg-success-dark text-success-text' }}">
+                            <i class="bx {{ $user->isActive() ? 'bx-user-x' : 'bx-user-check' }}"></i>
+                        </button>
                     </div>
                 </div>
             @empty
@@ -221,6 +214,7 @@
         </div>
         <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
             <x-pagination :paginator="$users" label="user" />
+        </div>
         </div>
 
         {{-- Modal detail user, dipakai kartu mobile --}}
@@ -236,6 +230,24 @@
                 <div class="pt-4 px-5 pb-5 overflow-y-auto flex flex-wrap items-start gap-x-8 gap-y-2.5" id="modalUserDetailBody"></div>
             </div>
         </div>
+
+        {{-- Modal konfirmasi nonaktifkan/aktifkan user - satu instance dipakai bareng oleh semua baris/kartu --}}
+        <x-modal-konfirmasi id="modalKonfirmasiStatusUser" title="Ubah Status User" icon="bx-error-circle" icon-class="text-danger-text">
+            <div id="statusUserBanner" class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
+                <div id="statusUserMessage" class="text-[13px] font-semibold text-[#c0392b]"></div>
+            </div>
+            <form id="formStatusUser" method="POST">
+                @csrf @method('DELETE')
+                <div class="flex justify-end gap-2.5 mt-3">
+                    <button type="button" data-modal-close
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                    <button type="submit" id="btnKonfirmasiStatusUser"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white">
+                        <i id="btnStatusUserIcon" class="bx bx-user-x"></i> <span id="btnStatusUserLabel">Nonaktifkan</span>
+                    </button>
+                </div>
+            </form>
+        </x-modal-konfirmasi>
     </main>
 @endsection
 
@@ -247,29 +259,61 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
-document.querySelectorAll('[data-open-user-modal]').forEach(function (el) {
-    el.addEventListener('click', function () {
-        document.getElementById('modalUserDetailLabel').textContent = el.dataset.nama;
+// Modal konfirmasi nonaktifkan/aktifkan user (komponen global modal-konfirmasi) - satu
+// instance dipakai bareng oleh semua baris tabel & kartu mobile. Warna & teks tombol
+// menyesuaikan arah aksi: merah/danger kalau menonaktifkan, hijau/success kalau mengaktifkan.
+function bukaKonfirmasiStatusUser(url, isActive, namaUser) {
+    var banner   = document.getElementById('statusUserBanner');
+    var message  = document.getElementById('statusUserMessage');
+    var btn      = document.getElementById('btnKonfirmasiStatusUser');
+    var btnIcon  = document.getElementById('btnStatusUserIcon');
+    var btnLabel = document.getElementById('btnStatusUserLabel');
 
-        var detailRowClass = 'flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]';
-        var detailRowFullClass = 'flex items-start gap-2.5 min-w-0 flex-[2_1_260px]';
-        var iconClass = 'bx text-lg text-primary mt-px shrink-0';
-        var labelClass = 'text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5';
-        var pClass = 'text-text dark:text-text-dark m-0 font-medium text-[13px] break-words';
+    document.getElementById('formStatusUser').action = url;
 
-        var waNumber = el.dataset.wa || '';
-        var waRow = waNumber && waNumber !== '-'
-            ? '<p class="' + pClass + '"><a href="https://wa.me/' + encodeURIComponent(waNumber) + '" target="_blank" rel="noopener" class="text-[#25D366] font-semibold inline-flex items-center gap-1 hover:underline">' + escapeHtml(el.dataset.nohp) + ' <i class="bx bx-link-external text-[11px]"></i></a></p>'
-            : '<p class="' + pClass + '">' + escapeHtml(el.dataset.nohp) + '</p>';
+    if (isActive) {
+        banner.className = 'bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4';
+        message.className = 'text-[13px] font-semibold text-[#c0392b]';
+        message.innerHTML = '<i class="bx bx-error"></i> Nonaktifkan akun ' + escapeHtml(namaUser) + '? User tidak akan bisa login sampai diaktifkan kembali.';
+        btn.className = 'h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white';
+        btnIcon.className = 'bx bx-user-x';
+        btnLabel.textContent = 'Nonaktifkan';
+    } else {
+        banner.className = 'bg-success dark:bg-success-dark rounded-[10px] py-3.5 px-4';
+        message.className = 'text-[13px] font-semibold text-success-text';
+        message.innerHTML = '<i class="bx bx-check-circle"></i> Aktifkan kembali akun ' + escapeHtml(namaUser) + '?';
+        btn.className = 'h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-success-text text-white';
+        btnIcon.className = 'bx bx-user-check';
+        btnLabel.textContent = 'Aktifkan';
+    }
 
-        document.getElementById('modalUserDetailBody').innerHTML =
-            '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-id-card"></i><div><label class="' + labelClass + '">ID User</label><p class="' + pClass + '">' + escapeHtml(el.dataset.id) + '</p></div></div>' +
-            '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bxl-whatsapp"></i><div><label class="' + labelClass + '">No. HP</label>' + waRow + '</div></div>' +
-            '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-male-sign"></i><div><label class="' + labelClass + '">Jenis Kelamin</label><p class="' + pClass + '">' + escapeHtml(el.dataset.jk) + '</p></div></div>' +
-            '<div class="' + detailRowFullClass + '"><i class="' + iconClass + ' bx-map"></i><div><label class="' + labelClass + '">Alamat</label><p class="' + pClass + '">' + escapeHtml(el.dataset.alamat) + '</p></div></div>';
+    bukaModalKonfirmasi('modalKonfirmasiStatusUser');
+}
 
-        document.getElementById('modalUserDetail').classList.add('open');
-    });
+document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-open-user-modal]');
+    if (!el) return;
+
+    document.getElementById('modalUserDetailLabel').textContent = el.dataset.nama;
+
+    var detailRowClass = 'flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]';
+    var detailRowFullClass = 'flex items-start gap-2.5 min-w-0 flex-[2_1_260px]';
+    var iconClass = 'bx text-lg text-primary mt-px shrink-0';
+    var labelClass = 'text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5';
+    var pClass = 'text-text dark:text-text-dark m-0 font-medium text-[13px] break-words';
+
+    var waNumber = el.dataset.wa || '';
+    var waRow = waNumber && waNumber !== '-'
+        ? '<p class="' + pClass + '"><a href="https://wa.me/' + encodeURIComponent(waNumber) + '" target="_blank" rel="noopener" class="text-[#25D366] font-semibold inline-flex items-center gap-1 hover:underline">' + escapeHtml(el.dataset.nohp) + ' <i class="bx bx-link-external text-[11px]"></i></a></p>'
+        : '<p class="' + pClass + '">' + escapeHtml(el.dataset.nohp) + '</p>';
+
+    document.getElementById('modalUserDetailBody').innerHTML =
+        '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-id-card"></i><div><label class="' + labelClass + '">ID User</label><p class="' + pClass + '">' + escapeHtml(el.dataset.id) + '</p></div></div>' +
+        '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bxl-whatsapp"></i><div><label class="' + labelClass + '">No. HP</label>' + waRow + '</div></div>' +
+        '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-male-sign"></i><div><label class="' + labelClass + '">Jenis Kelamin</label><p class="' + pClass + '">' + escapeHtml(el.dataset.jk) + '</p></div></div>' +
+        '<div class="' + detailRowFullClass + '"><i class="' + iconClass + ' bx-map"></i><div><label class="' + labelClass + '">Alamat</label><p class="' + pClass + '">' + escapeHtml(el.dataset.alamat) + '</p></div></div>';
+
+    document.getElementById('modalUserDetail').classList.add('open');
 });
 
 document.getElementById('modalUserDetail').addEventListener('click', function (e) {

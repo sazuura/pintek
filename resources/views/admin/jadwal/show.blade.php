@@ -70,7 +70,7 @@
 
         <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
             <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
-                <i class="bx bx-cart-alt"></i> Peminjaman Terkait</h3>
+                <i class="bx bx-briefcase"></i> Peminjaman Terkait</h3>
             <p class="text-xs text-text-muted mt-0.5 mb-3">Pengajuan peminjaman peralatan yang dikaitkan operator ke rapat ini.</p>
             @forelse($jadwal->peminjaman as $p)
             <div class="flex items-center justify-between py-2.5 border-b border-page-bg dark:border-page-bg-dark">

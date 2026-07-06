@@ -1,7 +1,14 @@
-// Progressive enhancement: turns a <select class="searchable"> into a two-tier combobox
-// (klik kotak trigger -> muncul search bar terpisah + daftar hasil di bawahnya), sambil
-// tetap mempertahankan <select> asli sebagai sumber kebenaran (value, options, disabled
-// state, validasi & submit form native).
+// Progressive enhancement: mengubah HAMPIR SEMUA <select> di aplikasi (kecuali
+// listbox beratribut "size", mis. picker bulan/tahun di dashboard) jadi dropdown
+// custom (klik kotak trigger -> muncul daftar hasil di bawahnya), supaya tidak ada
+// lagi tampilan dropdown bawaan browser/OS. <select> asli tetap dipertahankan sebagai
+// sumber kebenaran (value, options, disabled state, validasi & submit form native) -
+// cuma disembunyikan secara visual.
+//
+// Search bar di dalam dropdown otomatis muncul HANYA kalau jumlah pilihan (yang
+// benar-benar bisa dipilih, bukan placeholder) lebih dari SEARCH_THRESHOLD - jadi
+// select kecil seperti filter status/role tidak perlu kotak pencarian, sementara
+// select dengan banyak data (daftar alat, operator, jadwal) otomatis dapat search.
 //
 // Data per <option> yang dikenali (semua opsional kecuali value/textContent):
 //   data-subtitle       teks baris kedua di tiap item (mis. nomor HP, "Stok: 5")
@@ -12,9 +19,13 @@
 // sendiri -- murni dipakai buat query JS (closest(), classList) dan variant Tailwind
 // arbitrary (mis. [&.open]:block) yang ditulis langsung di className konstanta di bawah.
 (function () {
-    var TRIGGER_CLASSES = 'searchable-select-trigger w-full h-10 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-sm font-sans flex items-center justify-between gap-2 cursor-pointer transition-[border-color,box-shadow] duration-200 [&.open]:border-primary [&.open]:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
-    var DROPDOWN_CLASSES = 'searchable-select-dropdown hidden absolute top-[calc(100%+4px)] left-0 right-0 z-30 bg-surface dark:bg-surface-dark border border-page-bg dark:border-page-bg-dark rounded-lg p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] [&.open]:block';
-    var SEARCH_INPUT_CLASSES = 'searchable-select-input w-full h-9 pl-8 pr-8 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-sm font-sans focus:outline-none focus:border-primary';
+    var SELECT_SELECTOR = 'select:not([size])';
+    var SEARCH_THRESHOLD = 7;
+
+    var TRIGGER_CLASSES = 'searchable-select-trigger w-full h-10 px-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-surface dark:bg-surface-dark text-sm font-sans flex items-center justify-between gap-2 cursor-pointer transition-[border-color,box-shadow] duration-200 [&.open]:border-primary [&.open]:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
+    var TRIGGER_ERROR_CLASSES = 'searchable-select-trigger w-full h-10 px-3 border border-danger-text rounded-lg bg-surface dark:bg-surface-dark text-sm font-sans flex items-center justify-between gap-2 cursor-pointer transition-[border-color,box-shadow] duration-200 [&.open]:shadow-[0_0_0_3px_rgba(231,76,60,0.15)]';
+    var DROPDOWN_CLASSES = 'searchable-select-dropdown hidden absolute top-[calc(100%+4px)] left-0 right-0 z-30 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 rounded-lg p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] [&.open]:block';
+    var SEARCH_INPUT_CLASSES = 'searchable-select-input w-full h-9 pl-8 pr-8 border border-gray-300 dark:border-gray-700 rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-sm font-sans focus:outline-none focus:border-primary';
 
     function closeAllDropdowns(except) {
         document.querySelectorAll('.searchable-select-dropdown.open').forEach(function (dd) {
@@ -32,10 +43,17 @@
         return (opt.textContent || '').replace(/\s+/g, ' ').trim();
     }
 
+    // Opsi yang dianggap "bisa dipilih & tampil di daftar": bukan disabled (placeholder
+    // mis. "-- Pilih X --" selalu ditandai disabled) dan tidak hidden. Opsi dengan
+    // value="" TETAP dimasukkan selama tidak disabled (mis. "Semua Status" di filter).
+    function selectableOptions(select) {
+        return Array.from(select.options).filter(function (o) { return !o.disabled && !o.hidden; });
+    }
+
     function renderOptions(select, listEl, filter) {
         listEl.innerHTML = '';
         var f = (filter || '').trim().toLowerCase();
-        var opts = Array.from(select.options).filter(function (o) { return o.value !== '' && !o.hidden; });
+        var opts = selectableOptions(select);
         var matched = f ? opts.filter(function (o) {
             return optionLabel(o).toLowerCase().indexOf(f) !== -1 ||
                 (o.dataset.subtitle || '').toLowerCase().indexOf(f) !== -1;
@@ -95,12 +113,14 @@
         if (!wrapper) return;
         var label = wrapper.querySelector('.searchable-select-trigger-label');
         var opt = select.options[select.selectedIndex];
-        if (opt && opt.value) {
+        // Opsi valid (termasuk yang value="" tapi tidak disabled, mis. "Semua Status")
+        // ditampilkan apa adanya. Cuma placeholder (disabled) yang jatuh ke teks abu-abu.
+        if (opt && !opt.disabled) {
             label.textContent = optionLabel(opt);
             label.classList.remove('text-text-muted');
             label.classList.add('text-text', 'dark:text-text-dark');
         } else {
-            label.textContent = select.dataset.placeholder || 'Cari...';
+            label.textContent = select.dataset.placeholder || 'Pilih...';
             label.classList.add('text-text-muted');
             label.classList.remove('text-text', 'dark:text-text-dark');
         }
@@ -116,10 +136,12 @@
         closeAllDropdowns(dropdown);
         trigger.classList.add('open');
         dropdown.classList.add('open');
-        input.value = '';
-        wrapper.querySelector('.searchable-select-clear').classList.add('hidden');
+        if (input) {
+            input.value = '';
+            wrapper.querySelector('.searchable-select-clear').classList.add('hidden');
+        }
         renderOptions(select, listEl, '');
-        input.focus();
+        if (input) input.focus();
     }
 
     function closeDropdown(select) {
@@ -133,15 +155,26 @@
         if (select.dataset.enhanced) return;
         select.dataset.enhanced = '1';
 
+        // Select yang aslinya dibuat untuk melebar mengisi baris flex (mis. baris
+        // dinamis peralatan/operator, atau field form lewat <x-select>) ditandai lewat
+        // class 'flex-1' / 'w-full' di elemen aslinya - wrapper ikut melebar. Selain
+        // itu (mis. select filter di toolbar) wrapper dibuat menyesuaikan isi saja,
+        // supaya tidak melebar aneh mengisi sisa ruang flex toolbar.
+        var fill = select.classList.contains('flex-1') || select.classList.contains('w-full');
+
         var wrapper = document.createElement('div');
-        wrapper.className = 'searchable-select relative flex-1 min-w-0';
+        wrapper.className = 'searchable-select relative' + (fill ? ' flex-1 min-w-0' : ' inline-block');
         select.parentNode.insertBefore(wrapper, select);
         wrapper.appendChild(select);
         select.classList.add('searchable-select-native', 'hidden');
 
+        // Kalau select aslinya ditandai error (mis. class '!border-danger-text' dari
+        // $errors->has(...) di Blade), trigger-nya pakai border merah juga.
+        var hasError = select.classList.contains('!border-danger-text') || select.classList.contains('border-danger-text');
+
         var trigger = document.createElement('button');
         trigger.type = 'button';
-        trigger.className = TRIGGER_CLASSES;
+        trigger.className = hasError ? TRIGGER_ERROR_CLASSES : TRIGGER_CLASSES;
         var triggerLabel = document.createElement('span');
         triggerLabel.className = 'searchable-select-trigger-label truncate';
         trigger.appendChild(triggerLabel);
@@ -153,23 +186,29 @@
         var dropdown = document.createElement('div');
         dropdown.className = DROPDOWN_CLASSES;
 
-        var searchWrap = document.createElement('div');
-        searchWrap.className = 'relative mb-2';
-        var searchIcon = document.createElement('i');
-        searchIcon.className = 'bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none';
-        searchWrap.appendChild(searchIcon);
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.autocomplete = 'off';
-        input.className = SEARCH_INPUT_CLASSES;
-        input.placeholder = 'Cari...';
-        searchWrap.appendChild(input);
-        var clearBtn = document.createElement('button');
-        clearBtn.type = 'button';
-        clearBtn.className = 'searchable-select-clear hidden absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text dark:hover:text-text-dark text-lg leading-none';
-        clearBtn.innerHTML = '<i class="bx bx-x"></i>';
-        searchWrap.appendChild(clearBtn);
-        dropdown.appendChild(searchWrap);
+        // Search bar cuma dibuat kalau opsinya banyak - select kecil (mis. filter
+        // status/role/kondisi) langsung tampil daftarnya tanpa kotak pencarian.
+        var showSearch = selectableOptions(select).length > SEARCH_THRESHOLD;
+        var input = null, clearBtn = null;
+        if (showSearch) {
+            var searchWrap = document.createElement('div');
+            searchWrap.className = 'relative mb-2';
+            var searchIcon = document.createElement('i');
+            searchIcon.className = 'bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none';
+            searchWrap.appendChild(searchIcon);
+            input = document.createElement('input');
+            input.type = 'text';
+            input.autocomplete = 'off';
+            input.className = SEARCH_INPUT_CLASSES;
+            input.placeholder = 'Cari...';
+            searchWrap.appendChild(input);
+            clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.className = 'searchable-select-clear hidden absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text dark:hover:text-text-dark text-lg leading-none';
+            clearBtn.innerHTML = '<i class="bx bx-x"></i>';
+            searchWrap.appendChild(clearBtn);
+            dropdown.appendChild(searchWrap);
+        }
 
         var listEl = document.createElement('div');
         listEl.className = 'searchable-select-list max-h-[220px] overflow-y-auto flex flex-col gap-0.5';
@@ -186,25 +225,27 @@
                 openDropdown(select);
             }
         });
-        input.addEventListener('input', function () {
-            clearBtn.classList.toggle('hidden', input.value === '');
-            renderOptions(select, listEl, input.value);
-        });
-        clearBtn.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            input.value = '';
-            clearBtn.classList.add('hidden');
-            renderOptions(select, listEl, '');
-            input.focus();
-        });
-        input.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeDropdown(select);
-        });
+        if (input) {
+            input.addEventListener('input', function () {
+                clearBtn.classList.toggle('hidden', input.value === '');
+                renderOptions(select, listEl, input.value);
+            });
+            clearBtn.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                input.value = '';
+                clearBtn.classList.add('hidden');
+                renderOptions(select, listEl, '');
+                input.focus();
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeDropdown(select);
+            });
+        }
 
         select._searchableSelect = {
             refresh: function () {
                 syncTriggerLabel(select);
-                if (dropdown.classList.contains('open')) renderOptions(select, listEl, input.value);
+                if (dropdown.classList.contains('open')) renderOptions(select, listEl, input ? input.value : '');
             }
         };
     }
@@ -225,7 +266,7 @@
     // di-enhance. Panggil ini setelah kode lain mengubah select.value / option.hidden/disabled
     // / data-badge / data-subtitle.
     function refreshAll(root) {
-        (root || document).querySelectorAll('select.searchable[data-enhanced]').forEach(function (select) {
+        (root || document).querySelectorAll(SELECT_SELECTOR + '[data-enhanced]').forEach(function (select) {
             if (select._searchableSelect) select._searchableSelect.refresh();
         });
     }
@@ -233,14 +274,14 @@
     // Untuk baris hasil cloneNode(true): DOM ter-enhance ikut ter-copy tapi listener JS-nya
     // tidak, jadi bongkar dulu baru enhance ulang supaya event handler-nya segar.
     function reinitRow(container) {
-        container.querySelectorAll('select.searchable').forEach(function (select) {
+        container.querySelectorAll(SELECT_SELECTOR).forEach(function (select) {
             unenhance(select);
             enhance(select);
         });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('select.searchable').forEach(enhance);
+        document.querySelectorAll(SELECT_SELECTOR).forEach(enhance);
     });
 
     document.addEventListener('mousedown', function (e) {

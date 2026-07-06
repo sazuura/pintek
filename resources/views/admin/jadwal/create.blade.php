@@ -20,12 +20,11 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.jadwal.store') }}" method="POST" autocomplete="off">
+        <form action="{{ route('admin.jadwal.store') }}" method="POST" autocomplete="off" novalidate>
             @csrf
 
             @php
-                $inputClass = 'h-10 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
-                $labelClass = 'text-[13px] font-medium text-text dark:text-text-dark';
+                $inputClass = 'h-10 px-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
                 $hintClass = 'text-xs text-text-muted mt-0.5';
             @endphp
 
@@ -33,52 +32,38 @@
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
                     <i class="bx bx-info-circle"></i> Informasi Jadwal</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1.5 md:col-span-2">
-                        <label class="{{ $labelClass }}">Judul Rapat <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="text" name="judul_kegiatan"
-                            class="{{ $inputClass }} {{ $errors->has('judul_kegiatan') ? '!border-danger-text' : '' }}"
-                            value="{{ old('judul_kegiatan') }}" placeholder="cth: Rapat Koordinasi Bulanan" required>
+                    <div class="md:col-span-2">
+                        <x-input name="judul_kegiatan" label="Judul Rapat" required placeholder="cth: Rapat Koordinasi Bulanan" />
                     </div>
                     <div class="md:col-span-2 flex flex-wrap gap-4">
-                        <div class="flex flex-col gap-1.5 flex-1 basis-[200px]">
-                            <label class="{{ $labelClass }}">Tanggal <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                            <input type="date" id="tanggal" name="tanggal" class="{{ $inputClass }}" value="{{ old('tanggal') }}"
-                                min="{{ now()->format('Y-m-d') }}" required>
+                        <div class="flex-1 basis-[200px]">
+                            <x-input type="date" name="tanggal" label="Tanggal" required min="{{ now()->format('Y-m-d') }}" />
                         </div>
-                        <div class="flex flex-col gap-1.5 flex-1 basis-[200px]">
-                            <label class="{{ $labelClass }}">Platform <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                            <select name="platform" id="platform" class="{{ $inputClass }}" required>
-                                <option value="">-- Pilih Platform --</option>
+                        <div class="flex-1 basis-[200px]">
+                            <x-select name="platform" label="Platform" required placeholder="-- Pilih Platform --">
                                 @foreach(['Online (Zoom)', 'Online (Google Meet)', 'Offline', 'Hybrid'] as $p)
                                     <option value="{{ $p }}" {{ old('platform') == $p ? 'selected' : '' }}>{{ $p }}</option>
                                 @endforeach
-                            </select>
+                            </x-select>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Waktu Mulai <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="time" name="waktu_mulai" class="{{ $inputClass }}" value="{{ old('waktu_mulai') }}" required>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Waktu Selesai <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="time" name="waktu_selesai" class="{{ $inputClass }}" value="{{ old('waktu_selesai') }}"
-                            required>
-                    </div>
-                    <div class="flex flex-col gap-1.5 md:col-span-2">
-                        <label class="{{ $labelClass }}" id="ket-label">Keterangan</label>
-                        <input type="text" name="keterangan" id="keterangan" class="{{ $inputClass }}"
-                            value="{{ old('keterangan') }}" placeholder="Pilih platform terlebih dahulu">
-                        <span class="{{ $hintClass }}" id="ket-hint">Pilih platform untuk petunjuk pengisian.</span>
+                    <x-input type="time" name="waktu_mulai" label="Waktu Mulai" required />
+
+                    <x-input type="time" name="waktu_selesai" label="Waktu Selesai" required />
+
+                    <div class="md:col-span-2">
+                        <x-input name="keterangan" label="Keterangan" placeholder="Pilih platform terlebih dahulu"
+                            hint="Pilih platform untuk petunjuk pengisian." hint-id="ket-hint" />
                     </div>
                     <div class="flex flex-col gap-1.5 md:col-span-2">
-                        <label class="{{ $labelClass }}">Alat yang Dibutuhkan <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
+                        <label class="text-[13px] font-medium text-text dark:text-text-dark">Alat yang Dibutuhkan <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
                         <p class="{{ $hintClass }} mb-3">
                             Ini cuma catatan acuan buat operator, bukan pengajuan peminjaman. Operator tetap harus
                             ajukan sendiri lewat menu Peminjaman kalau mau benar-benar memakai alatnya.
                         </p>
                         <div class="dynamic-list flex flex-col gap-2.5" id="peralatan-list">
                             <div class="dynamic-item flex gap-2.5 items-center">
-                                <select name="peralatan_ids[]" class="peralatan-select searchable"
+                                <select name="peralatan_ids[]" class="peralatan-select searchable flex-1"
                                     data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
                                     <option value="" selected>-- Pilih Alat --</option>
                                     @foreach($daftarPeralatan as $alat)
@@ -110,7 +95,7 @@
                 </p>
                 <div class="dynamic-list flex flex-col gap-2.5" id="operator-list">
                     <div class="dynamic-item flex gap-2.5 items-center">
-                        <select name="operator_ids[]" class="operator-select searchable" required
+                        <select name="operator_ids[]" class="operator-select searchable flex-1" required
                             data-placeholder="Cari operator..." onchange="refreshOperatorOptions()">
                             <option value="" disabled selected>-- Pilih Operator --</option>
                             @foreach($operators as $op)

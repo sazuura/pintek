@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AlatTerpasangController;
 use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\PeminjamanController;
@@ -47,6 +48,9 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
 Route::prefix('inventaris')->name('inventaris.')->middleware(['auth', 'role:inventaris'])->group(function () {
     Route::get('/dashboard', [InventarisController::class, 'dashboard'])->name('dashboard');
     Route::resource('peralatan', PeralatanController::class)->names('peralatan');
+    Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang');
+    Route::post('/alat-terpasang/{id}/riwayat', [AlatTerpasangController::class, 'storeRiwayat'])->name('alat-terpasang.riwayat.store');
+    Route::delete('/alat-terpasang/{id}/riwayat/{riwayatId}', [AlatTerpasangController::class, 'destroyRiwayat'])->name('alat-terpasang.riwayat.destroy');
     Route::prefix('peminjaman')->name('peminjaman.')->group(function () {
         Route::get('/',              [PeminjamanController::class, 'inventarisIndex'])->name('index');
         Route::post('/{id}/approve', [PeminjamanController::class, 'inventarisApprove'])->name('approve');

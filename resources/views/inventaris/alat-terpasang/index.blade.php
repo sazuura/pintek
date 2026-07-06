@@ -1,97 +1,83 @@
 @extends('layouts.app')
-@section('title', 'Data Peralatan')
+@section('title', 'Alat Terpasang')
 @section('sidebar-menu') <x-sidebar-inventaris /> @endsection
 
 @section('content')
     <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
         <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
             <div>
-                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Data Peralatan</h1>
+                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Alat Terpasang</h1>
+                <p class="text-sm text-text-muted m-0">Alat yang terpasang permanen di ruangan/gedung (di luar alat yang dipinjam untuk rapat).</p>
             </div>
-            <a href="{{ route('inventaris.peralatan.create') }}"
+            <a href="{{ route('inventaris.alat-terpasang.create') }}"
                 class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
-                <i class="bx bx-plus"></i><span class="text">Tambah Peralatan</span>
+                <i class="bx bx-plus"></i><span class="text">Tambah Alat</span>
             </a>
         </div>
 
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-md:flex-col max-md:items-stretch">
-            <form method="GET" action="{{ route('inventaris.peralatan.index') }}" class="contents">
+            <form method="GET" action="{{ route('inventaris.alat-terpasang.index') }}" class="contents">
                 <div class="relative flex-1 min-w-[180px] max-w-[300px] max-md:max-w-full">
                     <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
-                    <input type="text" name="search" data-live-search="#hasil-peralatan-inv" autocomplete="off" placeholder="Cari nama / kode barang..." value="{{ request('search') }}"
+                    <input type="text" name="search" data-live-search="#hasil-alat-terpasang" autocomplete="off" placeholder="Cari nama alat / gedung..." value="{{ request('search') }}"
                         class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
                 </div>
-                {{-- <select name="gedung" class="toolbar-select">
-                    <option value="">Semua Gedung</option>
-                    @foreach($gedungList as $g)
-                    <option value="{{ $g }}" {{ request('gedung')==$g ? 'selected' : '' }}>{{ $g }}</option>
-                    @endforeach
-                </select> --}}
-                <select name="status" onchange="this.form.submit()"
+                <select name="kondisi" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
-                    <option value="">Semua Status</option>
-                    <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
-                    <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak
-                        Tersedia
-                    </option>
+                    <option value="">Semua Kondisi</option>
+                    <option value="baik" {{ request('kondisi') == 'baik' ? 'selected' : '' }}>Baik</option>
+                    <option value="perlu_servis" {{ request('kondisi') == 'perlu_servis' ? 'selected' : '' }}>Perlu Servis</option>
+                    <option value="rusak" {{ request('kondisi') == 'rusak' ? 'selected' : '' }}>Rusak</option>
                 </select>
-                @if(request()->hasAny(['search', 'gedung', 'status']))
-                    <a href="{{ route('inventaris.peralatan.index') }}"
+                @if(request()->hasAny(['search', 'kondisi']))
+                    <a href="{{ route('inventaris.alat-terpasang.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                         <i class="bx bx-x"></i> Reset</a>
                 @endif
             </form>
             <div class="ml-auto flex gap-2 items-center max-md:ml-0 max-md:w-full">
-                <span class="text-[13px] text-text-muted">{{ $peralatan->total() }} peralatan</span>
+                <span class="text-[13px] text-text-muted">{{ $alat->total() }} alat</span>
             </div>
         </div>
 
-        {{-- Grid marketplace --}}
-        <div id="hasil-peralatan-inv">
-        @if($peralatan->count())
+        <div id="hasil-alat-terpasang">
+        @if($alat->count())
             <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
-                @foreach($peralatan as $item)
+                @foreach($alat as $item)
                     <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
-                        {{-- Foto --}}
                         @if($item->foto)
-                            <img src="{{ Storage::url($item->foto) }}" alt="{{ $item->nama_peralatan }}" class="w-full aspect-[4/3] object-cover bg-page-bg dark:bg-page-bg-dark">
+                            <img src="{{ $item->foto_url }}" alt="{{ $item->nama_alat }}" class="w-full aspect-[4/3] object-cover bg-page-bg dark:bg-page-bg-dark">
                         @else
                             <div class="w-full aspect-[4/3] bg-page-bg dark:bg-page-bg-dark flex items-center justify-center text-text-muted text-4xl">
-                                <i class="bx bx-package"></i>
+                                <i class="bx bx-tv"></i>
                             </div>
                         @endif
 
                         <div class="p-3.5 flex flex-col gap-2 flex-1">
-                            <div class="text-sm font-semibold text-text dark:text-text-dark leading-tight">{{ $item->nama_peralatan }}</div>
-
-                            @if($item->kode_barang)
-                                <div class="text-[11px] text-text-muted flex items-center gap-1">
-                                    <i class="bx bx-barcode"></i> {{ $item->kode_barang }}
-                                </div>
-                            @endif
+                            <div class="text-sm font-semibold text-text dark:text-text-dark leading-tight">{{ $item->nama_alat }}</div>
 
                             <div class="text-xs text-text-muted flex items-center gap-1">
-                                <i class="bx bx-building"></i> {{ $item->lokasi_detail }}
+                                <i class="bx bx-building"></i> {{ $item->gedung }}{{ $item->lokasi_detail ? ' - ' . $item->lokasi_detail : '' }}
                             </div>
 
                             <div class="text-[13px] text-text dark:text-text-dark flex items-center justify-between">
-                                <span class="text-[13px] text-text-muted">Stok tersedia</span>
-                                <span class="font-bold text-lg text-text dark:text-text-dark">{{ $item->stok_tersedia }}</span>
+                                <span class="text-[13px] text-text-muted">Tanggal pasang</span>
+                                <span class="font-medium text-text dark:text-text-dark">{{ $item->tanggal_pasang->translatedFormat('d M Y') }}</span>
                             </div>
 
-                            <x-badge :variant="$item->statusBadgeClass">{{ $item->statusLabel }}</x-badge>
+                            <x-badge :variant="$item->kondisiBadgeClass">{{ $item->kondisiLabel }}</x-badge>
                         </div>
 
                         <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
-                            <a href="{{ route('inventaris.peralatan.edit', $item->id_peralatan) }}"
+                            <a href="{{ route('inventaris.alat-terpasang.edit', $item->id_alat_terpasang) }}"
                                 class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
-                                <i class="bx bx-edit"></i> Edit
+                                <i class="bx bx-edit"></i> Kelola
                             </a>
-                            <form action="{{ route('inventaris.peralatan.destroy', $item->id_peralatan) }}" method="POST">
+                            <form action="{{ route('inventaris.alat-terpasang.destroy', $item->id_alat_terpasang) }}" method="POST">
                                 @csrf @method('DELETE')
                                 <button type="submit"
                                     class="w-9 h-9 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
-                                    onclick="return confirm('Hapus {{ $item->nama_peralatan }}?')" title="Hapus">
+                                    onclick="return confirm('Hapus {{ $item->nama_alat }}?')" title="Hapus">
                                     <i class="bx bx-trash"></i>
                                 </button>
                             </form>
@@ -100,16 +86,15 @@
                 @endforeach
             </div>
 
-            {{-- Pagination untuk grid --}}
             <div class="mt-5 bg-surface dark:bg-surface-dark rounded-xl shadow-card">
-                <x-pagination :paginator="$peralatan" label="peralatan" />
+                <x-pagination :paginator="$alat" label="alat" />
             </div>
 
         @else
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-[60px] text-center text-text-muted">
-                <i class="bx bx-package text-5xl block mb-3"></i>
-                <p>Belum ada peralatan</p>
-                <a href="{{ route('inventaris.peralatan.create') }}"
+                <i class="bx bx-tv text-5xl block mb-3"></i>
+                <p>Belum ada alat terpasang</p>
+                <a href="{{ route('inventaris.alat-terpasang.create') }}"
                     class="mt-3 inline-flex h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
                     <i class="bx bx-plus"></i> Tambah Sekarang
                 </a>

@@ -61,7 +61,7 @@ class OperatorController extends Controller
         $sejak = now()->subDays(14);
 
         $jadwal = Penjadwalan::whereHas('operators', fn($q) => $q->where('users.id_user', $userId))
-            ->where('created_at', '>=', $sejak)
+            ->whereBetween('created_at', [$sejak, now()])
             ->orderByDesc('created_at')
             ->limit(6)
             ->get()
@@ -72,7 +72,7 @@ class OperatorController extends Controller
             ]);
 
         $peminjaman = Peminjaman::where('id_user', $userId)
-            ->where('updated_at', '>=', $sejak)
+            ->whereBetween('updated_at', [$sejak, now()])
             ->orderByDesc('updated_at')
             ->limit(6)
             ->get()

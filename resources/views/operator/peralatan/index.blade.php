@@ -14,19 +14,16 @@
             <form method="GET" action="{{ route('operator.peralatan.index') }}" class="contents">
                 <div class="relative flex-1 min-w-[180px] max-w-[300px] max-md:max-w-full">
                     <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
-                    <input type="text" name="search" placeholder="Cari nama peralatan..." value="{{ request('search') }}"
+                    <input type="text" name="search" data-live-search="#hasil-peralatan-op" autocomplete="off" placeholder="Cari nama peralatan..." value="{{ request('search') }}"
                         class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
                 </div>
-                <select name="gedung"
+                <select name="gedung" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Gedung</option>
                     @foreach($gedungList as $g)
                         <option value="{{ $g }}" {{ request('gedung') == $g ? 'selected' : '' }}>{{ $g }}</option>
                     @endforeach
                 </select>
-                <button type="submit"
-                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
-                    <i class="bx bx-filter"></i> Filter</button>
                 @if(request()->hasAny(['search', 'gedung']))
                     <a href="{{ route('operator.peralatan.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
@@ -38,8 +35,9 @@
             </form>
         </div>
 
+        <div id="hasil-peralatan-op">
         @if($peralatan->count())
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] max-md:grid-cols-2 max-xs:grid-cols-1 gap-4">
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 @foreach($peralatan as $item)
                     <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
                         @if($item->foto)
@@ -68,7 +66,7 @@
                             @if($item->stok_tersedia > 0)
                                 <a href="{{ route('operator.peminjaman.create', ['id_peralatan' => $item->id_peralatan]) }}"
                                     class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
-                                    <i class="bx bx-cart-add"></i> Pinjam
+                                    <i class="bx bx-briefcase"></i> Pinjam
                                 </a>
                             @else
                                 <span class="flex-1 justify-center h-9 px-3.5 rounded-lg text-[13px] font-sans inline-flex items-center gap-1.5 font-medium cursor-not-allowed opacity-50 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
@@ -89,5 +87,6 @@
                 <p>Tidak ada peralatan ditemukan</p>
             </div>
         @endif
+        </div>
     </main>
 @endsection

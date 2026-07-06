@@ -21,13 +21,11 @@
         @endif
 
         <form action="{{ route('inventaris.peralatan.update', $peralatan->id_peralatan) }}" method="POST"
-            enctype="multipart/form-data">
+            enctype="multipart/form-data" novalidate>
             @csrf @method('PUT')
 
             @php
-                $inputClass = 'h-10 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)] read-only:bg-page-bg dark:read-only:bg-page-bg-dark read-only:cursor-not-allowed';
-                $labelClass = 'text-[13px] font-medium text-text dark:text-text-dark';
-                $hintClass = 'text-xs text-text-muted mt-0.5';
+                $inputClass = 'h-10 px-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)] read-only:bg-page-bg dark:read-only:bg-page-bg-dark read-only:cursor-not-allowed';
             @endphp
 
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
@@ -35,35 +33,19 @@
                     <i class="bx bx-info-circle"></i> Informasi Peralatan</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">ID Peralatan</label>
+                        <label class="text-[13px] font-medium text-text dark:text-text-dark">ID Peralatan</label>
                         <input type="text" class="{{ $inputClass }}" value="{{ $peralatan->id_peralatan }}" readonly>
-                        <span class="{{ $hintClass }}">ID tidak bisa diubah.</span>
+                        <span class="text-xs text-text-muted">ID tidak bisa diubah.</span>
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Nomor Seri</label>
-                        <input type="text" name="kode_barang"
-                            class="{{ $inputClass }} {{ $errors->has('kode_barang') ? '!border-danger-text' : '' }}"
-                            value="{{ old('kode_barang', $peralatan->kode_barang) }}" placeholder="cth: GU/LAP/2024/001">
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Nama Peralatan <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="text" name="nama_peralatan" class="{{ $inputClass }}"
-                            value="{{ old('nama_peralatan', $peralatan->nama_peralatan) }}" required>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Lokasi</label>
-                        <input type="text" name="gedung" class="{{ $inputClass }}" value="{{ $peralatan->gedung }}">
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Lokasi Detail</label>
-                        <input type="text" name="lokasi_detail" class="{{ $inputClass }}"
-                            value="{{ old('lokasi_detail', $peralatan->lokasi_detail) }}" placeholder="cth: Rak 3, Lt.2">
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Keterangan</label>
-                        <input type="text" name="keterangan" class="{{ $inputClass }}"
-                            value="{{ old('keterangan', $peralatan->keterangan) }}">
-                    </div>
+                    <x-input name="kode_barang" label="Nomor Seri" placeholder="cth: GU/LAP/2024/001"
+                        value="{{ old('kode_barang', $peralatan->kode_barang) }}" />
+                    <x-input name="nama_peralatan" label="Nama Peralatan" required
+                        value="{{ old('nama_peralatan', $peralatan->nama_peralatan) }}" />
+                    <x-input name="gedung" label="Lokasi" value="{{ $peralatan->gedung }}" />
+                    <x-input name="lokasi_detail" label="Lokasi Detail" placeholder="cth: Rak 3, Lt.2"
+                        value="{{ old('lokasi_detail', $peralatan->lokasi_detail) }}" />
+                    <x-input name="keterangan" label="Keterangan"
+                        value="{{ old('keterangan', $peralatan->keterangan) }}" />
                 </div>
             </div>
 
@@ -71,21 +53,12 @@
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
                     <i class="bx bx-data"></i> Data Stok</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Stok Total <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="number" name="stok" class="{{ $inputClass }} {{ $errors->has('stok') ? '!border-danger-text' : '' }}"
-                            value="{{ old('stok', $peralatan->stok) }}" min="0" required id="inp-stok">
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Unit Rusak</label>
-                        <input type="number" name="rusak" class="{{ $inputClass }} {{ $errors->has('rusak') ? '!border-danger-text' : '' }}"
-                            value="{{ old('rusak', $peralatan->rusak) }}" min="0" id="inp-rusak">
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Dalam Perbaikan</label>
-                        <input type="number" name="perbaikan" class="{{ $inputClass }}"
-                            value="{{ old('perbaikan', $peralatan->perbaikan) }}" min="0" id="inp-perbaikan">
-                    </div>
+                    <x-input type="number" name="stok" id="inp-stok" label="Stok Total" required min="0"
+                        value="{{ old('stok', $peralatan->stok) }}" />
+                    <x-input type="number" name="rusak" id="inp-rusak" label="Unit Rusak" min="0"
+                        value="{{ old('rusak', $peralatan->rusak) }}" />
+                    <x-input type="number" name="perbaikan" id="inp-perbaikan" label="Dalam Perbaikan" min="0"
+                        value="{{ old('perbaikan', $peralatan->perbaikan) }}" />
                 </div>
                 <div class="mt-3 py-2.5 px-3.5 bg-page-bg dark:bg-page-bg-dark rounded-lg text-[13px]">
                     <span class="text-text-muted">Stok tersedia = stok - rusak - perbaikan = </span>
@@ -101,13 +74,11 @@
                         <p class="text-[13px] text-text-muted mb-2">Foto saat ini:</p>
                         <img src="{{ Storage::url($peralatan->foto) }}" alt="Foto"
                             class="h-[120px] rounded-lg object-cover border border-page-bg dark:border-page-bg-dark">
-                        <label class="flex items-center gap-2 mt-2.5 text-[13px] cursor-pointer text-text dark:text-text-dark">
-                            <input type="checkbox" name="hapus_foto" value="1"> Hapus foto ini
-                        </label>
+                        <x-checkbox name="hapus_foto">Hapus foto ini</x-checkbox>
                     </div>
                 @endif
                 <div class="flex flex-col gap-1.5">
-                    <label class="{{ $labelClass }}">{{ $peralatan->foto ? 'Upload Foto Baru' : 'Upload Foto' }} <small class="font-normal text-text-muted ml-1">(opsional,
+                    <label class="text-[13px] font-medium text-text dark:text-text-dark">{{ $peralatan->foto ? 'Upload Foto Baru' : 'Upload Foto' }} <small class="font-normal text-text-muted ml-1">(opsional,
                             max 2MB)</small></label>
                     <input type="file" name="foto" id="foto-input"
                         accept="image/jpg,image/jpeg,image/png,image/webp"

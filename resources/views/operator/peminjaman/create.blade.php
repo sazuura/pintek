@@ -20,12 +20,11 @@
             </div>
         @endif
 
-        <form action="{{ route('operator.peminjaman.store') }}" method="POST" id="form-peminjaman">
+        <form action="{{ route('operator.peminjaman.store') }}" method="POST" id="form-peminjaman" novalidate>
             @csrf
 
             @php
-                $inputClass = 'h-10 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
-                $labelClass = 'text-[13px] font-medium text-text dark:text-text-dark';
+                $inputClass = 'h-10 px-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
                 $hintClass = 'text-xs text-text-muted mt-0.5';
             @endphp
 
@@ -33,9 +32,10 @@
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
                     <i class="bx bx-info-circle"></i> Detail Pengajuan</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1.5 md:col-span-2">
-                        <label class="{{ $labelClass }}">Kaitkan ke Jadwal <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
-                        <select name="id_penjadwalan" id="id_penjadwalan" class="{{ $inputClass }} {{ $errors->has('id_penjadwalan') ? '!border-danger-text' : '' }}">
+                    <div class="md:col-span-2">
+                        <x-select name="id_penjadwalan" id="id_penjadwalan"
+                            hint="Pilih kalau peminjaman ini untuk salah satu rapat yang kamu tugaskan - Keperluan & Tanggal Pinjam akan terisi otomatis (tetap bisa diedit). Kalau operator lain di jadwal yang sama sudah mengajukan alat tertentu, kamu tetap bisa mengajukan alat yang sama, tapi akan muncul konfirmasi dulu supaya tidak sengaja duplikat.">
+                            <x-slot:label>Kaitkan ke Jadwal <small class="font-normal text-text-muted ml-1">(opsional)</small></x-slot:label>
                             <option value="">-- Tidak terkait jadwal tertentu --</option>
                             @foreach($jadwalAktif as $j)
                                 <option value="{{ $j->id_penjadwalan }}"
@@ -47,32 +47,20 @@
                                     {{ $j->judul_kegiatan }} - {{ $j->tanggal->translatedFormat('D, d M Y') }}
                                 </option>
                             @endforeach
-                        </select>
-                        <span class="{{ $hintClass }}">Pilih kalau peminjaman ini untuk salah satu rapat yang kamu tugaskan - Keperluan & Tanggal Pinjam akan terisi otomatis (tetap bisa diedit). Kalau operator lain di jadwal yang sama sudah mengajukan alat tertentu, kamu tetap bisa mengajukan alat yang sama, tapi akan muncul konfirmasi dulu supaya tidak sengaja duplikat.</span>
+                        </x-select>
                         <div id="referensi-hint" class="hidden bg-primary-50 dark:bg-[#0d2a40] rounded-lg py-2.5 px-3.5 mt-1">
                             <p class="text-[13px] text-primary font-medium m-0"><i class="bx bx-info-circle"></i> Alat yang direkomendasikan admin untuk jadwal ini sudah otomatis ditambahkan di bawah (tetap bisa diubah/dihapus):</p>
                             <p id="referensi-hint-list" class="text-[13px] text-primary m-0 mt-1"></p>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1.5 md:col-span-2">
-                        <label class="{{ $labelClass }}">Keperluan <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="text" name="keperluan" id="keperluan"
-                            class="{{ $inputClass }} {{ $errors->has('keperluan') ? '!border-danger-text' : '' }}" value="{{ old('keperluan') }}"
-                            placeholder="cth: Rapat dinas luar kota bersama Kemendagri" required>
+                    <div class="md:col-span-2">
+                        <x-input name="keperluan" label="Keperluan" required
+                            placeholder="cth: Rapat dinas luar kota bersama Kemendagri" value="{{ old('keperluan') }}" />
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Tanggal Pinjam <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="date" name="tanggal_pinjam" id="tanggal_pinjam"
-                            class="{{ $inputClass }} {{ $errors->has('tanggal_pinjam') ? '!border-danger-text' : '' }}"
-                            value="{{ old('tanggal_pinjam') }}" min="{{ now()->format('Y-m-d') }}" required>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Rencana Kembali <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="date" name="tanggal_kembali_rencana"
-                            class="{{ $inputClass }} {{ $errors->has('tanggal_kembali_rencana') ? '!border-danger-text' : '' }}"
-                            value="{{ old('tanggal_kembali_rencana') }}" required>
-                        <span class="{{ $hintClass }}">Harus setelah tanggal pinjam.</span>
-                    </div>
+                    <x-input type="date" name="tanggal_pinjam" label="Tanggal Pinjam" required
+                        min="{{ now()->format('Y-m-d') }}" value="{{ old('tanggal_pinjam') }}" />
+                    <x-input type="date" name="tanggal_kembali_rencana" label="Rencana Kembali" required
+                        value="{{ old('tanggal_kembali_rencana') }}" hint="Harus setelah tanggal pinjam." />
                 </div>
             </div>
 

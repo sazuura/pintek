@@ -20,66 +20,38 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.users.store') }}" method="POST">
+        <form action="{{ route('admin.users.store') }}" method="POST" novalidate>
             @csrf
-
-            @php
-                $inputClass = 'h-10 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
-                $labelClass = 'text-[13px] font-medium text-text dark:text-text-dark';
-            @endphp
 
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
                     <i class="bx bxs-user-plus"></i> Data User Baru</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Nama Lengkap <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="text" name="nama_user"
-                            class="{{ $inputClass }} {{ $errors->has('nama_user') ? '!border-danger-text' : '' }}"
-                            value="{{ old('nama_user') }}" placeholder="cth: Budi Santoso" required>
+                    <x-input name="nama_user" label="Nama Lengkap" required placeholder="cth: Budi Santoso" />
+
+                    <x-input name="nohp" label="No. HP" required placeholder="08xxxxxxxxxx"
+                        hint="Dipakai untuk notifikasi WhatsApp" />
+
+                    <x-input type="email" name="email" label="Email" required placeholder="nama@diskominfotik.go.id" />
+
+                    <x-select name="jenis_kelamin" label="Jenis Kelamin" required placeholder="-- Pilih Jenis Kelamin --">
+                        <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                        <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
+                    </x-select>
+
+                    <div class="md:col-span-2">
+                        <x-input type="textarea" name="alamat" label="Alamat" required placeholder="Alamat lengkap" />
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">No. HP <span class="text-[#e74c3c] ml-0.5">*</span> <small class="font-normal text-text-muted ml-1">(untuk WhatsApp)</small></label>
-                        <input type="text" name="nohp"
-                            class="{{ $inputClass }} {{ $errors->has('nohp') ? '!border-danger-text' : '' }}"
-                            value="{{ old('nohp') }}" placeholder="08xxxxxxxxxx" required>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Email <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="email" name="email"
-                            class="{{ $inputClass }} {{ $errors->has('email') ? '!border-danger-text' : '' }}"
-                            value="{{ old('email') }}" placeholder="nama@diskominfotik.go.id" required>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Jenis Kelamin <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <select name="jenis_kelamin" class="{{ $inputClass }} {{ $errors->has('jenis_kelamin') ? '!border-danger-text' : '' }}" required>
-                            <option value="">-- Pilih Jenis Kelamin --</option>
-                            <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki</option>
-                            <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
-                        </select>
-                    </div>
-                    <div class="flex flex-col gap-1.5 md:col-span-2">
-                        <label class="{{ $labelClass }}">Alamat <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <textarea name="alamat"
-                            class="{{ $inputClass }} {{ $errors->has('alamat') ? '!border-danger-text' : '' }} h-auto py-2.5 resize-y min-h-[80px]"
-                            placeholder="Alamat lengkap" required>{{ old('alamat') }}</textarea>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Password <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <input type="password" name="password"
-                            class="{{ $inputClass }} {{ $errors->has('password') ? '!border-danger-text' : '' }}"
-                            placeholder="Min. 6 karakter" required>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="{{ $labelClass }}">Role <span class="text-[#e74c3c] ml-0.5">*</span></label>
-                        <select name="role" id="role-select" class="{{ $inputClass }} {{ $errors->has('role') ? '!border-danger-text' : '' }}"
-                            onchange="toggleGedung(this.value)" required>
-                            <option value="">-- Pilih Role --</option>
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="operator" {{ old('role') == 'operator' ? 'selected' : '' }}>Operator</option>
-                            <option value="inventaris" {{ old('role') == 'inventaris' ? 'selected' : '' }}>Inventaris</option>
-                        </select>
-                    </div>
+
+                    <x-input name="password" label="Password" type="password" toggleable required
+                        placeholder="Min. 6 karakter" />
+
+                    <x-select name="role" label="Role" required placeholder="-- Pilih Role --"
+                        onchange="toggleGedung(this.value)">
+                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="operator" {{ old('role') == 'operator' ? 'selected' : '' }}>Operator</option>
+                        <option value="inventaris" {{ old('role') == 'inventaris' ? 'selected' : '' }}>Inventaris</option>
+                    </x-select>
                 </div>
             </div>
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">

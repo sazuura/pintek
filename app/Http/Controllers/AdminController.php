@@ -89,7 +89,7 @@ class AdminController extends Controller
     {
         $sejak = now()->subDays(14);
 
-        $jadwal = Penjadwalan::where('created_at', '>=', $sejak)
+        $jadwal = Penjadwalan::whereBetween('created_at', [$sejak, now()])
             ->orderByDesc('created_at')
             ->limit(6)
             ->get()
@@ -99,7 +99,7 @@ class AdminController extends Controller
                 'time' => $j->created_at,
             ]);
 
-        $peminjaman = Peminjaman::where('created_at', '>=', $sejak)
+        $peminjaman = Peminjaman::whereBetween('created_at', [$sejak, now()])
             ->with('user')
             ->orderByDesc('created_at')
             ->limit(6)

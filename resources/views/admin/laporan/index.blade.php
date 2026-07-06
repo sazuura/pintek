@@ -16,13 +16,13 @@
             <input type="hidden" name="tab" id="active-tab-input" value="{{ request('tab', 'panel-jadwal') }}">
 
             <label class="text-[13px] text-text-muted whitespace-nowrap">Dari</label>
-            <input type="date" name="start" value="{{ request('start') }}"
+            <input type="date" name="start" value="{{ request('start') }}" onchange="this.form.submit()"
                 class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
             <label class="text-[13px] text-text-muted whitespace-nowrap">s/d</label>
-            <input type="date" name="end" value="{{ request('end') }}"
+            <input type="date" name="end" value="{{ request('end') }}" onchange="this.form.submit()"
                 class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
 
-            <select name="operator"
+            <select name="operator" onchange="this.form.submit()"
                 class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                 <option value="">Semua Operator</option>
                 @foreach($operators as $op)
@@ -32,9 +32,6 @@
                 @endforeach
             </select>
 
-            <button type="submit"
-                class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
-                <i class="bx bx-filter"></i> Filter</button>
             @if(request()->hasAny(['start','end','operator']))
                 <a href="{{ route('admin.laporan.index', ['tab' => request('tab','panel-jadwal')]) }}"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">

@@ -15,7 +15,7 @@
 
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
             <form method="GET" action="{{ route('inventaris.peminjaman.index') }}" class="contents">
-                <select name="status"
+                <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
                     <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu</option>
@@ -24,7 +24,7 @@
                     <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan
                     </option>
                 </select>
-                <select name="id_user"
+                <select name="id_user" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Operator</option>
                     @foreach($operatorList as $op)
@@ -33,9 +33,6 @@
                         </option>
                     @endforeach
                 </select>
-                <button type="submit"
-                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
-                    <i class="bx bx-filter"></i> Filter</button>
                 @if(request('status') || request('id_user'))
                     <a href="{{ route('inventaris.peminjaman.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
@@ -94,30 +91,22 @@
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
                                     <div class="flex gap-1.5 items-center">
                                         @if($p->isMenunggu())
-                                            <form action="{{ route('inventaris.peminjaman.approve', $p->id_peminjaman) }}"
-                                                method="POST" class="contents">
-                                                @csrf
-                                                <button type="submit" title="Setujui"
-                                                    class="{{ $actionClass }} bg-success dark:bg-success-dark text-success-text"
-                                                    onclick="return confirm('Setujui pengajuan ini?')">
-                                                    <i class="bx bx-check"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" title="Setujui"
+                                                class="{{ $actionClass }} bg-success dark:bg-success-dark text-success-text"
+                                                onclick="bukaKonfirmasiSetujui('{{ route('inventaris.peminjaman.approve', $p->id_peminjaman) }}')">
+                                                <i class="bx bx-check"></i>
+                                            </button>
                                             <button type="button" title="Tolak"
                                                 class="{{ $actionClass }} bg-danger dark:bg-danger-dark text-danger-text"
                                                 onclick="toggleTolak('tolak-{{ $p->id_peminjaman }}')">
                                                 <i class="bx bx-x"></i>
                                             </button>
                                         @elseif($p->isDisetujui())
-                                            <form action="{{ route('inventaris.peminjaman.kembali', $p->id_peminjaman) }}"
-                                                method="POST" class="contents">
-                                                @csrf
-                                                <button type="submit" title="Konfirmasi Kembali"
-                                                    class="{{ $actionClass }} bg-primary-50 dark:bg-[#0d2a40] text-primary"
-                                                    onclick="return confirm('Konfirmasi peralatan sudah dikembalikan?')">
-                                                    <i class="bx bx-revision"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" title="Konfirmasi Kembali"
+                                                class="{{ $actionClass }} bg-primary-50 dark:bg-[#0d2a40] text-primary"
+                                                onclick="bukaKonfirmasiKembali('{{ route('inventaris.peminjaman.kembali', $p->id_peminjaman) }}')">
+                                                <i class="bx bx-revision"></i>
+                                            </button>
                                         @endif
                                     </div>
                                 </td>
@@ -185,7 +174,7 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center py-10 text-text-muted">
-                                    <i class="bx bx-cart-alt text-4xl block mb-2"></i>
+                                    <i class="bx bx-briefcase text-4xl block mb-2"></i>
                                     Tidak ada pengajuan
                                 </td>
                             </tr>
@@ -195,6 +184,45 @@
             </div>
             <x-pagination :paginator="$peminjaman">{{ $peminjaman->total() }} total pengajuan</x-pagination>
         </div>
+
+        {{-- Modal konfirmasi setuju & kembali - satu instance dipakai bareng oleh semua baris --}}
+        <x-modal-konfirmasi id="modalKonfirmasiSetujui" title="Setujui Pengajuan" icon="bx-check-circle" icon-class="text-success-text">
+            <div class="bg-success dark:bg-success-dark rounded-[10px] py-3.5 px-4">
+                <div class="text-[13px] font-semibold text-success-text">
+                    <i class="bx bx-check-circle"></i> Setujui pengajuan peminjaman ini?
+                </div>
+            </div>
+            <form id="formKonfirmasiSetujui" method="POST">
+                @csrf
+                <div class="flex justify-end gap-2.5 mt-3">
+                    <button type="button" data-modal-close
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                    <button type="submit"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-success-text text-white">
+                        <i class="bx bx-check"></i> Setujui
+                    </button>
+                </div>
+            </form>
+        </x-modal-konfirmasi>
+
+        <x-modal-konfirmasi id="modalKonfirmasiKembali" title="Konfirmasi Pengembalian" icon="bx-revision" icon-class="text-primary">
+            <div class="bg-primary-50 dark:bg-[#0d2a40] rounded-[10px] py-3.5 px-4">
+                <div class="text-[13px] font-semibold text-primary">
+                    <i class="bx bx-info-circle"></i> Konfirmasi peralatan sudah dikembalikan?
+                </div>
+            </div>
+            <form id="formKonfirmasiKembali" method="POST">
+                @csrf
+                <div class="flex justify-end gap-2.5 mt-3">
+                    <button type="button" data-modal-close
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                    <button type="submit"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
+                        <i class="bx bx-revision"></i> Konfirmasi
+                    </button>
+                </div>
+            </form>
+        </x-modal-konfirmasi>
     </main>
 @endsection
 
@@ -203,6 +231,16 @@
         function toggleTolak(id) {
             var el = document.getElementById(id);
             el.classList.toggle('hidden');
+        }
+
+        function bukaKonfirmasiSetujui(url) {
+            document.getElementById('formKonfirmasiSetujui').action = url;
+            bukaModalKonfirmasi('modalKonfirmasiSetujui');
+        }
+
+        function bukaKonfirmasiKembali(url) {
+            document.getElementById('formKonfirmasiKembali').action = url;
+            bukaModalKonfirmasi('modalKonfirmasiKembali');
         }
     </script>
 @endpush

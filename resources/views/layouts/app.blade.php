@@ -8,25 +8,29 @@
     <title>@yield('title', 'Sistem') - Diskominfotik</title>
 
     {{--
-    ANTI-FLASH - wajib jadi script PERTAMA di
+    ANTI-FLASH - wajib jadi script PERTAMA di <head>, sebelum CSS apapun.
 
-    <head>, sebelum CSS apapun.
+    Masalah: browser render body dengan warna default (putih) dulu,
+    baru JS jalan dan tambahkan class .dark - hasilnya ada flash putih.
 
-        Masalah: browser render body dengan warna default (putih) dulu,
-        baru JS jalan dan tambahkan class .dark - hasilnya ada flash putih.
-
-        Solusi: script ini jalan SEBELUM CSS dimuat dan SEBELUM body dirender.
-        Langsung tambahkan class 'dark' ke
-
-    <body> jika localStorage bilang dark.
-        Ketika CSS akhirnya dimuat, body sudah punya class .dark → langsung gelap.
-        Tidak ada momen putih sama sekali.
-        --}}
-        <script>
-            if (localStorage.getItem('theme') === 'dark') {
-                document.write('<body class="dark">');
-            }
-        </script>
+    Solusi: tambahkan class 'dark' ke <html> (bukan <body> via document.write).
+    document.write('<body class="dark">') sebelumnya menyebabkan bug: parser HTML
+    menganggap itu tag <body> KEDUA begitu tag <body> asli di bawah muncul, dan per
+    spek HTML, atribut yang sudah ada (class) di body "duplikat" itu TIDAK digabung
+    dengan atribut class asli - class asli (bg-page-bg, overflow-x-hidden, dst)
+    malah hilang total, cuma tersisa "dark" saja. Makanya kalau dark mode aktif,
+    body kehilangan bg-page-bg-nya sendiri (jadi putih) begitu pindah halaman, dan
+    saat toggle balik ke light, class 'dark' dilepas dari body yang classnya sudah
+    cuma "dark" itu - hasilnya body benar-benar tanpa class sama sekali.
+    classList.add() di <html> tidak kena masalah ini karena bukan document.write
+    (tidak menulis ulang tag), dan <html> adalah leluhur semua elemen jadi variant
+    dark: (lihat @custom-variant di app.css) tetap kena ke semua turunannya.
+    --}}
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 
         <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
         @vite(['resources/css/app.css'])
@@ -34,11 +38,6 @@
         @stack('styles')
 </head>
 
-{{--
-
-<body> tanpa class - class 'dark' sudah ditulis via document.write di atas jika perlu.
-    Jangan tambahkan class apapun di sini agar tidak konflik.
-    --}}
 
     <body class="bg-page-bg dark:bg-page-bg-dark overflow-x-hidden font-sans">
 
@@ -48,7 +47,7 @@
                 class="text-2xl font-bold h-14 flex items-center text-primary sticky top-0 left-0 bg-surface dark:bg-surface-dark z-[500] p-0 box-content overflow-hidden shrink-0">
                 <img src="{{ asset('img/logo.png') }}" alt="Logo Diskominfotik"
                     class="min-w-[60px] h-8 object-contain flex justify-center px-3 shrink-0">
-                <span class="text text-lg group-[.hide]:hidden">DISKOMINFOTIK</span>
+                <span class="text text-2xl group-[.hide]:hidden">DISKOMINFOTIK</span>
             </a>
             <ul class="side-menu top w-full mt-12">
                 @yield('sidebar-menu')
@@ -58,7 +57,7 @@
                     <a href="{{ route('logout') }}"
                         onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                         class="relative flex items-center h-12 mx-3 my-0.5 pl-4 rounded-xl text-base text-red hover:bg-page-bg dark:hover:bg-page-bg-dark transition-all duration-300 whitespace-nowrap overflow-x-hidden group-[.hide]:mx-auto group-[.hide]:pl-0 group-[.hide]:w-10 group-[.hide]:justify-center">
-                        <i class='bx bxs-log-out min-w-10 flex justify-center'></i>
+                        <i class='bx bxs-log-out min-w-10 group-[.hide]:min-w-6 flex justify-center'></i>
                         <span class="text group-[.hide]:hidden">Logout</span>
                     </a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
@@ -85,8 +84,8 @@
                     <div class="theme-toggle flex items-center">
                         <input type="checkbox" id="switch-mode" class="peer hidden">
                         <label for="switch-mode"
-                            class="toggle w-[5px] h-[5px] bg-[#facc15] rounded-full flex justify-center items-center cursor-pointer transition-[background-color,rotate] duration-[400ms] peer-checked:bg-[#1e293b] peer-checked:rotate-[360deg]">
-                            <span class="icon text-[28px]" id="theme-icon">🌞</span>
+                            class="toggle w-9 h-9 rounded-lg bg-page-bg dark:bg-page-bg-dark flex justify-center items-center cursor-pointer transition-colors duration-200 text-text-muted hover:text-primary shrink-0">
+                            <i class="bx bx-sun text-lg" id="theme-icon"></i>
                         </label>
                     </div>
                     <a href="#" class="profile">
@@ -106,6 +105,7 @@
         <script src="{{ asset('js/adminhub.js') }}"></script>
         <script src="{{ asset('js/content.js') }}"></script>
         <script src="{{ asset('js/searchable-select.js') }}"></script>
+        <script src="{{ asset('js/live-search.js') }}"></script>
         @stack('scripts')
     </body>
 

@@ -18,25 +18,22 @@
             <form method="GET" action="{{ route('admin.jadwal.index') }}" class="contents">
                 <div class="relative flex-1 min-w-[180px] max-w-[300px]">
                     <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
-                    <input type="text" name="search" placeholder="Cari judul, platform..." value="{{ request('search') }}"
+                    <input type="text" name="search" data-live-search="#hasil-jadwal" autocomplete="off" placeholder="Cari judul, platform..." value="{{ request('search') }}"
                         class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
                 </div>
-                <select name="platform"
+                <select name="platform" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Platform</option>
                     <option value="Online" {{ request('platform') == 'Online' ? 'selected' : '' }}>Online</option>
                     <option value="Offline" {{ request('platform') == 'Offline' ? 'selected' : '' }}>Offline</option>
                 </select>
-                <select name="status"
+                <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
                     <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
                     <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
                     <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                 </select>
-                <button type="submit"
-                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
-                    <i class="bx bx-filter"></i> Filter</button>
                 @if(request()->hasAny(['search', 'platform', 'status']))
                     <a href="{{ route('admin.jadwal.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
@@ -52,6 +49,7 @@
             $badgeDanger = $badgeClass . ' bg-danger dark:bg-danger-dark text-danger-text';
         @endphp
 
+        <div id="hasil-jadwal">
         <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
             <div class="py-4 px-5 flex items-center justify-between border-b border-page-bg dark:border-page-bg-dark">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark">Daftar Jadwal</h3>
@@ -280,6 +278,7 @@
         <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
             <x-pagination :paginator="$jadwal" />
         </div>
+        </div>
 
         {{-- Modal detail jadwal, dipakai kartu mobile --}}
         <div id="modalJadwalDetail"
@@ -364,11 +363,11 @@
             document.getElementById('modalJadwalDetail').classList.add('open');
         }
 
-        document.querySelectorAll('[data-open-jadwal-modal]').forEach(function (el) {
-            el.addEventListener('click', function () {
-                var card = el.closest('.mobile-card');
-                if (card) bukaModalJadwalMobile(card);
-            });
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest('[data-open-jadwal-modal]');
+            if (!el) return;
+            var card = el.closest('.mobile-card');
+            if (card) bukaModalJadwalMobile(card);
         });
 
         document.getElementById('modalJadwalDetail').addEventListener('click', function (e) {

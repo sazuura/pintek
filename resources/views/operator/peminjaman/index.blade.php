@@ -16,7 +16,7 @@
 
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
             <form method="GET" action="{{ route('operator.peminjaman.index') }}" class="contents">
-                <select name="status"
+                <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
                     <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu</option>
@@ -26,9 +26,6 @@
                     </option>
                     <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                 </select>
-                <button type="submit"
-                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
-                    <i class="bx bx-filter"></i> Filter</button>
                 @if(request('status'))
                     <a href="{{ route('operator.peminjaman.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
@@ -166,7 +163,7 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center py-10 text-text-muted">
-                                    <i class="bx bx-cart-alt text-4xl block mb-2"></i>
+                                    <i class="bx bx-briefcase text-4xl block mb-2"></i>
                                     Belum ada pengajuan peminjaman
                                 </td>
                             </tr>
@@ -194,7 +191,7 @@
                      @if($p->isMenunggu()) data-batalkan-url="{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}" @endif>
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-[#0d2a40] text-primary flex items-center justify-center text-lg shrink-0">
-                            <i class="bx bx-cart-alt"></i>
+                            <i class="bx bx-briefcase"></i>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="font-semibold text-sm text-text dark:text-text-dark truncate">{{ $p->keperluan }}</div>
@@ -219,7 +216,7 @@
                 </div>
             @empty
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-10 text-center text-text-muted">
-                    <i class="bx bx-cart-alt text-4xl block mb-2"></i>
+                    <i class="bx bx-briefcase text-4xl block mb-2"></i>
                     Belum ada pengajuan peminjaman
                 </div>
             @endforelse

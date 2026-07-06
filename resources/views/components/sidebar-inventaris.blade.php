@@ -7,16 +7,21 @@
 @endphp
 <li>
     <a href="{{ route('inventaris.dashboard') }}" class="{{ $aBase }} {{ request()->is('inventaris/dashboard') ? $aActive : $aInactive }}">
-        <i class='bx bxs-dashboard min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Dashboard</span>
+        <i class='bx bxs-dashboard min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Dashboard</span>
     </a>
 </li>
 <li>
     <a href="{{ route('inventaris.peralatan.index') }}" class="{{ $aBase }} {{ request()->is('inventaris/peralatan*') ? $aActive : $aInactive }}">
-        <i class='bx bxs-wrench min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Peralatan Saya</span>
+        <i class='bx bxs-wrench min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Peralatan Saya</span>
     </a>
 </li>
 <li>
     <a href="{{ route('inventaris.peminjaman.index') }}" class="{{ $aBase }} {{ request()->is('inventaris/peminjaman*') ? $aActive : $aInactive }}">
-        <i class='bx bxs-cart min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Peminjaman</span>
+        <i class='bx bxs-briefcase min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Peminjaman</span>
+    </a>
+</li>
+<li>
+    <a href="{{ route('inventaris.alat-terpasang.index') }}" class="{{ $aBase }} {{ request()->is('inventaris/alat-terpasang*') ? $aActive : $aInactive }}">
+        <i class='bx bxs-tv min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Alat Terpasang</span>
     </a>
 </li>

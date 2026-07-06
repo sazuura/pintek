@@ -15,7 +15,7 @@
         </div>
 
         {{-- Stat cards --}}
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:grid-cols-1 gap-4 mb-6">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4 mb-6">
             <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
                 <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] text-[#3C91E6]"><i class="bx bxs-data"></i></div>
                 <div>
@@ -93,7 +93,7 @@
             <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card col-span-3">
                 <div class="flex items-center justify-between mb-3.5">
                     <h3 class="m-0 text-[15px] font-semibold text-text dark:text-text-dark">
-                        <i class="bx bx-cart text-primary"></i> Pengajuan Menunggu Persetujuan
+                        <i class="bx bx-briefcase text-primary"></i> Pengajuan Menunggu Persetujuan
                         @if($totalMenunggu > 0)
                             <x-badge variant="badge-warning" class="ml-1.5">{{ $totalMenunggu }}</x-badge>
                         @endif
@@ -165,7 +165,7 @@
                     </div>
                 @empty
                     <div class="text-center py-[30px] text-text-muted">
-                        <i class="bx bx-cart-alt text-4xl block mb-2"></i>
+                        <i class="bx bx-briefcase text-4xl block mb-2"></i>
                         Tidak ada pengajuan yang menunggu
                     </div>
                 @endforelse

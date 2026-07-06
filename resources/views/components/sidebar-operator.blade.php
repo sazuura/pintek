@@ -7,12 +7,12 @@
 @endphp
 <li>
     <a href="{{ route('operator.dashboard') }}" class="{{ $aBase }} {{ request()->is('operator/dashboard') ? $aActive : $aInactive }}">
-        <i class='bx bxs-dashboard min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Dashboard</span>
+        <i class='bx bxs-dashboard min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Dashboard</span>
     </a>
 </li>
 <li>
     <a href="{{ route('operator.jadwal.index') }}" class="{{ $aBase }} {{ request()->is('operator/jadwal*') ? $aActive : $aInactive }}">
-        <i class='bx bxs-calendar min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Jadwal
+        <i class='bx bxs-calendar min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Jadwal
             Saya</span>
     </a>
 </li>
@@ -22,11 +22,11 @@
 </li> --}}
 <li>
     <a href="{{ route('operator.peralatan.index') }}" class="{{ $aBase }} {{ request()->is('operator/peralatan*') ? $aActive : $aInactive }}">
-        <i class='bx bxs-wrench min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Peralatan</span>
+        <i class='bx bxs-wrench min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Peralatan</span>
     </a>
 </li>
 <li>
     <a href="{{ route('operator.peminjaman.index') }}" class="{{ $aBase }} {{ request()->is('operator/peminjaman*') ? $aActive : $aInactive }}">
-        <i class='bx bxs-cart min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Peminjaman</span>
+        <i class='bx bxs-briefcase min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Peminjaman</span>
     </a>
 </li>

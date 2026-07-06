@@ -7,21 +7,21 @@
 @endphp
 <li>
     <a href="{{ route('admin.dashboard') }}" class="{{ $aBase }} {{ request()->is('admin/dashboard') ? $aActive : $aInactive }}">
-        <i class='bx bxs-dashboard min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Dashboard</span>
+        <i class='bx bxs-dashboard min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Dashboard</span>
     </a>
 </li>
 <li>
     <a href="{{ route('admin.users.index') }}" class="{{ $aBase }} {{ request()->is('admin/users*') ? $aActive : $aInactive }}">
-        <i class='bx bxs-group min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Users</span>
+        <i class='bx bxs-group min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Users</span>
     </a>
 </li>
 <li>
     <a href="{{ route('admin.jadwal.index') }}" class="{{ $aBase }} {{ request()->is('admin/jadwal*') ? $aActive : $aInactive }}">
-        <i class='bx bxs-calendar min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Jadwal</span>
+        <i class='bx bxs-calendar min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Jadwal</span>
     </a>
 </li>
 <li>
     <a href="{{ route('admin.laporan.index') }}" class="{{ $aBase }} {{ request()->is('admin/laporan*') ? $aActive : $aInactive }}">
-        <i class='bx bxs-file min-w-10 flex justify-center'></i><span class="text group-[.hide]:hidden">Laporan</span>
+        <i class='bx bxs-file min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Laporan</span>
     </a>
 </li>

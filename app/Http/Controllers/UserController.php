@@ -91,7 +91,16 @@ class UserController extends Controller
         if ($user->id_user === auth()->user()->id_user) {
             return back()->with('error', 'Tidak dapat menonaktifkan akun Anda sendiri.');
         }
+
         $newStatus = $user->isActive() ? 'inactive' : 'active';
+
+        if ($newStatus === 'inactive' && $user->role === 'admin') {
+            $jumlahAdminAktif = User::where('role', 'admin')->where('status', 'active')->count();
+            if ($jumlahAdminAktif <= 1) {
+                return back()->with('error', 'Tidak dapat menonaktifkan admin ini karena ini satu-satunya akun admin yang aktif.');
+            }
+        }
+
         $user->update(['status' => $newStatus]);
         $label = $newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan';
         return back()->with('success', "User berhasil {$label}.");
