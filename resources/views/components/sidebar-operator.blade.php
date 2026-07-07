@@ -16,10 +16,6 @@
             Saya</span>
     </a>
 </li>
-{{-- <li class="{{ request()->is('operator/absensi*') ? 'active' : '' }}">
-    <a href="{{ route('operator.absensi.index') }}"><i class='bx bxs-check-circle'></i><span
-            class="text">Presensi</span></a>
-</li> --}}
 <li>
     <a href="{{ route('operator.peralatan.index') }}" class="{{ $aBase }} {{ request()->is('operator/peralatan*') ? $aActive : $aInactive }}">
         <i class='bx bxs-wrench min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Peralatan</span>

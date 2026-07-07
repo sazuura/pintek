@@ -17,13 +17,22 @@
         ];
     @endphp
 
+    {{-- Statistik & chart di bawah ini mengikuti bulan yang lagi dipilih di kalender
+         kanan - navigasi bulan/tahun di kalender otomatis memperbarui semuanya. Taruh di
+         luar grid 2 kolom (bukan di dalam kolom kiri) supaya kolom kiri & kanan tetap
+         sejajar dari atas. --}}
+    <p class="text-[13px] text-text-muted mb-3 flex items-center gap-1.5">
+        <i class="bx bx-calendar"></i> Menampilkan data:
+        <span class="font-semibold text-text dark:text-text-dark">{{ $kalender['labelBulan'] }} {{ $kalender['tahun'] }}</span>
+    </p>
+
     {{-- Layout asimetris: stat card + chart + peralatan lebih lebar di kiri, kalender + aktivitas ditumpuk di kanan --}}
     <div class="grid grid-cols-1 min-[1101px]:grid-cols-[14fr_7fr] gap-4 mb-4 items-start">
         <div class="flex flex-col gap-4 min-w-0">
             {{-- Stat cards --}}
             <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                    <span class="{{ $trendClass }} {{ $trendVariant[$trenRapat['arah']] ?? $trendVariant['flat'] }}" title="Dibanding jumlah rapat 30 hari sebelumnya">
+                    <span class="{{ $trendClass }} {{ $trendVariant[$trenRapat['arah']] ?? $trendVariant['flat'] }}" title="Dibanding bulan sebelumnya">
                         @if($trenRapat['arah'] === 'up') <i class="bx bx-up-arrow-alt text-[13px]"></i>
                         @elseif($trenRapat['arah'] === 'down') <i class="bx bx-down-arrow-alt text-[13px]"></i>
                         @else <i class="bx bx-minus text-[13px]"></i>
@@ -47,7 +56,7 @@
                 </div>
 
                 <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                    <span class="{{ $trendClass }} {{ $trendVariant[$trenPeralatan['arah']] ?? $trendVariant['flat'] }}" title="Dibanding peminjaman baru 7 hari sebelumnya">
+                    <span class="{{ $trendClass }} {{ $trendVariant[$trenPeralatan['arah']] ?? $trendVariant['flat'] }}" title="Dibanding bulan sebelumnya">
                         @if($trenPeralatan['arah'] === 'up') <i class="bx bx-up-arrow-alt text-[13px]"></i>
                         @elseif($trenPeralatan['arah'] === 'down') <i class="bx bx-down-arrow-alt text-[13px]"></i>
                         @else <i class="bx bx-minus text-[13px]"></i>
@@ -62,7 +71,7 @@
                 </div>
 
                 <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                    <span class="{{ $trendClass }} {{ $trendVariant[$trenJadwal['arah']] ?? $trendVariant['flat'] }}" title="Dibanding jumlah rapat 7 hari sebelumnya">
+                    <span class="{{ $trendClass }} {{ $trendVariant[$trenJadwal['arah']] ?? $trendVariant['flat'] }}" title="Dibanding bulan sebelumnya">
                         @if($trenJadwal['arah'] === 'up') <i class="bx bx-up-arrow-alt text-[13px]"></i>
                         @elseif($trenJadwal['arah'] === 'down') <i class="bx bx-down-arrow-alt text-[13px]"></i>
                         @else <i class="bx bx-minus text-[13px]"></i>
@@ -120,8 +129,8 @@
                 </div>
                 <div class="flex items-center gap-3.5 flex-wrap mb-2">
                     <span class="inline-flex items-center gap-1.5 text-xs text-text-muted whitespace-nowrap"><span class="w-3 h-3 rounded shrink-0 bg-blue-600"></span> Hari ini</span>
-                    <span class="inline-flex items-center gap-1.5 text-xs text-text-muted whitespace-nowrap"><span class="w-3 h-3 rounded shrink-0 bg-blue-100 dark:bg-blue-900"></span> Akan datang</span>
-                    <span class="inline-flex items-center gap-1.5 text-xs text-text-muted whitespace-nowrap"><span class="w-3 h-3 rounded shrink-0 bg-gray-100 dark:bg-gray-800"></span> Sudah lewat</span>
+                    <span class="inline-flex items-center gap-1.5 text-xs text-text-muted whitespace-nowrap"><span class="w-3 h-3 rounded shrink-0 bg-blue-200 dark:bg-blue-800"></span> Akan datang</span>
+                    <span class="inline-flex items-center gap-1.5 text-xs text-text-muted whitespace-nowrap"><span class="w-3 h-3 rounded shrink-0 bg-gray-200 dark:bg-gray-700"></span> Sudah lewat</span>
                 </div>
 
                 @php
@@ -178,8 +187,8 @@
                                             $cellClass = 'relative w-full aspect-square max-h-[42px] wide:max-h-[43px] max-xs:max-h-[34px] rounded-xl max-xs:rounded-lg flex items-center justify-center text-[13px] max-xs:text-[11px] font-semibold text-text dark:text-text-dark mx-auto transition-transform duration-150';
                                             if ($hari['inBulan']) $cellClass .= ' cursor-pointer hover:scale-[1.08]';
                                             if (!$hari['inBulan']) $cellClass .= ' text-text-muted opacity-50';
-                                            if ($warnaKelas === 'upcoming') $cellClass .= ' bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-                                            if ($warnaKelas === 'past') $cellClass .= ' bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400';
+                                            if ($warnaKelas === 'upcoming') $cellClass .= ' bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200';
+                                            if ($warnaKelas === 'past') $cellClass .= ' bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400';
                                             if ($hari['isHariIni']) $cellClass .= ' bg-blue-600 text-white shadow-[0_3px_10px_rgba(0,102,255,0.45)]';
 
                                             $badgeClass = 'absolute -bottom-1 -right-1 max-xs:-bottom-[3px] max-xs:-right-[3px] min-w-[16px] max-xs:min-w-[13px] h-4 max-xs:h-[13px] px-[3px] rounded-lg text-[9px] max-xs:text-[8px] font-bold flex items-center justify-center leading-none bg-blue-600 text-white shadow-[0_0_0_2px_var(--color-surface)] dark:shadow-[0_0_0_2px_var(--color-surface-dark)]';

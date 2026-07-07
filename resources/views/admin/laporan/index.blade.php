@@ -40,7 +40,7 @@
 
             <div class="ml-auto flex gap-2 items-center max-md:ml-0 max-md:w-full">
                 {{-- Export - URL menyertakan tab aktif + filter yang sedang berlaku --}}
-                <a id="btn-pdf" href="{{ route('admin.laporan.exportPdf', array_merge(request()->except(['jadwal_page','peralatan_page']), ['tab' => request('tab','panel-jadwal')])) }}"
+                <a id="btn-pdf" target="_blank" rel="noopener" href="{{ route('admin.laporan.exportPdf', array_merge(request()->except(['jadwal_page','peralatan_page']), ['tab' => request('tab','panel-jadwal')])) }}"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-danger-text text-white">
                     <i class="bx bxs-file-pdf"></i> PDF
                 </a>

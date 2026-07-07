@@ -52,6 +52,10 @@
                         <option value="operator" {{ old('role') == 'operator' ? 'selected' : '' }}>Operator</option>
                         <option value="inventaris" {{ old('role') == 'inventaris' ? 'selected' : '' }}>Inventaris</option>
                     </x-select>
+
+                    <div id="gedung-field" class="hidden">
+                        <x-input name="gedung" label="Gedung" placeholder="cth: Gedung A" value="{{ old('gedung') }}" />
+                    </div>
                 </div>
             </div>
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
@@ -70,8 +74,9 @@
     <script>
         function toggleGedung(role) {
             var field = document.getElementById('gedung-field');
-            field.style.display = role === 'inventaris' ? 'flex' : 'none';
-            field.querySelector('input').required = role === 'inventaris';
+            field.classList.toggle('hidden', role !== 'inventaris');
+            var input = field.querySelector('input');
+            if (input) input.required = role === 'inventaris';
         }
         toggleGedung('{{ old("role", "") }}');
     </script>

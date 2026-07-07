@@ -109,7 +109,7 @@ class PeminjamanService
                     daftarPeralatan: $daftarPeralatan,
                     alasan: $alasan
                 );
-                $this->wa->kirim($inventaris->nohp, $pesan);
+                $this->wa->kirim($inventaris->nomor_wa, $pesan);
             }
         }
     }
@@ -169,7 +169,7 @@ class PeminjamanService
                     daftarPeralatan: $daftarPeralatan,
                     terkaitJadwal: $terkaitJadwal,
                 );
-                $this->wa->kirim($inventaris->nohp, $pesan);
+                $this->wa->kirim($inventaris->nomor_wa, $pesan);
             }
         }
     }

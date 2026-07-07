@@ -12,48 +12,70 @@ class AdminController extends Controller
 {
     public function dashboard(Request $request)
     {
+        $bulanAktif = $this->bulanAktifDari($request->query('bulan'));
+        $awalBulan  = $bulanAktif->copy()->startOfMonth();
+        $akhirBulan = $bulanAktif->copy()->endOfMonth();
+
+        // Rapat "mendatang" dibatasi ke bulan yang lagi dilihat di kalender (bukan lagi
+        // fixed 30 hari dari hari ini) - jadi kalau kalender dipindah ke bulan lain, kartu
+        // statistik & chart ikut menyesuaikan. Untuk bulan yang sudah lewat total, hasilnya
+        // otomatis 0 (memang tidak ada lagi yang "mendatang" di bulan yang sudah lewat).
         $stats = [
             'jumlahRapatMendatang' => Penjadwalan::where('status', '!=', 'dibatalkan')
                 ->whereRaw("TIMESTAMP(tanggal, waktu_selesai) >= NOW()")
-                ->whereDate('tanggal', '<=', now()->addDays(30))
+                ->whereBetween('tanggal', [$awalBulan->format('Y-m-d'), $akhirBulan->format('Y-m-d')])
                 ->count(),
+            // Snapshot akun (bukan data per-periode) - sengaja TIDAK ikut berubah saat pindah bulan.
             'jumlahOperator' => User::where('role', 'operator')->where('status', 'active')->count(),
-            'jumlahPeralatanDipinjam' => PeminjamanItem::whereHas('peminjaman', fn($q) => $q->where('status', 'disetujui'))->sum('jumlah'),
-            'jumlahJadwal'   => Penjadwalan::count(),
+            'jumlahPeralatanDipinjam' => PeminjamanItem::whereHas('peminjaman', fn($q) =>
+                $q->where('status', 'disetujui')->whereBetween('tanggal_pinjam', [$awalBulan->format('Y-m-d'), $akhirBulan->format('Y-m-d')])
+            )->sum('jumlah'),
+            'jumlahJadwal' => Penjadwalan::whereBetween('tanggal', [$awalBulan->format('Y-m-d'), $akhirBulan->format('Y-m-d')])->count(),
         ];
 
         $operatorChart = User::where('role', 'operator')
-            ->withCount('jadwalDitugaskan')
+            ->withCount(['jadwalDitugaskan' => fn($q) =>
+                $q->whereBetween('tanggal', [$awalBulan->format('Y-m-d'), $akhirBulan->format('Y-m-d')])
+            ])
             ->orderByDesc('jadwal_ditugaskan_count')
             ->get();
 
-        // Peralatan paling sering dipinjam (hanya hitung peminjaman yang benar-benar terjadi: disetujui/dikembalikan)
+        // Peralatan paling sering dipinjam di bulan yang lagi dilihat (hanya hitung peminjaman
+        // yang benar-benar terjadi: disetujui/dikembalikan).
         $topPeralatan = PeminjamanItem::query()
             ->join('peralatan', 'peminjaman_item.id_peralatan', '=', 'peralatan.id_peralatan')
             ->join('peminjaman', 'peminjaman_item.id_peminjaman', '=', 'peminjaman.id_peminjaman')
             ->whereIn('peminjaman.status', ['disetujui', 'dikembalikan'])
+            ->whereBetween('peminjaman.tanggal_pinjam', [$awalBulan->format('Y-m-d'), $akhirBulan->format('Y-m-d')])
             ->selectRaw('peralatan.nama_peralatan, SUM(peminjaman_item.jumlah) as total_dipinjam')
             ->groupBy('peralatan.nama_peralatan')
             ->orderByDesc('total_dipinjam')
             ->limit(6)
             ->get();
 
+        // Aktivitas Terbaru sengaja TETAP selalu "14 hari terakhir dari hari ini" terlepas
+        // dari bulan yang dipilih di kalender - karena "terbaru" secara alami berarti dekat
+        // dengan sekarang, bukan bulan yang sedang di-browse.
         $activities = $this->recentActivities();
-        $kalender   = $this->jadwalKalender($request->query('bulan'));
+        $kalender   = $this->jadwalKalender($bulanAktif);
 
-        // Detail tambahan tiap stat card: tren dihitung dari data asli (bukan angka karangan).
+        // Detail tambahan tiap stat card: tren dihitung dari data asli, dibandingkan
+        // terhadap bulan SEBELUM bulan yang sedang dilihat (bukan lagi N hari dari hari ini).
+        $bulanSebelumnyaAwal  = $awalBulan->copy()->subMonth();
+        $bulanSebelumnyaAkhir = $bulanSebelumnyaAwal->copy()->endOfMonth();
+
         $rapatBulanLalu = Penjadwalan::where('status', '!=', 'dibatalkan')
-            ->whereBetween('tanggal', [now()->subDays(30)->format('Y-m-d'), now()->subDay()->format('Y-m-d')])
+            ->whereBetween('tanggal', [$bulanSebelumnyaAwal->format('Y-m-d'), $bulanSebelumnyaAkhir->format('Y-m-d')])
             ->count();
         $trenRapat = $this->hitungTrenSelisih($stats['jumlahRapatMendatang'], $rapatBulanLalu);
 
-        $jadwalMingguIni  = Penjadwalan::whereBetween('tanggal', [now()->subDays(7)->format('Y-m-d'), now()->format('Y-m-d')])->count();
-        $jadwalMingguLalu = Penjadwalan::whereBetween('tanggal', [now()->subDays(14)->format('Y-m-d'), now()->subDays(7)->format('Y-m-d')])->count();
-        $trenJadwal = $this->hitungTrenSelisih($jadwalMingguIni, $jadwalMingguLalu);
+        $jadwalBulanLalu = Penjadwalan::whereBetween('tanggal', [$bulanSebelumnyaAwal->format('Y-m-d'), $bulanSebelumnyaAkhir->format('Y-m-d')])->count();
+        $trenJadwal = $this->hitungTrenSelisih($stats['jumlahJadwal'], $jadwalBulanLalu);
 
-        $dipinjamMingguIni  = PeminjamanItem::whereHas('peminjaman', fn($q) => $q->where('status', 'disetujui')->where('created_at', '>=', now()->subDays(7)))->sum('jumlah');
-        $dipinjamMingguLalu = PeminjamanItem::whereHas('peminjaman', fn($q) => $q->where('status', 'disetujui')->whereBetween('created_at', [now()->subDays(14), now()->subDays(7)]))->sum('jumlah');
-        $trenPeralatan = $this->hitungTrenSelisih($dipinjamMingguIni, $dipinjamMingguLalu);
+        $dipinjamBulanLalu = PeminjamanItem::whereHas('peminjaman', fn($q) =>
+            $q->where('status', 'disetujui')->whereBetween('tanggal_pinjam', [$bulanSebelumnyaAwal->format('Y-m-d'), $bulanSebelumnyaAkhir->format('Y-m-d')])
+        )->sum('jumlah');
+        $trenPeralatan = $this->hitungTrenSelisih($stats['jumlahPeralatanDipinjam'], $dipinjamBulanLalu);
 
         $totalOperatorAkun = User::where('role', 'operator')->count();
 
@@ -61,6 +83,13 @@ class AdminController extends Controller
             'operatorChart', 'topPeralatan', 'activities', 'kalender',
             'trenRapat', 'trenJadwal', 'trenPeralatan', 'totalOperatorAkun'
         )));
+    }
+
+    private function bulanAktifDari(?string $bulan): Carbon
+    {
+        return $bulan
+            ? Carbon::createFromFormat('Y-m', $bulan)->startOfMonth()
+            : now()->startOfMonth();
     }
 
     /**
@@ -118,12 +147,8 @@ class AdminController extends Controller
      * serta daftar jadwal per tanggal (dipakai saat tanggal diklik di frontend).
      * Rapat yang sudah dibatalkan sengaja tidak diikutkan sama sekali di kalender ini.
      */
-    private function jadwalKalender(?string $bulan): array
+    private function jadwalKalender(Carbon $bulanAktif): array
     {
-        $bulanAktif = $bulan
-            ? Carbon::createFromFormat('Y-m', $bulan)->startOfMonth()
-            : now()->startOfMonth();
-
         $awalGrid  = $bulanAktif->copy()->startOfWeek(Carbon::SUNDAY);
         $akhirGrid = $bulanAktif->copy()->endOfMonth()->endOfWeek(Carbon::SUNDAY);
 
@@ -184,32 +209,121 @@ class AdminController extends Controller
         return view('admin.laporan.index', compact('jadwal', 'peralatan', 'operators'));
     }
 
+    /**
+     * PDF laporan dirender sebagai halaman HTML biasa (Tailwind, sama seperti tampilan
+     * live). Selain ditampilkan sebagai tabel, data yang sama juga disertakan sebagai
+     * headers+rows supaya jsPDF+AutoTable di sisi browser bisa langsung membuat PDF
+     * asli (teks vektor, bisa di-select/search) dan otomatis diunduh - window.print()
+     * tetap disediakan sebagai tombol fallback manual di halamannya.
+     */
     public function laporanExportPdf(Request $request)
     {
+        $namaFile = $this->buatNamaLaporan($request);
+
         if ($request->tab === 'panel-peralatan') {
             $peralatan = $this->queryPeralatanLaporan($request)->get();
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.laporan.pdf_peralatan', compact('peralatan'));
-            return $pdf->download('laporan-peralatan.pdf');
+            return view('admin.laporan.print_peralatan', [
+                'peralatan'      => $peralatan,
+                'namaFile'       => $namaFile,
+                'judul'          => 'LAPORAN PERALATAN DIGUNAKAN',
+                'pdfHeaders'     => ['#', 'Judul Rapat', 'Peralatan', 'Peminjam', 'Tgl Pinjam', 'Status'],
+                'pdfRows'        => $this->barisPdfPeralatan($peralatan),
+                'pdfStatusIndex' => 5,
+            ]);
         }
 
         $jadwal = $this->queryJadwalLaporan($request)->get();
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.laporan.pdf', compact('jadwal'));
-        return $pdf->download('laporan-jadwal.pdf');
+        return view('admin.laporan.print_jadwal', [
+            'jadwal'         => $jadwal,
+            'namaFile'       => $namaFile,
+            'judul'          => 'LAPORAN JADWAL & OPERATOR',
+            'pdfHeaders'     => ['#', 'Operator', 'Judul Rapat', 'Tanggal', 'Platform', 'Status'],
+            'pdfRows'        => $this->barisPdfJadwal($jadwal),
+            'pdfStatusIndex' => 5,
+        ]);
     }
 
+    private function barisPdfJadwal($jadwal): array
+    {
+        return $jadwal->values()->map(function ($j, $index) {
+            $sudahLewat = Carbon::parse($j->tanggal->format('Y-m-d') . ' ' . $j->waktu_selesai)->isPast();
+            $dibatalkan = $j->isDibatalkan();
+            $status     = $dibatalkan ? 'Dibatalkan' : ($sudahLewat ? 'Selesai' : 'Aktif');
+
+            return [
+                $index + 1,
+                $j->operators->pluck('nama_user')->join(', ') ?: '-',
+                $j->judul_kegiatan,
+                $j->tanggal->translatedFormat('D, d/m/Y'),
+                str_contains($j->platform, 'Online') ? 'Online' : 'Offline',
+                $status,
+            ];
+        })->toArray();
+    }
+
+    private function barisPdfPeralatan($peralatan): array
+    {
+        return $peralatan->values()->map(function ($p, $index) {
+            $daftarAlat = $p->items->map(function ($item) {
+                $nama   = $item->peralatan->nama_peralatan ?? '-';
+                $seri   = $item->peralatan->kode_barang ?? '-';
+                $gedung = $item->peralatan->gedung ?? '-';
+                return "{$nama} ({$seri}, {$gedung}) x{$item->jumlah}";
+            })->join("\n");
+
+            return [
+                $index + 1,
+                $p->penjadwalan->judul_kegiatan ?? $p->keperluan,
+                $daftarAlat,
+                $p->user->nama_user ?? '-',
+                $p->tanggal_pinjam->format('d/m/Y'),
+                $p->badge['label'],
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Excel tetap pakai PhpSpreadsheet (lewat maatwebsite/excel) - beda dengan PDF,
+     * library ini tidak merender HTML/CSS jadi tidak kena masalah kompatibilitas
+     * Tailwind seperti dompdf, dan hasilnya file .xlsx asli tanpa peringatan
+     * "format tidak cocok" dari Excel (yang muncul kalau pakai trik HTML-sebagai-.xls).
+     */
     public function laporanExportExcel(Request $request)
     {
+        $namaFile = $this->buatNamaLaporan($request);
+
         if ($request->tab === 'panel-peralatan') {
             return \Maatwebsite\Excel\Facades\Excel::download(
                 new \App\Exports\PeralatanExport($request),
-                'laporan-peralatan.xlsx'
+                $namaFile . '.xlsx'
             );
         }
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\LaporanExport($request),
-            'laporan-jadwal.xlsx'
+            $namaFile . '.xlsx'
         );
+    }
+
+    /**
+     * Bikin nama file laporan dinamis dari jenis tab + rentang tanggal filter yang
+     * sedang dipakai, supaya tidak selalu "laporan-jadwal.pdf" yang generik.
+     */
+    private function buatNamaLaporan(Request $request): string
+    {
+        $jenis = $request->tab === 'panel-peralatan' ? 'peralatan-digunakan' : 'jadwal-operator';
+
+        if ($request->start && $request->end) {
+            $periode = Carbon::parse($request->start)->format('d-m-Y') . '_sd_' . Carbon::parse($request->end)->format('d-m-Y');
+        } elseif ($request->start) {
+            $periode = 'sejak_' . Carbon::parse($request->start)->format('d-m-Y');
+        } elseif ($request->end) {
+            $periode = 'sampai_' . Carbon::parse($request->end)->format('d-m-Y');
+        } else {
+            $periode = now()->format('d-m-Y');
+        }
+
+        return "laporan-{$jenis}_{$periode}";
     }
 
     public function peralatanIndex(Request $request)

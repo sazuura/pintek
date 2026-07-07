@@ -40,12 +40,14 @@ class UserControllerTest extends TestCase
     {
         $this->actingAs($this->admin)
              ->post(route('admin.users.store'), [
-                 'nama_user' => 'Operator Baru',
-                 'nohp'      => '089999999999',
-                 'email'     => 'opbaru@test.com',
-                 'password'  => 'password',
-                 'role'      => 'operator',
-                 'gedung'    => null,
+                 'nama_user'     => 'Operator Baru',
+                 'jenis_kelamin' => 'L',
+                 'alamat'        => 'Jl. Contoh No. 1',
+                 'nohp'          => '089999999999',
+                 'email'         => 'opbaru@test.com',
+                 'password'      => 'password',
+                 'role'          => 'operator',
+                 'gedung'        => null,
              ])
              ->assertRedirect(route('admin.users.index'));
 
@@ -60,12 +62,14 @@ class UserControllerTest extends TestCase
     {
         $this->actingAs($this->admin)
              ->post(route('admin.users.store'), [
-                 'nama_user' => 'Inventaris Baru',
-                 'nohp'      => '088888888888',
-                 'email'     => 'inv@test.com',
-                 'password'  => 'password',
-                 'role'      => 'inventaris',
-                 'gedung'    => '', // sengaja kosong
+                 'nama_user'     => 'Inventaris Baru',
+                 'jenis_kelamin' => 'L',
+                 'alamat'        => 'Jl. Contoh No. 1',
+                 'nohp'          => '088888888888',
+                 'email'         => 'inv@test.com',
+                 'password'      => 'password',
+                 'role'          => 'inventaris',
+                 'gedung'        => '', // sengaja kosong
              ])
              ->assertSessionHasErrors('gedung');
     }
@@ -75,12 +79,14 @@ class UserControllerTest extends TestCase
     {
         $this->actingAs($this->admin)
              ->post(route('admin.users.store'), [
-                 'nama_user' => 'Inventaris Baru',
-                 'nohp'      => '088888888888',
-                 'email'     => 'inv@test.com',
-                 'password'  => 'password',
-                 'role'      => 'inventaris',
-                 'gedung'    => 'Gedung A',
+                 'nama_user'     => 'Inventaris Baru',
+                 'jenis_kelamin' => 'L',
+                 'alamat'        => 'Jl. Contoh No. 1',
+                 'nohp'          => '088888888888',
+                 'email'         => 'inv@test.com',
+                 'password'      => 'password',
+                 'role'          => 'inventaris',
+                 'gedung'        => 'Gedung A',
              ])
              ->assertRedirect(route('admin.users.index'));
 

@@ -34,13 +34,43 @@ class PenjadwalanService
     {
         $this->validasiBentrokOperator($operatorIds, $data['tanggal'], $data['waktu_mulai'], $data['waktu_selesai'], $jadwal->id_penjadwalan);
 
-        return DB::transaction(function () use ($jadwal, $data, $operatorIds, $peralatanSync) {
+        $operatorLamaIds = $jadwal->operators()->pluck('users.id_user')->all();
+
+        // Dibandingkan manual (bukan $jadwal->wasChanged()) karena waktu_mulai/waktu_selesai
+        // kolom TIME - MySQL menyimpan "09:00:00" tapi form submit "09:00", jadi
+        // wasChanged() akan SELALU melihat itu sebagai "berubah" walau user tidak
+        // mengubah apa-apa. Fingerprint di sini menormalisasi format dulu sebelum
+        // dibandingkan, supaya notifikasi "jadwal diubah" tidak salah terkirim.
+        $fingerprintLama = $this->fingerprintDetail(
+            $jadwal->judul_kegiatan, $jadwal->tanggal->format('Y-m-d'), $jadwal->waktu_mulai,
+            $jadwal->waktu_selesai, $jadwal->platform, $jadwal->keterangan
+        );
+
+        return DB::transaction(function () use ($jadwal, $data, $operatorIds, $peralatanSync, $operatorLamaIds, $fingerprintLama) {
             $jadwal->update($data);
+            $fingerprintBaru = $this->fingerprintDetail(
+                $data['judul_kegiatan'], $data['tanggal'], $data['waktu_mulai'],
+                $data['waktu_selesai'], $data['platform'], $data['keterangan'] ?? null
+            );
+            $adaPerubahanDetail = $fingerprintLama !== $fingerprintBaru;
+
             $jadwal->operators()->sync($operatorIds);
             $jadwal->peralatanReferensi()->sync($peralatanSync);
-            $this->kirimNotifKeOperator($jadwal, $operatorIds);
+            $this->kirimNotifPerubahan($jadwal, $operatorLamaIds, $operatorIds, $adaPerubahanDetail);
             return $jadwal->fresh();
         });
+    }
+
+    private function fingerprintDetail(string $judul, string $tanggal, string $waktuMulai, string $waktuSelesai, string $platform, ?string $keterangan): array
+    {
+        return [
+            'judul_kegiatan' => $judul,
+            'tanggal'        => \Carbon\Carbon::parse($tanggal)->format('Y-m-d'),
+            'waktu_mulai'    => substr($waktuMulai, 0, 5),
+            'waktu_selesai'  => substr($waktuSelesai, 0, 5),
+            'platform'       => $platform,
+            'keterangan'     => $keterangan ?? '',
+        ];
     }
 
     public function hapus(Penjadwalan $jadwal): void
@@ -75,7 +105,7 @@ class PenjadwalanService
                 $alasan,
                 $jadwal->keterangan ?? '-'
             );
-            $this->wa->kirim($operator->nohp, $pesan);
+            $this->wa->kirim($operator->nomor_wa, $pesan);
         }
     }
 
@@ -112,7 +142,41 @@ class PenjadwalanService
                 $jadwal->platform,
                 $jadwal->keterangan ?? '-'
             );
-            $this->wa->kirim($operator->nohp, $pesan);
+            $this->wa->kirim($operator->nomor_wa, $pesan);
+        }
+    }
+
+    /**
+     * Operator yang BARU ditambahkan di edit ini dapat notif "jadwal baru" (baru
+     * pertama kali ditugaskan), sementara operator yang SUDAH ada sebelumnya dan
+     * tetap ditugaskan cuma dinotif "jadwal diubah" - dan hanya kalau memang ada
+     * detail yang berubah (bukan cuma re-sync operator/peralatan tanpa perubahan).
+     * Ini mencegah operator lama dapat notif "jadwal baru" yang salah/membingungkan
+     * tiap kali admin edit jadwal.
+     */
+    private function kirimNotifPerubahan(Penjadwalan $jadwal, array $operatorLamaIds, array $operatorBaruIds, bool $adaPerubahanDetail): void
+    {
+        $operatorBaruSaja = array_diff($operatorBaruIds, $operatorLamaIds);
+        $operatorTetap    = array_intersect($operatorBaruIds, $operatorLamaIds);
+
+        $this->kirimNotifKeOperator($jadwal, $operatorBaruSaja);
+
+        if (!$adaPerubahanDetail) {
+            return;
+        }
+
+        foreach (User::whereIn('id_user', $operatorTetap)->get() as $operator) {
+            if (!$operator->nohp) continue;
+            $pesan = $this->wa->templateJadwalDiubah(
+                $operator->nama_user,
+                $jadwal->tanggal->format('d/m/Y'),
+                $jadwal->waktu_mulai,
+                $jadwal->waktu_selesai,
+                $jadwal->judul_kegiatan,
+                $jadwal->platform,
+                $jadwal->keterangan ?? '-'
+            );
+            $this->wa->kirim($operator->nomor_wa, $pesan);
         }
     }
 }

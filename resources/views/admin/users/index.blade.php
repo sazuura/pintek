@@ -106,7 +106,7 @@
                             <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row" id="{{ $uid }}">
                                 <td colspan="7" class="!p-0">
                                     @php
-                                        $waNumber = $user->nohp ? '62' . ltrim(preg_replace('/\D/', '', $user->nohp), '0') : null;
+                                        $waNumber = $user->nomor_wa;
                                     @endphp
                                     <div class="flex flex-wrap items-start gap-x-8 gap-y-2.5 py-[18px] px-4">
                                         <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
@@ -163,7 +163,7 @@
             @forelse($users as $user)
                 @php
                     $roleColor = ['admin' => 'badge-danger', 'operator' => 'badge-info', 'inventaris' => 'badge-purple'][$user->role] ?? '';
-                    $waNumber  = $user->nohp ? '62' . ltrim(preg_replace('/\D/', '', $user->nohp), '0') : null;
+                    $waNumber  = $user->nomor_wa;
                 @endphp
                 <div class="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-3.5">
                     <div class="flex items-center gap-3 cursor-pointer" data-open-user-modal

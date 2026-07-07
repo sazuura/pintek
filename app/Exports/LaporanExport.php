@@ -1,14 +1,18 @@
 <?php
 namespace App\Exports;
+use App\Exports\Concerns\StyledExport;
 use App\Models\Penjadwalan;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Carbon\Carbon;
 
-class LaporanExport implements FromCollection, WithHeadings, ShouldAutoSize
+class LaporanExport implements FromCollection, WithHeadings, ShouldAutoSize, WithEvents
 {
+    use StyledExport;
+
     protected $request;
     public function __construct(Request $request)
     {

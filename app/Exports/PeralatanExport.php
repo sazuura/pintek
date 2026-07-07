@@ -2,14 +2,18 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\StyledExport;
 use App\Models\Peminjaman;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
 
-class PeralatanExport implements FromCollection, WithHeadings, ShouldAutoSize
+class PeralatanExport implements FromCollection, WithHeadings, ShouldAutoSize, WithEvents
 {
+    use StyledExport;
+
     protected $request;
 
     public function __construct(Request $request)

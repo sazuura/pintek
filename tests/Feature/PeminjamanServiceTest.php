@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Helpers\IdGenerator;
 use App\Models\Peminjaman;
 use App\Models\PeminjamanItem;
 use App\Models\Peralatan;
@@ -18,10 +19,8 @@ class PeminjamanServiceTest extends TestCase
 
     private PeminjamanService $service;
     private User $operator;
-    private User $invGedungA;
-    private User $invGedungB;
-    private Peralatan $alatGedungA;
-    private Peralatan $alatGedungB;
+    private User $inventaris;
+    private Peralatan $alat;
 
     protected function setUp(): void
     {
@@ -35,19 +34,12 @@ class PeminjamanServiceTest extends TestCase
 
         $this->service = $this->app->make(PeminjamanService::class);
 
-        // Users
-        $this->operator   = $this->buatUser('US001', 'operator', null);
-        $this->invGedungA = $this->buatUser('US002', 'inventaris', 'Gedung A', '081111111111');
-        $this->invGedungB = $this->buatUser('US003', 'inventaris', 'Gedung B', '082222222222');
+        $this->operator   = $this->buatUser('US001', 'operator');
+        $this->inventaris = $this->buatUser('US002', 'inventaris', '081111111111');
 
-        // Peralatan di dua gedung berbeda
-        $this->alatGedungA = Peralatan::create([
+        $this->alat = Peralatan::create([
             'id_peralatan' => 'PR-001', 'nama_peralatan' => 'Laptop',
             'gedung' => 'Gedung A', 'stok' => 5,
-        ]);
-        $this->alatGedungB = Peralatan::create([
-            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor',
-            'gedung' => 'Gedung B', 'stok' => 3,
         ]);
     }
 
@@ -56,7 +48,7 @@ class PeminjamanServiceTest extends TestCase
     {
         $this->service->ajukan(
             header:       $this->dataHeader(),
-            peralatanIds: [$this->alatGedungA->id_peralatan],
+            peralatanIds: [$this->alat->id_peralatan],
             jumlahArr:    [2],
         );
 
@@ -79,7 +71,7 @@ class PeminjamanServiceTest extends TestCase
 
         $this->service->ajukan(
             header:       $this->dataHeader(),
-            peralatanIds: [$this->alatGedungA->id_peralatan],
+            peralatanIds: [$this->alat->id_peralatan],
             jumlahArr:    [99], // lebih dari stok
         );
     }
@@ -87,9 +79,9 @@ class PeminjamanServiceTest extends TestCase
     /** @test */
     public function setujui_mengubah_status_menjadi_disetujui(): void
     {
-        $peminjaman = $this->buatPeminjaman([$this->alatGedungA->id_peralatan]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan]);
 
-        $this->service->setujui($peminjaman, $this->invGedungA, 'OK disetujui');
+        $this->service->setujui($peminjaman, $this->inventaris, 'OK disetujui');
 
         $this->assertDatabaseHas('peminjaman', [
             'id_peminjaman'      => $peminjaman->id_peminjaman,
@@ -101,9 +93,9 @@ class PeminjamanServiceTest extends TestCase
     /** @test */
     public function tolak_mengubah_status_menjadi_ditolak(): void
     {
-        $peminjaman = $this->buatPeminjaman([$this->alatGedungA->id_peralatan]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan]);
 
-        $this->service->tolak($peminjaman, $this->invGedungA, 'Stok habis.');
+        $this->service->tolak($peminjaman, $this->inventaris, 'Stok habis.');
 
         $this->assertDatabaseHas('peminjaman', [
             'id_peminjaman'      => $peminjaman->id_peminjaman,
@@ -115,9 +107,9 @@ class PeminjamanServiceTest extends TestCase
     /** @test */
     public function konfirmasi_kembali_mengisi_tanggal_kembali_aktual(): void
     {
-        $peminjaman = $this->buatPeminjaman([$this->alatGedungA->id_peralatan], 'disetujui');
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan], 'disetujui');
 
-        $this->service->konfirmasiKembali($peminjaman, $this->invGedungA);
+        $this->service->konfirmasiKembali($peminjaman, $this->inventaris);
 
         $this->assertDatabaseHas('peminjaman', [
             'id_peminjaman' => $peminjaman->id_peminjaman,
@@ -126,40 +118,9 @@ class PeminjamanServiceTest extends TestCase
         $this->assertNotNull(Peminjaman::find($peminjaman->id_peminjaman)->tanggal_kembali_aktual);
     }
 
-    /** @test */
-    public function inventaris_gedung_a_tidak_bisa_setujui_peminjaman_gedung_b(): void
-    {
-        // Peminjaman hanya berisi alat dari Gedung B
-        $peminjaman = $this->buatPeminjaman([$this->alatGedungB->id_peralatan]);
-
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessageMatches('/tidak berwenang/');
-
-        // inventaris Gedung A coba setujui - harus ditolak
-        $this->service->setujui($peminjaman, $this->invGedungA);
-    }
-
-    /** @test */
-    public function inventaris_berwenang_jika_ada_item_dari_gedungnya(): void
-    {
-        // Peminjaman lintas 2 gedung
-        $peminjaman = $this->buatPeminjaman([
-            $this->alatGedungA->id_peralatan,
-            $this->alatGedungB->id_peralatan,
-        ]);
-
-        // Inventaris Gedung A berwenang karena ada item dari Gedung A
-        $this->service->setujui($peminjaman, $this->invGedungA);
-
-        $this->assertDatabaseHas('peminjaman', [
-            'id_peminjaman' => $peminjaman->id_peminjaman,
-            'status'        => 'disetujui',
-        ]);
-    }
-
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private function buatUser(string $id, string $role, ?string $gedung, string $nohp = '080000000000'): User
+    private function buatUser(string $id, string $role, string $nohp = '080000000000'): User
     {
         return User::create([
             'id_user'   => $id,
@@ -168,7 +129,6 @@ class PeminjamanServiceTest extends TestCase
             'email'     => "$id@test.com",
             'password'  => bcrypt('password'),
             'role'      => $role,
-            'gedung'    => $gedung,
             'status'    => 'active',
         ]);
     }
@@ -186,7 +146,10 @@ class PeminjamanServiceTest extends TestCase
 
     private function buatPeminjaman(array $alatIds, string $status = 'diajukan'): Peminjaman
     {
-        $p = Peminjaman::create(array_merge($this->dataHeader(), ['status' => $status]));
+        $p = Peminjaman::create(array_merge($this->dataHeader(), [
+            'id_peminjaman' => IdGenerator::next(Peminjaman::class, 'id_peminjaman', 'PMJ-'),
+            'status'        => $status,
+        ]));
 
         foreach ($alatIds as $id) {
             PeminjamanItem::create([

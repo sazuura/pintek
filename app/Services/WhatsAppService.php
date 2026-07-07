@@ -39,12 +39,43 @@ class WhatsAppService
                 CURLOPT_TIMEOUT    => 10,
             ]);
             $response = curl_exec($curl);
+            $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
             $error    = curl_error($curl);
             curl_close($curl);
+
             if ($error) {
-                Log::error('WhatsAppService: cURL error.', ['nomor' => $nomor, 'error' => $error]);
+                Log::error('WhatsAppService: cURL error (koneksi gagal/timeout).', [
+                    'nomor' => $nomor,
+                    'error' => $error,
+                ]);
                 return false;
             }
+
+            // Fonnte tetap balas HTTP 200 walau pesannya sendiri ditolak (nomor tidak
+            // valid, kuota habis, dsb) - status keberhasilan yang SEBENARNYA ada di
+            // field "status" pada body JSON, bukan cuma dari sukses/tidaknya koneksi.
+            $data = json_decode((string) $response, true);
+            $statusApi = is_array($data) ? ($data['status'] ?? null) : null;
+
+            if ($statusApi === false) {
+                Log::error('WhatsAppService: Fonnte menolak pesan.', [
+                    'nomor'     => $nomor,
+                    'http_code' => $httpCode,
+                    'alasan'    => $data['reason'] ?? $data['detail'] ?? 'tidak diketahui',
+                    'response'  => $response,
+                ]);
+                return false;
+            }
+
+            if ($httpCode < 200 || $httpCode >= 300) {
+                Log::error('WhatsAppService: Fonnte membalas status HTTP non-2xx.', [
+                    'nomor'     => $nomor,
+                    'http_code' => $httpCode,
+                    'response'  => $response,
+                ]);
+                return false;
+            }
+
             Log::info('WhatsAppService: pesan terkirim.', [
                 'nomor'    => $nomor,
                 'response' => $response,
@@ -75,6 +106,26 @@ class WhatsAppService
             . "💻 Platform: {$platform}\n"
             . "📌 Keterangan: {$keterangan}\n\n"
             . "Harap cek sistem untuk detail lengkap dan konfirmasi kehadiran Anda.\n"
+            . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
+    }
+
+    public function templateJadwalDiubah(
+        string $namaOperator,
+        string $tanggal,
+        string $waktuMulai,
+        string $waktuSelesai,
+        string $judulKegiatan,
+        string $platform,
+        string $keterangan
+    ): string {
+        return "✏️ *JADWAL RAPAT DIUBAH*\n\n"
+            . "Halo *{$namaOperator}*,\n"
+            . "Detail rapat *{$judulKegiatan}* yang Anda tangani telah diperbarui:\n\n"
+            . "📅 Tanggal : {$tanggal}\n"
+            . "⏰ Waktu   : {$waktuMulai} - {$waktuSelesai} WIB\n"
+            . "💻 Platform: {$platform}\n"
+            . "📌 Keterangan: {$keterangan}\n\n"
+            . "Harap cek sistem untuk detail terbaru.\n"
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
     }
 
@@ -135,6 +186,17 @@ class WhatsAppService
             . "Silakan login ke sistem untuk menyetujui atau menolak pengajuan ini.\n"
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
         return $baris;
+    }
+
+    public function templateOtpLupaPassword(string $namaUser, string $kode): string
+    {
+        return "🔐 *RESET KATA SANDI*\n\n"
+            . "Halo *{$namaUser}*,\n"
+            . "Kode verifikasi untuk atur ulang kata sandi akun kamu:\n\n"
+            . "*{$kode}*\n\n"
+            . "Kode ini berlaku 10 menit. Jangan berikan kode ini ke siapa pun, termasuk pihak yang mengaku dari Diskominfotik.\n"
+            . "Kalau kamu tidak merasa meminta ini, abaikan pesan ini.\n\n"
+            . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
     }
 
     public function templatePeminjamanDibatalkan(

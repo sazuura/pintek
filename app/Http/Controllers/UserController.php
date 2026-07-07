@@ -35,6 +35,7 @@ class UserController extends Controller
             'email'         => 'required|email|unique:users,email',
             'password'      => 'required|string|min:6',
             'role'          => 'required|in:admin,operator,inventaris',
+            'gedung'        => 'required_if:role,inventaris|nullable|string|max:100',
         ], [
             'gedung.required_if' => 'Nama gedung wajib diisi untuk role inventaris.',
         ]);
@@ -47,6 +48,7 @@ class UserController extends Controller
             'email'         => $data['email'],
             'password'      => bcrypt($data['password']),
             'role'          => $data['role'],
+            'gedung'        => $data['role'] === 'inventaris' ? $data['gedung'] : null,
             'status'        => 'active',
         ]);
         return redirect()->route('admin.users.index')
@@ -67,6 +69,7 @@ class UserController extends Controller
             'email'         => 'required|email|unique:users,email,' . $id . ',id_user',
             'password'      => 'nullable|string|min:6',
             'role'          => 'required|in:admin,operator,inventaris',
+            'gedung'        => 'required_if:role,inventaris|nullable|string|max:100',
         ], [
             'gedung.required_if' => 'Nama gedung wajib diisi untuk role inventaris.',
         ]);
@@ -77,6 +80,7 @@ class UserController extends Controller
             'nohp'          => $data['nohp'],
             'email'         => $data['email'],
             'role'          => $data['role'],
+            'gedung'        => $data['role'] === 'inventaris' ? $data['gedung'] : null,
         ];
         if (!empty($data['password'])) {
             $update['password'] = bcrypt($data['password']);

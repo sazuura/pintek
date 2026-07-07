@@ -13,19 +13,32 @@ class OperatorController extends Controller
         $userId = auth()->user()->id_user;
         $today  = Carbon::today('Asia/Jakarta');
 
+        $bulanAktif = $request->query('bulan')
+            ? Carbon::createFromFormat('Y-m', $request->query('bulan'))->startOfMonth()
+            : now()->startOfMonth();
+        $awalBulan  = $bulanAktif->copy()->startOfMonth()->format('Y-m-d');
+        $akhirBulan = $bulanAktif->copy()->endOfMonth()->format('Y-m-d');
+
         $jadwalQuery     = Penjadwalan::whereHas('operators', fn($q) => $q->where('users.id_user', $userId));
         $peminjamanQuery = Peminjaman::where('id_user', $userId);
 
+        // Jadwal & pengajuan dibatasi ke bulan yang lagi dilihat di kalender - jadi kalau
+        // kalender dipindah ke bulan lain, kartu statistik & chart ikut menyesuaikan.
         $stats = [
-            'jumlahJadwal'   => (clone $jadwalQuery)->where('status', '!=', 'dibatalkan')->whereDate('tanggal', '>=', $today)->count(),
-            'menungguCount'  => (clone $peminjamanQuery)->where('status', 'diajukan')->count(),
-            'disetujuiCount' => (clone $peminjamanQuery)->where('status', 'disetujui')->count(),
-            'ditolakCount'   => (clone $peminjamanQuery)->where('status', 'ditolak')->count(),
+            'jumlahJadwal'   => (clone $jadwalQuery)->where('status', '!=', 'dibatalkan')
+                ->whereDate('tanggal', '>=', $today)
+                ->whereBetween('tanggal', [$awalBulan, $akhirBulan])
+                ->count(),
+            'menungguCount'  => (clone $peminjamanQuery)->where('status', 'diajukan')->whereBetween('tanggal_pinjam', [$awalBulan, $akhirBulan])->count(),
+            'disetujuiCount' => (clone $peminjamanQuery)->where('status', 'disetujui')->whereBetween('tanggal_pinjam', [$awalBulan, $akhirBulan])->count(),
+            'ditolakCount'   => (clone $peminjamanQuery)->where('status', 'ditolak')->whereBetween('tanggal_pinjam', [$awalBulan, $akhirBulan])->count(),
         ];
 
         // Semua peminjaman yang sedang dipakai (sudah disetujui, belum ditandai dikembalikan
         // oleh inventaris) - bukan cuma yang sudah lewat rencana kembalinya, karena pengembalian
         // H+1/H+2 (apalagi kalau lewat akhir pekan) itu wajar dan bukan berarti "terlambat".
+        // Ini daftar tindakan yang perlu dilakukan SEKARANG, jadi sengaja TIDAK ikut
+        // dibatasi ke bulan kalender (selalu tampilkan yang benar-benar masih perlu dikembalikan).
         $perluDikembalikan = (clone $peminjamanQuery)
             ->where('status', 'disetujui')
             ->with('items.peralatan')
@@ -33,19 +46,22 @@ class OperatorController extends Controller
             ->paginate(4, ['*'], 'kembali_page')
             ->withQueryString();
 
-        // Alat yang paling sering dipinjam operator ini sendiri (hanya peminjaman yang benar-benar
-        // terjadi: disetujui/dikembalikan), buat dilihat sebagai chart di atas daftar pengembalian.
+        // Alat yang paling sering dipinjam operator ini sendiri di bulan yang lagi dilihat
+        // (hanya peminjaman yang benar-benar terjadi: disetujui/dikembalikan).
         $topPeralatan = \App\Models\PeminjamanItem::query()
             ->join('peminjaman', 'peminjaman_item.id_peminjaman', '=', 'peminjaman.id_peminjaman')
             ->join('peralatan', 'peminjaman_item.id_peralatan', '=', 'peralatan.id_peralatan')
             ->where('peminjaman.id_user', $userId)
             ->whereIn('peminjaman.status', ['disetujui', 'dikembalikan'])
+            ->whereBetween('peminjaman.tanggal_pinjam', [$awalBulan, $akhirBulan])
             ->selectRaw('peralatan.nama_peralatan, SUM(peminjaman_item.jumlah) as total_dipinjam')
             ->groupBy('peralatan.nama_peralatan')
             ->orderByDesc('total_dipinjam')
             ->limit(6)
             ->get();
 
+        // Aktivitas Terbaru sengaja TETAP selalu "14 hari terakhir dari hari ini" terlepas
+        // dari bulan yang dipilih di kalender.
         $activities = $this->recentActivities($userId);
         $kalender   = $this->jadwalKalender($request->query('bulan'), $userId);
 

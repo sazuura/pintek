@@ -7,10 +7,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Drop tabel dokumentasi dan absensi
-        Schema::dropIfExists('dokumentasi');
-        Schema::dropIfExists('absensi');
-
         // 2. Drop foreign key id_pemateri di tabel penjadwalan dan ubah ke id_user
         Schema::table('penjadwalan', function (Blueprint $table) {
             $table->dropForeign(['id_pemateri']);
