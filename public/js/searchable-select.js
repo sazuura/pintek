@@ -159,11 +159,13 @@
         // dinamis peralatan/operator, atau field form lewat <x-select>) ditandai lewat
         // class 'flex-1' / 'w-full' di elemen aslinya - wrapper ikut melebar. Selain
         // itu (mis. select filter di toolbar) wrapper dibuat menyesuaikan isi saja,
-        // supaya tidak melebar aneh mengisi sisa ruang flex toolbar.
+        // supaya tidak melebar aneh mengisi sisa ruang flex toolbar - tapi tetap diberi
+        // lebar minimum supaya label seperti "Gedung B (Persandian)" tidak kepotong
+        // ellipsis di kotak yang terlalu sempit.
         var fill = select.classList.contains('flex-1') || select.classList.contains('w-full');
 
         var wrapper = document.createElement('div');
-        wrapper.className = 'searchable-select relative' + (fill ? ' flex-1 min-w-0' : ' inline-block');
+        wrapper.className = 'searchable-select relative' + (fill ? ' flex-1 min-w-0' : ' inline-block min-w-[190px]');
         select.parentNode.insertBefore(wrapper, select);
         wrapper.appendChild(select);
         select.classList.add('searchable-select-native', 'hidden');
