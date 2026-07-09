@@ -184,15 +184,37 @@ class OperatorController extends Controller
 
     public function peralatanIndex(Request $request)
     {
+        // Ambang batas status disamakan persis dengan Peralatan::getStatusLabelAttribute()
+        // (>2 Tersedia, 1-2 Hampir Habis, <=0 Tidak Tersedia) supaya filter konsisten
+        // dengan badge status yang ditampilkan di tiap kartu.
+        $stokTersediaRaw = '(stok - COALESCE(rusak,0))';
+
         $peralatan = Peralatan::query()
             ->when($request->search, fn($q, $s) =>
                 $q->where('nama_peralatan', 'like', "%{$s}%")
                   ->orWhere('gedung',       'like', "%{$s}%")
             )
             ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
-            ->orderBy('gedung')
-            ->orderBy('nama_peralatan')
-            ->paginate(12)
+            ->when($request->status, fn($q, $v) => match ($v) {
+                'tersedia'       => $q->whereRaw("{$stokTersediaRaw} > 2"),
+                'kritis'         => $q->whereRaw("{$stokTersediaRaw} between 1 and 2"),
+                'tidak_tersedia' => $q->whereRaw("{$stokTersediaRaw} <= 0"),
+                default          => $q,
+            })
+            ->when($request->kondisi, fn($q, $v) => match ($v) {
+                'baik'  => $q->whereRaw('COALESCE(rusak,0) <= 0'),
+                'rusak' => $q->whereRaw('COALESCE(rusak,0) > 0'),
+                default => $q,
+            })
+            ->when($request->urutkan, fn($q, $v) => match ($v) {
+                'gedung'    => $q->orderBy('gedung')->orderBy('nama_peralatan'),
+                'nama_asc'  => $q->orderBy('nama_peralatan'),
+                'nama_desc' => $q->orderByDesc('nama_peralatan'),
+                'stok_asc'  => $q->orderByRaw("{$stokTersediaRaw} asc"),
+                'stok_desc' => $q->orderByRaw("{$stokTersediaRaw} desc"),
+                default     => $q->orderBy('gedung')->orderBy('nama_peralatan'),
+            }, fn($q) => $q->orderBy('gedung')->orderBy('nama_peralatan'))
+            ->paginate(10)
             ->withQueryString();
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
         return view('operator.peralatan.index', compact('peralatan', 'gedungList'));

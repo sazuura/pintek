@@ -26,7 +26,22 @@
                     </option>
                     <option value="kritis" {{ request('status') == 'kritis' ? 'selected' : '' }}>Hampir Habis</option>
                 </select>
-                @if(request()->hasAny(['search', 'status']))
+                <select name="kondisi" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="">Semua Kondisi</option>
+                    <option value="baik" {{ request('kondisi') == 'baik' ? 'selected' : '' }}>Baik</option>
+                    <option value="rusak" {{ request('kondisi') == 'rusak' ? 'selected' : '' }}>Rusak</option>
+                </select>
+                <select name="urutkan" onchange="this.form.submit()" data-placeholder="-- Urutkan --"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="" disabled {{ request('urutkan') ? '' : 'selected' }}>-- Urutkan --</option>
+                    <option value="gedung" {{ request('urutkan') == 'gedung' ? 'selected' : '' }}>Gedung</option>
+                    <option value="nama_asc" {{ request('urutkan') == 'nama_asc' ? 'selected' : '' }}>Nama (A-Z)</option>
+                    <option value="nama_desc" {{ request('urutkan') == 'nama_desc' ? 'selected' : '' }}>Nama (Z-A)</option>
+                    <option value="stok_desc" {{ request('urutkan') == 'stok_desc' ? 'selected' : '' }}>Stok Terbanyak</option>
+                    <option value="stok_asc" {{ request('urutkan') == 'stok_asc' ? 'selected' : '' }}>Stok Tersedikit</option>
+                </select>
+                @if(request()->hasAny(['search', 'status', 'kondisi', 'urutkan']))
                     <a href="{{ route('admin.peralatan.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                         <i class="bx bx-x"></i> Reset</a>
@@ -39,7 +54,7 @@
 
         <div id="hasil-peralatan">
         @if($peralatan->count())
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
+            <div class="grid grid-cols-5 max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 @foreach($peralatan as $item)
                     <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
                         @if($item->foto)
@@ -73,12 +88,6 @@
                                     <div class="flex justify-between">
                                         <span>Rusak</span>
                                         <span class="text-[#e74c3c]">{{ $item->rusak }}</span>
-                                    </div>
-                                @endif
-                                @if($item->perbaikan > 0)
-                                    <div class="flex justify-between">
-                                        <span>Perbaikan</span>
-                                        <span class="text-[#f39c12]">{{ $item->perbaikan }}</span>
                                     </div>
                                 @endif
                                 <div class="flex justify-between border-t border-page-bg dark:border-page-bg-dark pt-[3px] mt-0.5">

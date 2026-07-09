@@ -131,6 +131,8 @@ class PenjadwalanService
 
     private function kirimNotifKeOperator(Penjadwalan $jadwal, array $operatorIds): void
     {
+        $daftarPeralatan = $this->formatPeralatanReferensi($jadwal);
+
         foreach (User::whereIn('id_user', $operatorIds)->get() as $operator) {
             if (!$operator->nohp) continue;
             $pesan = $this->wa->templateJadwalBaru(
@@ -140,10 +142,27 @@ class PenjadwalanService
                 $jadwal->waktu_selesai,
                 $jadwal->judul_kegiatan,
                 $jadwal->platform,
-                $jadwal->keterangan ?? '-'
+                $jadwal->keterangan ?? '-',
+                $daftarPeralatan
             );
             $this->wa->kirim($operator->nomor_wa, $pesan);
         }
+    }
+
+    /**
+     * Format daftar peralatan referensi (catatan acuan admin, bukan pengajuan
+     * peminjaman - lihat form Tambah/Edit Jadwal) untuk ditampilkan di notif WA,
+     * diposisikan di bawah baris Keterangan. Null kalau jadwal tidak punya
+     * rekomendasi peralatan sama sekali (baris ini tidak ditampilkan).
+     */
+    private function formatPeralatanReferensi(Penjadwalan $jadwal): ?string
+    {
+        $items = $jadwal->load('peralatanReferensi')->peralatanReferensi;
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        return $items->map(fn($p) => "   - {$p->nama_peralatan} (x{$p->pivot->jumlah})")->implode("\n");
     }
 
     /**
@@ -165,6 +184,8 @@ class PenjadwalanService
             return;
         }
 
+        $daftarPeralatan = $this->formatPeralatanReferensi($jadwal);
+
         foreach (User::whereIn('id_user', $operatorTetap)->get() as $operator) {
             if (!$operator->nohp) continue;
             $pesan = $this->wa->templateJadwalDiubah(
@@ -174,7 +195,8 @@ class PenjadwalanService
                 $jadwal->waktu_selesai,
                 $jadwal->judul_kegiatan,
                 $jadwal->platform,
-                $jadwal->keterangan ?? '-'
+                $jadwal->keterangan ?? '-',
+                $daftarPeralatan
             );
             $this->wa->kirim($operator->nomor_wa, $pesan);
         }

@@ -52,13 +52,13 @@
 
         {{-- reCAPTCHA --}}
         {{-- Widget resminya cuma tersedia ukuran normal (304x78) atau compact - di-scale up
-             (bukan resize) via CSS transform biar lebar visualnya sepadan dengan field lain
-             (356px). Wrapper diberi ukuran hasil scale supaya ruang di bawahnya (tombol Masuk)
-             tidak tertimpa. --}}
+             (bukan resize) via CSS transform biar lebar visualnya sepadan dengan field lain.
+             Skala dihitung dinamis lewat JS (bukan angka tetap) berdasarkan lebar kartu yang
+             tersedia, supaya di layar HP sempit widget-nya ikut mengecil, bukan overflow/kepotong. --}}
         @if(class_exists(\Anhskohbo\NoCaptcha\NoCaptchaServiceProvider::class))
             <div class="mb-[18px]">
-                <div class="w-[356px] max-w-full h-[91px]">
-                    <div class="origin-top-left scale-[1.17]">
+                <div id="recaptcha-wrap" class="w-full max-w-[356px] overflow-hidden">
+                    <div id="recaptcha-scale" class="origin-top-left">
                         {!! NoCaptcha::display() !!}
                     </div>
                 </div>

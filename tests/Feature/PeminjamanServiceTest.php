@@ -29,6 +29,8 @@ class PeminjamanServiceTest extends TestCase
         // Mock WA - test tidak kirim WA sungguhan
         $waMock = Mockery::mock(WhatsAppService::class);
         $waMock->shouldReceive('templatePeminjamanBaru')->andReturn('pesan test');
+        $waMock->shouldReceive('templatePeminjamanDiubah')->andReturn('pesan test');
+        $waMock->shouldReceive('templatePeminjamanDibatalkan')->andReturn('pesan test');
         $waMock->shouldReceive('kirim')->andReturn(true);
         $this->app->instance(WhatsAppService::class, $waMock);
 
@@ -64,16 +66,49 @@ class PeminjamanServiceTest extends TestCase
     }
 
     /** @test */
-    public function ajukan_gagal_jika_stok_tidak_cukup(): void
+    public function ajukan_langsung_mengurangi_stok_supaya_tidak_bisa_di_spam(): void
     {
+        $alatSatuStok = Peralatan::create([
+            'id_peralatan' => 'PR-MOUSE', 'nama_peralatan' => 'Mouse',
+            'gedung' => 'Gedung A', 'stok' => 1,
+        ]);
+
+        $this->service->ajukan(
+            header:       $this->dataHeader(),
+            peralatanIds: [$alatSatuStok->id_peralatan],
+            jumlahArr:    [1],
+        );
+
+        $this->assertSame(0, $alatSatuStok->fresh()->stok);
+
+        // Stok sudah 0 - pengajuan kedua untuk alat yang sama (belum di-ACC/ditolak
+        // sama sekali) harus gagal, bukan lolos terus seperti sebelum ada reservasi ini.
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/tidak mencukupi/');
 
         $this->service->ajukan(
             header:       $this->dataHeader(),
-            peralatanIds: [$this->alat->id_peralatan],
-            jumlahArr:    [99], // lebih dari stok
+            peralatanIds: [$alatSatuStok->id_peralatan],
+            jumlahArr:    [1],
         );
+    }
+
+    /** @test */
+    public function ajukan_gagal_jika_stok_tidak_cukup(): void
+    {
+        try {
+            $this->service->ajukan(
+                header:       $this->dataHeader(),
+                peralatanIds: [$this->alat->id_peralatan],
+                jumlahArr:    [99], // lebih dari stok
+            );
+            $this->fail('Seharusnya melempar RuntimeException.');
+        } catch (\RuntimeException $e) {
+            $this->assertMatchesRegularExpression('/tidak mencukupi/', $e->getMessage());
+        }
+
+        // Gagal validasi harus rollback total - stok tidak boleh berkurang sedikit pun.
+        $this->assertSame(5, $this->alat->fresh()->stok);
     }
 
     /** @test */
@@ -105,9 +140,80 @@ class PeminjamanServiceTest extends TestCase
     }
 
     /** @test */
-    public function konfirmasi_kembali_mengisi_tanggal_kembali_aktual(): void
+    public function tolak_mengembalikan_stok_yang_sudah_direservasi(): void
+    {
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan]); // stok jadi 4
+
+        $this->service->tolak($peminjaman, $this->inventaris, 'Stok habis.');
+
+        $this->assertSame(5, $this->alat->fresh()->stok);
+    }
+
+    /** @test */
+    public function batalkan_mengembalikan_stok_yang_sudah_direservasi(): void
+    {
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan]); // stok jadi 4
+
+        $this->service->batalkan($peminjaman, 'Rapat dibatalkan.');
+
+        $this->assertSame(5, $this->alat->fresh()->stok);
+    }
+
+    /** @test */
+    public function ubah_mengganti_keperluan_dan_item_peminjaman(): void
+    {
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan]);
+        $alatKedua = Peralatan::create([
+            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor',
+            'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+
+        $this->service->ubah(
+            peminjaman:   $peminjaman,
+            header:       ['keperluan' => 'Rapat dinas (diperbarui)'] + $this->dataHeader(),
+            peralatanIds: [$alatKedua->id_peralatan],
+            jumlahArr:    [2],
+        );
+
+        $this->assertDatabaseHas('peminjaman', [
+            'id_peminjaman' => $peminjaman->id_peminjaman,
+            'keperluan'     => 'Rapat dinas (diperbarui)',
+        ]);
+        $this->assertDatabaseMissing('peminjaman_item', [
+            'id_peminjaman' => $peminjaman->id_peminjaman,
+            'id_peralatan'  => 'PR-001',
+        ]);
+        $this->assertDatabaseHas('peminjaman_item', [
+            'id_peminjaman' => $peminjaman->id_peminjaman,
+            'id_peralatan'  => 'PR-002',
+            'jumlah'        => 2,
+        ]);
+
+        // Reservasi alat lama (PR-001) dilepas kembali, reservasi alat baru (PR-002) dibuat.
+        $this->assertSame(5, $this->alat->fresh()->stok);
+        $this->assertSame(1, $alatKedua->fresh()->stok);
+    }
+
+    /** @test */
+    public function ubah_gagal_jika_status_bukan_menunggu(): void
     {
         $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan], 'disetujui');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/Menunggu/');
+
+        $this->service->ubah(
+            peminjaman:   $peminjaman,
+            header:       $this->dataHeader(),
+            peralatanIds: [$this->alat->id_peralatan],
+            jumlahArr:    [1],
+        );
+    }
+
+    /** @test */
+    public function konfirmasi_kembali_mengisi_tanggal_kembali_aktual(): void
+    {
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan], 'disetujui'); // stok jadi 4
 
         $this->service->konfirmasiKembali($peminjaman, $this->inventaris);
 
@@ -116,6 +222,7 @@ class PeminjamanServiceTest extends TestCase
             'status'        => 'dikembalikan',
         ]);
         $this->assertNotNull(Peminjaman::find($peminjaman->id_peminjaman)->tanggal_kembali_aktual);
+        $this->assertSame(5, $this->alat->fresh()->stok);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -157,6 +264,10 @@ class PeminjamanServiceTest extends TestCase
                 'id_peralatan'  => $id,
                 'jumlah'        => 1,
             ]);
+            // Samakan dengan perilaku ajukan() sungguhan (stok direservasi/dikurangi begitu
+            // diajukan) supaya test tolak/batalkan/ubah/konfirmasiKembali yang memverifikasi
+            // pengembalian stok berjalan dari kondisi awal yang realistis.
+            Peralatan::whereKey($id)->decrement('stok', 1);
         }
 
         return $p;

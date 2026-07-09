@@ -24,13 +24,6 @@ class AlatTerpasang extends Model
         'tanggal_pasang' => 'date',
     ];
 
-    public function riwayat()
-    {
-        return $this->hasMany(AlatTerpasangRiwayat::class, 'id_alat_terpasang', 'id_alat_terpasang')
-            ->orderByDesc('tanggal')
-            ->orderByDesc('id');
-    }
-
     public function peralatan()
     {
         return $this->belongsTo(Peralatan::class, 'id_peralatan', 'id_peralatan');
@@ -39,18 +32,16 @@ class AlatTerpasang extends Model
     public function getKondisiLabelAttribute(): string
     {
         return match ($this->kondisi) {
-            'rusak'        => 'Rusak',
-            'perlu_servis' => 'Perlu Servis',
-            default        => 'Baik',
+            'rusak'  => 'Rusak',
+            default  => 'Baik',
         };
     }
 
     public function getKondisiBadgeClassAttribute(): string
     {
         return match ($this->kondisi) {
-            'rusak'        => 'badge-danger',
-            'perlu_servis' => 'badge-warning',
-            default        => 'badge-active',
+            'rusak'  => 'badge-danger',
+            default  => 'badge-active',
         };
     }
 

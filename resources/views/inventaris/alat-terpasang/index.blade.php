@@ -15,6 +15,36 @@
             </a>
         </div>
 
+        @if($ringkasan->isNotEmpty())
+            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-4 mb-4">
+                <h3 class="text-[13px] font-semibold text-text dark:text-text-dark mb-3 flex items-center gap-1.5">
+                    <i class="bx bx-bar-chart-alt-2"></i> Ringkasan Penempatan per Alat
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[13px] border-collapse">
+                        <thead>
+                            <tr class="text-left text-text-muted border-b border-page-bg dark:border-page-bg-dark">
+                                <th class="py-1.5 pr-3 font-medium">Nama Alat</th>
+                                <th class="py-1.5 px-3 font-medium text-right">Terpasang</th>
+                                <th class="py-1.5 px-3 font-medium text-right">Tersimpan (Gudang)</th>
+                                <th class="py-1.5 pl-3 font-medium text-right">Total Tersedia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($ringkasan as $r)
+                                <tr class="border-b border-page-bg dark:border-page-bg-dark last:border-0">
+                                    <td class="py-1.5 pr-3 text-text dark:text-text-dark">{{ $r['nama_peralatan'] }}</td>
+                                    <td class="py-1.5 px-3 text-right font-semibold text-primary">{{ $r['jumlah_terpasang'] }}</td>
+                                    <td class="py-1.5 px-3 text-right text-text dark:text-text-dark">{{ $r['jumlah_tersimpan'] }}</td>
+                                    <td class="py-1.5 pl-3 text-right text-text-muted">{{ $r['stok_tersedia'] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-md:flex-col max-md:items-stretch">
             <form method="GET" action="{{ route('inventaris.alat-terpasang.index') }}" class="contents">
                 <div class="relative flex-1 min-w-[180px] max-w-[300px] max-md:max-w-full">
@@ -22,14 +52,7 @@
                     <input type="text" name="search" data-live-search="#hasil-alat-terpasang" autocomplete="off" placeholder="Cari nama alat / gedung..." value="{{ request('search') }}"
                         class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
                 </div>
-                <select name="kondisi" onchange="this.form.submit()"
-                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
-                    <option value="">Semua Kondisi</option>
-                    <option value="baik" {{ request('kondisi') == 'baik' ? 'selected' : '' }}>Baik</option>
-                    <option value="perlu_servis" {{ request('kondisi') == 'perlu_servis' ? 'selected' : '' }}>Perlu Servis</option>
-                    <option value="rusak" {{ request('kondisi') == 'rusak' ? 'selected' : '' }}>Rusak</option>
-                </select>
-                @if(request()->hasAny(['search', 'kondisi']))
+                @if(request()->hasAny(['search']))
                     <a href="{{ route('inventaris.alat-terpasang.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                         <i class="bx bx-x"></i> Reset</a>
@@ -42,7 +65,7 @@
 
         <div id="hasil-alat-terpasang">
         @if($alat->count())
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
+            <div class="grid grid-cols-5 max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 @foreach($alat as $item)
                     <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
                         @if($item->foto)

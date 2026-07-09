@@ -18,4 +18,24 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // reCAPTCHA "normal" cuma tersedia ukuran tetap 304x78 dari Google - di-scale
+    // pakai CSS transform biar lebar visualnya sepadan dengan field lain. Skala
+    // dihitung dari lebar kartu yang BENERAN tersedia (bukan angka tetap), supaya
+    // di layar HP sempit widget-nya ikut mengecil mengikuti kartu, bukan overflow
+    // atau kepotong kayak sebelumnya.
+    var recaptchaWrap  = document.getElementById('recaptcha-wrap');
+    var recaptchaScale = document.getElementById('recaptcha-scale');
+    if (recaptchaWrap && recaptchaScale) {
+        var NATIVE_WIDTH = 304, NATIVE_HEIGHT = 78, MAX_SCALE = 1.17;
+
+        var applyScale = function () {
+            var scale = Math.min(recaptchaWrap.clientWidth / NATIVE_WIDTH, MAX_SCALE);
+            recaptchaScale.style.transform = 'scale(' + scale + ')';
+            recaptchaWrap.style.height = Math.round(NATIVE_HEIGHT * scale) + 'px';
+        };
+
+        applyScale();
+        window.addEventListener('resize', applyScale);
+    }
+
 });

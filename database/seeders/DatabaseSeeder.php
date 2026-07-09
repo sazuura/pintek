@@ -98,9 +98,8 @@ class DatabaseSeeder extends Seeder
 
         foreach ($gedungList as $gedung) {
             foreach ($barangTemplate as $barang) {
-                $stok      = $faker->numberBetween(5, 20);
-                $rusak     = $faker->optional(0.3, 0)->numberBetween(0, 2); 
-                $perbaikan = $faker->optional(0.2, 0)->numberBetween(0, 1); 
+                $stok  = $faker->numberBetween(5, 20);
+                $rusak = $faker->optional(0.3, 0)->numberBetween(0, 2);
 
                 $idAlat = 'A-' . strtoupper($barang['kode']) . '-' . $faker->unique()->numerify('###');
                 $peralatanIds[] = $idAlat;
@@ -113,7 +112,6 @@ class DatabaseSeeder extends Seeder
                     'lokasi_detail'  => $faker->randomElement(['Ruang Rapat Utama', 'Aula Lantai 2', 'Gudang Logistik', 'Ruang Server']),
                     'stok'           => $stok,
                     'rusak'          => $rusak,
-                    'perbaikan'      => $perbaikan,
                     'keterangan'     => $faker->optional(0.4)->sentence(),
                     'foto'           => 'peralatan/' . $faker->numberBetween(1, 10) . '.jpg',
                 ]);

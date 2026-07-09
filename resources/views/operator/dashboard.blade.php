@@ -27,7 +27,7 @@
             {{-- Stat cards --}}
             <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                    <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] text-[#3C91E6]"><i class="bx bxs-calendar"></i></div>
+                    <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] dark:bg-[#3C91E6]/15 text-[#3C91E6]"><i class="bx bxs-calendar"></i></div>
                     <div>
                         <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahJadwal }}</h3>
                         <p class="text-[13px] text-text-muted m-0">Jadwal Mendatang</p>
@@ -43,7 +43,7 @@
                 </div>
 
                 <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                    <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e6f9f0] text-[#1abc9c]"><i class="bx bxs-check-circle"></i></div>
+                    <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e6f9f0] dark:bg-[#1abc9c]/15 text-[#1abc9c]"><i class="bx bxs-check-circle"></i></div>
                     <div>
                         <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $disetujuiCount }}</h3>
                         <p class="text-[13px] text-text-muted m-0">Disetujui / Dipakai</p>
@@ -90,11 +90,11 @@
                                 $hariIni = today();
                                 if ($rencana->lt($hariIni)) {
                                     $labelBadge = $rencana->diffInDays($hariIni) . ' hari terlambat';
-                                    $rowClass   = 'bg-danger dark:bg-danger-dark';
+                                    $rowClass   = 'bg-danger dark:bg-danger-dark/50';
                                     $badgeClass = 'bg-danger-text text-white';
                                 } elseif ($rencana->eq($hariIni)) {
                                     $labelBadge = 'Kembali hari ini';
-                                    $rowClass   = 'bg-warning dark:bg-warning-dark';
+                                    $rowClass   = 'bg-warning dark:bg-warning-dark/50';
                                     $badgeClass = 'bg-warning-text text-white';
                                 } else {
                                     $labelBadge = 'H-' . $hariIni->diffInDays($rencana);
@@ -221,10 +221,10 @@
                         <p class="m-0 text-[13px]">Belum ada aktivitas dalam 14 hari terakhir</p>
                     </div>
                 @else
-                    <ul class="list-none m-0 p-0 flex flex-col gap-1 max-h-[260px] wide:max-h-[280px] overflow-y-auto">
+                    <ul class="list-none m-0 p-0 flex flex-col gap-1 max-h-[260px] wide:max-h-[280px] overflow-y-auto custom-scrollbar">
                         @foreach($activities as $a)
                             <li class="flex items-start gap-3 py-2.5 px-1 border-b border-page-bg dark:border-page-bg-dark last:border-b-0">
-                                <span class="w-[34px] h-[34px] wide:w-[35px] wide:h-[35px] rounded-[10px] bg-[#e8f4fd] text-[#3C91E6] flex items-center justify-center shrink-0 text-base"><i class="bx {{ $a['icon'] }}"></i></span>
+                                <span class="w-[34px] h-[34px] wide:w-[35px] wide:h-[35px] rounded-[10px] bg-[#e8f4fd] dark:bg-[#3C91E6]/15 text-[#3C91E6] flex items-center justify-center shrink-0 text-base"><i class="bx {{ $a['icon'] }}"></i></span>
                                 <div>
                                     <p class="m-0 mb-0.5 text-[13px] text-text dark:text-text-dark leading-[1.4]">{{ $a['text'] }}</p>
                                     <small class="text-[11px] text-text-muted">{{ \Carbon\Carbon::parse($a['time'])->diffForHumans() }}</small>
@@ -267,8 +267,10 @@ Chart.defaults.font.family = "'Poppins', sans-serif";
 var chartTopPeralatanEl = document.getElementById('chartTopPeralatan');
 if (chartTopPeralatanEl) {
     var topPeralatanData = @json($topPeralatan->pluck('total_dipinjam'));
-    var topPeralatanBlueDark  = [0, 61, 153];    // #003D99 (primary-700)
-    var topPeralatanBlueLight = [204, 224, 255]; // #CCE0FF (primary-100)
+    // Di dark mode gradiennya dipersempit ke rentang biru yang lebih redup (bukan sampai
+    // primary-100 yang nyaris putih) supaya bar-nya tidak menyilaukan di atas background gelap.
+    var topPeralatanBlueDark  = isDark ? [0, 41, 102]  : [0, 61, 153];    // #002966 (primary-800) / #003D99 (primary-700)
+    var topPeralatanBlueLight = isDark ? [51, 133, 255] : [204, 224, 255]; // #3385FF (primary-400) / #CCE0FF (primary-100)
 
     var topPeralatanColors = topPeralatanData.map(function (_, i) {
         var t = topPeralatanData.length > 1 ? 1 - (i / (topPeralatanData.length - 1)) : 1;

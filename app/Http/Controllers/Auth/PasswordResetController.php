@@ -14,6 +14,8 @@ class PasswordResetController extends Controller
 {
     private const OTP_TTL_MINUTES = 10;
 
+    public function __construct(private WhatsAppService $wa) {}
+
     public function sendOtp(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -43,8 +45,7 @@ class PasswordResetController extends Controller
             ['token' => Hash::make($kode), 'created_at' => now()]
         );
 
-        $wa = new WhatsAppService();
-        $terkirim = $wa->kirim($user->nomor_wa, $wa->templateOtpLupaPassword($user->nama_user, $kode));
+        $terkirim = $this->wa->kirim($user->nomor_wa, $this->wa->templateOtpLupaPassword($user->nama_user, $kode));
 
         if (!$terkirim) {
             return response()->json(['message' => 'Gagal mengirim kode verifikasi. Coba lagi nanti.'], 500);

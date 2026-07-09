@@ -20,13 +20,18 @@
         // Didefinisikan di head (bukan di akhir body) supaya sudah tersedia
         // sebelum dipanggil dari script di konten anak (child view).
         var LP_STATUS_COLORS = {
-            'Aktif':        { bg: [232, 244, 253], text: [29, 111, 184] },
-            'Disetujui':    { bg: [230, 249, 240], text: [22, 130, 90] },
-            'Selesai':      { bg: [230, 249, 240], text: [22, 130, 90] },
-            'Menunggu':     { bg: [255, 244, 229], text: [185, 119, 14] },
-            'Ditolak':      { bg: [253, 236, 234], text: [192, 57, 43] },
-            'Dibatalkan':   { bg: [253, 236, 234], text: [192, 57, 43] },
-            'Dikembalikan': { bg: [232, 244, 253], text: [29, 111, 184] },
+            'Aktif':          { bg: [232, 244, 253], text: [29, 111, 184] },
+            'Disetujui':      { bg: [230, 249, 240], text: [22, 130, 90] },
+            'Selesai':        { bg: [230, 249, 240], text: [22, 130, 90] },
+            'Menunggu':       { bg: [255, 244, 229], text: [185, 119, 14] },
+            'Ditolak':        { bg: [253, 236, 234], text: [192, 57, 43] },
+            'Dibatalkan':     { bg: [253, 236, 234], text: [192, 57, 43] },
+            'Dikembalikan':   { bg: [232, 244, 253], text: [29, 111, 184] },
+            'Tersedia':       { bg: [230, 249, 240], text: [22, 130, 90] },
+            'Hampir Habis':   { bg: [255, 244, 229], text: [185, 119, 14] },
+            'Tidak Tersedia': { bg: [253, 236, 234], text: [192, 57, 43] },
+            'Baik':           { bg: [230, 249, 240], text: [22, 130, 90] },
+            'Rusak':          { bg: [253, 236, 234], text: [192, 57, 43] },
         };
 
         /**

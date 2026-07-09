@@ -17,12 +17,13 @@
             <table class="w-full border-collapse">
                 <thead>
                     <tr>
+                        <th class="w-8 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap"></th>
                         <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
                         <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Judul Rapat <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                        <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tanggal <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                        <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Waktu</th>
-                        <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Platform</th>
-                        <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
+                        <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tanggal <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                        <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Waktu</th>
+                        <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Platform</th>
+                        <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,38 +34,36 @@
                         $dibatalkan = $j->isDibatalkan();
                     @endphp
                     <tr class="group accordion-row cursor-pointer border-b border-page-bg dark:border-page-bg-dark transition-colors duration-150 hover:bg-page-bg dark:hover:bg-page-bg-dark" data-target="{{ $uid }}">
+                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center"><i class="bx bx-chevron-down transition-transform duration-200 text-text-muted text-base group-[.open]:rotate-180 group-[.open]:text-primary"></i></td>
                         <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $jadwal->firstItem() + $index }}</td>
                         <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
                             <div class="font-medium">{{ $j->judul_kegiatan }}</div>
                             <div class="text-xs text-text-muted mt-0.5">{{ $j->keterangan }}</div>
                         </td>
-                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $j->tanggal->translatedFormat('D, d M Y') }}</td>
-                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
+                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $j->tanggal->translatedFormat('D, d M Y') }}</td>
+                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                             {{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
                             {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }}
                         </td>
-                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
+                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                             @if(str_contains($j->platform,'Online'))
                                 <x-badge variant="badge-info"><i class="bx bx-wifi"></i> Online</x-badge>
                             @else
                                 <x-badge variant="badge-active"><i class="bx bx-building"></i> Offline</x-badge>
                             @endif
                         </td>
-                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
-                            <div class="flex items-center gap-1.5">
-                                @if($dibatalkan)
-                                    <x-badge variant="badge-danger"><i class="bx bx-x-circle"></i> Dibatalkan</x-badge>
-                                @elseif($sudahLewat)
-                                    <x-badge variant="badge-active"><i class="bx bx-check-double"></i> Selesai</x-badge>
-                                @else
-                                    <x-badge variant="badge-info"><i class="bx bx-check-circle"></i> Aktif</x-badge>
-                                @endif
-                                <i class="bx bx-chevron-down transition-transform duration-200 text-text-muted text-base group-[.open]:rotate-180 group-[.open]:text-primary"></i>
-                            </div>
+                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
+                            @if($dibatalkan)
+                                <x-badge variant="badge-danger"><i class="bx bx-x-circle"></i> Dibatalkan</x-badge>
+                            @elseif($sudahLewat)
+                                <x-badge variant="badge-active"><i class="bx bx-check-double"></i> Selesai</x-badge>
+                            @else
+                                <x-badge variant="badge-info"><i class="bx bx-check-circle"></i> Aktif</x-badge>
+                            @endif
                         </td>
                     </tr>
                     <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row" id="{{ $uid }}">
-                        <td colspan="6" class="!p-0">
+                        <td colspan="7" class="!p-0">
                             <div class="flex flex-wrap items-start gap-x-8 gap-y-2.5 py-[18px] px-4">
                                 <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
                                     <i class="bx bx-calendar text-lg text-primary mt-px shrink-0"></i>

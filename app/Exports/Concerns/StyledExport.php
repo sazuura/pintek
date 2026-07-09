@@ -65,13 +65,18 @@ trait StyledExport
         $statusCol = Coordinate::stringFromColumnIndex($statusColIndex + 1);
 
         $peta = [
-            'Aktif'        => ['bg' => 'E8F4FD', 'font' => '1D6FB8'],
-            'Disetujui'    => ['bg' => 'E6F9F0', 'font' => '16825A'],
-            'Selesai'      => ['bg' => 'E6F9F0', 'font' => '16825A'],
-            'Menunggu'     => ['bg' => 'FFF4E5', 'font' => 'B9770E'],
-            'Ditolak'      => ['bg' => 'FDECEA', 'font' => 'C0392B'],
-            'Dibatalkan'   => ['bg' => 'FDECEA', 'font' => 'C0392B'],
-            'Dikembalikan' => ['bg' => 'E8F4FD', 'font' => '1D6FB8'],
+            'Aktif'          => ['bg' => 'E8F4FD', 'font' => '1D6FB8'],
+            'Disetujui'      => ['bg' => 'E6F9F0', 'font' => '16825A'],
+            'Selesai'        => ['bg' => 'E6F9F0', 'font' => '16825A'],
+            'Menunggu'       => ['bg' => 'FFF4E5', 'font' => 'B9770E'],
+            'Ditolak'        => ['bg' => 'FDECEA', 'font' => 'C0392B'],
+            'Dibatalkan'     => ['bg' => 'FDECEA', 'font' => 'C0392B'],
+            'Dikembalikan'   => ['bg' => 'E8F4FD', 'font' => '1D6FB8'],
+            'Tersedia'       => ['bg' => 'E6F9F0', 'font' => '16825A'],
+            'Hampir Habis'   => ['bg' => 'FFF4E5', 'font' => 'B9770E'],
+            'Tidak Tersedia' => ['bg' => 'FDECEA', 'font' => 'C0392B'],
+            'Baik'           => ['bg' => 'E6F9F0', 'font' => '16825A'],
+            'Rusak'          => ['bg' => 'FDECEA', 'font' => 'C0392B'],
         ];
 
         for ($row = 2; $row <= $highestRow; $row++) {

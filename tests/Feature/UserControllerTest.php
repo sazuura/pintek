@@ -47,7 +47,6 @@ class UserControllerTest extends TestCase
                  'email'         => 'opbaru@test.com',
                  'password'      => 'password',
                  'role'          => 'operator',
-                 'gedung'        => null,
              ])
              ->assertRedirect(route('admin.users.index'));
 
@@ -58,7 +57,7 @@ class UserControllerTest extends TestCase
     }
 
     /** @test */
-    public function tambah_user_inventaris_wajib_isi_gedung(): void
+    public function admin_bisa_tambah_user_inventaris(): void
     {
         $this->actingAs($this->admin)
              ->post(route('admin.users.store'), [
@@ -69,31 +68,12 @@ class UserControllerTest extends TestCase
                  'email'         => 'inv@test.com',
                  'password'      => 'password',
                  'role'          => 'inventaris',
-                 'gedung'        => '', // sengaja kosong
-             ])
-             ->assertSessionHasErrors('gedung');
-    }
-
-    /** @test */
-    public function tambah_user_inventaris_berhasil_jika_gedung_diisi(): void
-    {
-        $this->actingAs($this->admin)
-             ->post(route('admin.users.store'), [
-                 'nama_user'     => 'Inventaris Baru',
-                 'jenis_kelamin' => 'L',
-                 'alamat'        => 'Jl. Contoh No. 1',
-                 'nohp'          => '088888888888',
-                 'email'         => 'inv@test.com',
-                 'password'      => 'password',
-                 'role'          => 'inventaris',
-                 'gedung'        => 'Gedung A',
              ])
              ->assertRedirect(route('admin.users.index'));
 
         $this->assertDatabaseHas('users', [
-            'email'  => 'inv@test.com',
-            'role'   => 'inventaris',
-            'gedung' => 'Gedung A',
+            'email' => 'inv@test.com',
+            'role'  => 'inventaris',
         ]);
     }
 

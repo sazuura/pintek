@@ -102,7 +102,9 @@ class PenjadwalanController extends Controller
 
     private function peralatanUntukReferensi()
     {
-        return Peralatan::orderBy('nama_peralatan')->get(['id_peralatan', 'nama_peralatan', 'gedung']);
+        // stok/rusak ikut diambil supaya accessor stok_tersedia bisa dipakai
+        // di view untuk menandai alat yang stoknya sedang habis (data-badge "Stok Habis").
+        return Peralatan::orderBy('nama_peralatan')->get(['id_peralatan', 'nama_peralatan', 'gedung', 'stok', 'rusak']);
     }
 
     public function destroy(string $id)

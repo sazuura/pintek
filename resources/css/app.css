@@ -97,3 +97,41 @@
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Scrollbar custom tipis, dipakai di daftar yang overflow-y-auto (mis. dropdown
+   searchable-select) supaya tidak nampilin scrollbar bawaan OS yang tebal & kontras. */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .18) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, .18);
+    border-radius: 999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, .3);
+}
+.dark .custom-scrollbar {
+    scrollbar-color: rgba(255, 255, 255, .18) transparent;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, .18);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, .3);
+}
+
+/* Ikon kalender/jam bawaan browser di input type="date"/"time" defaultnya gelap -
+   nyaris tidak kelihatan di atas input dark mode yang juga gelap. Dibalik jadi
+   terang khusus saat dark mode supaya tetap kontras. */
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5);
+}

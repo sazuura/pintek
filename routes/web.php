@@ -22,7 +22,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::resource('jadwal', PenjadwalanController::class)->names('jadwal');
     Route::get('/peralatan', [AdminController::class, 'peralatanIndex'])->name('peralatan.index');
-    Route::resource('users', UserController::class)->names('users');
+    Route::resource('users', UserController::class)->names('users')->except(['show']);
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/',            [AdminController::class, 'laporanIndex'])->name('index');
         Route::get('/export/pdf',  [AdminController::class, 'laporanExportPdf'])->name('exportPdf');
@@ -38,19 +38,25 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
         Route::get('/', [OperatorController::class, 'peralatanIndex'])->name('index');
     });
     Route::prefix('peminjaman')->name('peminjaman.')->group(function () {
-        Route::get('/',       [PeminjamanController::class, 'operatorIndex'])->name('index');
-        Route::get('/create', [PeminjamanController::class, 'operatorCreate'])->name('create');
-        Route::post('/',      [PeminjamanController::class, 'operatorStore'])->name('store');
+        Route::get('/',          [PeminjamanController::class, 'operatorIndex'])->name('index');
+        Route::get('/create',    [PeminjamanController::class, 'operatorCreate'])->name('create');
+        Route::post('/',         [PeminjamanController::class, 'operatorStore'])->name('store');
+        Route::post('/cek-spam', [PeminjamanController::class, 'operatorCekSpam'])->name('cekSpam');
+        Route::get('/{id}/edit', [PeminjamanController::class, 'operatorEdit'])->name('edit');
+        Route::put('/{id}',      [PeminjamanController::class, 'operatorUpdate'])->name('update');
     });
     Route::post('/peminjaman/{id}/batalkan', [PeminjamanController::class, 'operatorBatalkan'])->name('peminjaman.batalkan');
 });
 
 Route::prefix('inventaris')->name('inventaris.')->middleware(['auth', 'role:inventaris'])->group(function () {
     Route::get('/dashboard', [InventarisController::class, 'dashboard'])->name('dashboard');
-    Route::resource('peralatan', PeralatanController::class)->names('peralatan');
-    Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang');
-    Route::post('/alat-terpasang/{id}/riwayat', [AlatTerpasangController::class, 'storeRiwayat'])->name('alat-terpasang.riwayat.store');
-    Route::delete('/alat-terpasang/{id}/riwayat/{riwayatId}', [AlatTerpasangController::class, 'destroyRiwayat'])->name('alat-terpasang.riwayat.destroy');
+    Route::resource('peralatan', PeralatanController::class)->names('peralatan')->except(['show']);
+    Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang')->except(['show']);
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/',             [InventarisController::class, 'laporanIndex'])->name('index');
+        Route::get('/export/pdf',   [InventarisController::class, 'laporanExportPdf'])->name('exportPdf');
+        Route::get('/export/excel', [InventarisController::class, 'laporanExportExcel'])->name('exportExcel');
+    });
     Route::prefix('peminjaman')->name('peminjaman.')->group(function () {
         Route::get('/',              [PeminjamanController::class, 'inventarisIndex'])->name('index');
         Route::post('/{id}/approve', [PeminjamanController::class, 'inventarisApprove'])->name('approve');

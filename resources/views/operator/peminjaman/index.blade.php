@@ -46,10 +46,11 @@
                             <th class="w-8 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap"></th>
                             <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
                             <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Keperluan <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                            <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tgl Pinjam <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rencana Kembali</th>
-                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Tgl Kembali</th>
-                            <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
+                            <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tgl Pinjam <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rencana Kembali</th>
+                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Tgl Kembali</th>
+                            <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
+                            <th class="w-[100px] py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -64,15 +65,30 @@
                                         {{ $p->items->count() }} item peralatan
                                     </div>
                                 </td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}</td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->tanggal_kembali_aktual?->translatedFormat('l, d F Y') ?? '-' }}</td>
-                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->tanggal_kembali_aktual?->translatedFormat('l, d F Y') ?? '-' }}</td>
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     <x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge>
+                                </td>
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
+                                    @if($p->isMenunggu())
+                                        <div class="flex gap-1.5 items-center justify-center">
+                                            <a href="{{ route('operator.peminjaman.edit', $p->id_peminjaman) }}"
+                                                class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80 bg-warning dark:bg-warning-dark text-warning-text"
+                                                title="Edit Pengajuan"><i class="bx bx-edit"></i></a>
+                                            <button type="button"
+                                                class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
+                                                title="Batalkan Pengajuan"
+                                                onclick="bukaBatalkanPengajuan('{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}')">
+                                                <i class="bx bx-block"></i>
+                                            </button>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                             <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row" id="{{ $uid }}">
-                                <td colspan="7" class="!p-0">
+                                <td colspan="8" class="!p-0">
                                     <div class="flex flex-wrap items-start gap-x-8 gap-y-2.5 py-[18px] px-4">
                                         <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
                                             <i class="bx bx-calendar-check text-lg text-primary mt-px shrink-0"></i>
@@ -147,22 +163,11 @@
                                             </table>
                                         </div>
                                     </div>
-
-                                    {{-- Tombol batalkan - hanya jika masih diajukan --}}
-                                    @if($p->isMenunggu())
-                                        <div class="py-3 px-4 border-t border-page-bg dark:border-page-bg-dark">
-                                            <button type="button"
-                                                class="h-8 px-3.5 rounded-lg border-none text-xs font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white"
-                                                onclick="bukaBatalkanPengajuan('{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}')">
-                                                <i class="bx bx-block"></i> Batalkan Pengajuan
-                                            </button>
-                                        </div>
-                                    @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-10 text-text-muted">
+                                <td colspan="8" class="text-center py-10 text-text-muted">
                                     <i class="bx bx-briefcase text-4xl block mb-2"></i>
                                     Belum ada pengajuan peminjaman
                                 </td>
@@ -188,7 +193,10 @@
                      data-catatan="{{ $p->catatan_inventaris ?? '-' }}"
                      data-dibatalkan="{{ $p->isDibatalkan() ? '1' : '' }}"
                      data-alasan-batal="{{ $p->alasan_batal }}"
-                     @if($p->isMenunggu()) data-batalkan-url="{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}" @endif>
+                     @if($p->isMenunggu())
+                         data-edit-url="{{ route('operator.peminjaman.edit', $p->id_peminjaman) }}"
+                         data-batalkan-url="{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}"
+                     @endif>
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-[#0d2a40] text-primary flex items-center justify-center text-lg shrink-0">
                             <i class="bx bx-briefcase"></i>
@@ -319,7 +327,10 @@
             html += '</div>';
 
             if (d.batalkanUrl) {
-                html += '<div><button type="button" id="btnBatalkanPengajuanMobile" class="h-8 px-3.5 rounded-lg border-none text-xs font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white"><i class="bx bx-block"></i> Batalkan Pengajuan</button></div>';
+                html += '<div class="flex gap-2">' +
+                    '<a href="' + d.editUrl + '" class="h-8 px-3.5 rounded-lg bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-xs font-sans cursor-pointer no-underline inline-flex items-center gap-1.5 font-medium transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark"><i class="bx bx-edit"></i> Edit Pengajuan</a>' +
+                    '<button type="button" id="btnBatalkanPengajuanMobile" class="h-8 px-3.5 rounded-lg border-none text-xs font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white"><i class="bx bx-block"></i> Batalkan Pengajuan</button>' +
+                    '</div>';
             }
 
             document.getElementById('modalPeminjamanDetailBody').innerHTML = html;
