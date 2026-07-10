@@ -35,7 +35,7 @@
                         </div>
                         <div class="flex-1 basis-[200px]">
                             <x-select name="platform" label="Platform" required placeholder="-- Pilih Platform --">
-                                @foreach(['Online (Zoom)', 'Online (Google Meet)', 'Offline', 'Hybrid'] as $p)
+                                @foreach(['Online (Zoom)', 'Offline', 'Hybrid'] as $p)
                                     <option value="{{ $p }}" {{ old('platform') == $p ? 'selected' : '' }}>{{ $p }}</option>
                                 @endforeach
                             </x-select>
@@ -49,13 +49,21 @@
                         <x-input name="keterangan" label="Keterangan" placeholder="Pilih platform terlebih dahulu"
                             hint="Pilih platform untuk petunjuk pengisian." hint-id="ket-hint" />
                     </div>
+                    <div class="md:col-span-2" id="link-otomatis-wrap" style="display:none;">
+                        <div class="[&>label]:text-text [&>label]:dark:text-text-dark">
+                            <x-checkbox name="link_otomatis" id="link_otomatis">Buat link Zoom otomatis</x-checkbox>
+                        </div>
+                        <div class="mt-2.5" id="zoom-akun-wrap" style="display:none;">
+                            <x-select name="zoom_akun_pilihan" id="zoom_akun_pilihan" label="Pilih Akun Zoom">
+                                <option value="">Otomatis (pilih akun yang kosong)</option>
+                                <option value="akun_1" data-jadwal='@json($zoomJadwal['akun_1'] ?? [])' {{ old('zoom_akun_pilihan') == 'akun_1' ? 'selected' : '' }}>Akun 1</option>
+                                <option value="akun_2" data-jadwal='@json($zoomJadwal['akun_2'] ?? [])' {{ old('zoom_akun_pilihan') == 'akun_2' ? 'selected' : '' }}>Akun 2</option>
+                            </x-select>
+                        </div>
+                    </div>
                     <div class="flex flex-col gap-1.5 md:col-span-2">
                         <label class="text-[13px] font-medium text-text dark:text-text-dark">Alat yang Dibutuhkan <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
-                        <p class="{{ $hintClass }} mb-3">
-                            Daftar ini hanya menjadi catatan acuan bagi operator dan bukan merupakan pengajuan
-                            peminjaman. Operator tetap wajib mengajukan peminjaman secara mandiri melalui menu
-                            Peminjaman apabila peralatan tersebut akan benar-benar digunakan.
-                        </p>
+                        <p class="{{ $hintClass }} mb-3">Catatan acuan saja, bukan pengajuan peminjaman.</p>
                         <div class="dynamic-list flex flex-col gap-2.5" id="peralatan-list">
                             <div class="dynamic-item flex gap-2.5 items-center">
                                 <select name="peralatan_ids[]" class="peralatan-select searchable flex-1"
@@ -134,6 +142,10 @@
 @push('scripts')
     <script>
         // ── Platform hint ──────────────────────────────────────────────────────────
+        function platformPakaiZoom(v) {
+            return v.includes('Zoom') || v === 'Hybrid';
+        }
+
         document.getElementById('platform').addEventListener('change', function () {
             var v = this.value;
             var hint = document.getElementById('ket-hint');
@@ -151,6 +163,66 @@
                 inp.placeholder = 'cth: zoom.us/j/xxx | Gedung A Lt.2';
                 inp.type = 'text';
             }
+
+            var zoomWrap = document.getElementById('link-otomatis-wrap');
+            var zoomCheckbox = document.getElementById('link_otomatis');
+            var pakaiZoom = platformPakaiZoom(v);
+            zoomWrap.style.display = pakaiZoom ? '' : 'none';
+            if (!pakaiZoom && zoomCheckbox.checked) {
+                zoomCheckbox.checked = false;
+                zoomCheckbox.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // ── Link Zoom otomatis: kunci field Keterangan saat dicentang ──────────────
+        document.getElementById('link_otomatis').addEventListener('change', function () {
+            var inp = document.getElementById('keterangan');
+            var akunWrap = document.getElementById('zoom-akun-wrap');
+            if (this.checked) {
+                inp.value = '';
+                inp.readOnly = true;
+                inp.style.backgroundColor = '#f3f4f6';
+                inp.placeholder = 'Link akan dibuat otomatis setelah disimpan';
+                akunWrap.style.display = '';
+                refreshZoomAkunOptions();
+            } else {
+                inp.readOnly = false;
+                inp.style.backgroundColor = '';
+                akunWrap.style.display = 'none';
+                document.getElementById('platform').dispatchEvent(new Event('change'));
+            }
+        });
+
+        // ── Pilih Akun Zoom: disable opsi yang bentrok jadwal di tanggal+jam ini ───
+        function refreshZoomAkunOptions() {
+            var select = document.getElementById('zoom_akun_pilihan');
+            if (!select) return;
+            var tanggal = document.getElementById('tanggal').value;
+            var mulai   = document.getElementById('waktu_mulai').value;
+            var selesai = document.getElementById('waktu_selesai').value;
+
+            Array.from(select.options).forEach(function (opt) {
+                if (!opt.value) return; // skip opsi "Otomatis"
+
+                var daftarJadwal = [];
+                try { daftarJadwal = JSON.parse(opt.dataset.jadwal || '[]'); } catch (e) { }
+
+                var bentrok = !!(tanggal && mulai && selesai) && daftarJadwal.some(function (j) {
+                    return j.tanggal === tanggal && mulai < j.selesai && selesai > j.mulai;
+                });
+
+                opt.disabled = bentrok;
+                var namaBersih = opt.textContent.replace(' (bentrok jadwal)', '');
+                opt.textContent = bentrok ? namaBersih + ' (bentrok jadwal)' : namaBersih;
+
+                if (bentrok && select.value === opt.value) {
+                    select.value = '';
+                }
+            });
+        }
+
+        ['tanggal', 'waktu_mulai', 'waktu_selesai'].forEach(function (id) {
+            document.getElementById(id).addEventListener('change', refreshZoomAkunOptions);
         });
 
         // ── Operator: hide yang sudah dipilih, disable yang bentrok tanggal ────────

@@ -39,4 +39,19 @@ return [
     'fonnte' => [
     'token' => env('FONNTE_TOKEN', ''),
     ],
+
+    'zoom' => [
+        'akun_1' => [
+            'account_id'    => env('ZOOM_AKUN1_ACCOUNT_ID', ''),
+            'client_id'     => env('ZOOM_AKUN1_CLIENT_ID', ''),
+            'client_secret' => env('ZOOM_AKUN1_CLIENT_SECRET', ''),
+            'user_id'       => env('ZOOM_AKUN1_USER_ID', 'me'),
+        ],
+        'akun_2' => [
+            'account_id'    => env('ZOOM_AKUN2_ACCOUNT_ID', ''),
+            'client_id'     => env('ZOOM_AKUN2_CLIENT_ID', ''),
+            'client_secret' => env('ZOOM_AKUN2_CLIENT_SECRET', ''),
+            'user_id'       => env('ZOOM_AKUN2_USER_ID', 'me'),
+        ],
+    ],
 ];

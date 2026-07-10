@@ -153,7 +153,7 @@ class DatabaseSeeder extends Seeder
                     'tanggal'        => $tanggal,
                     'waktu_mulai'    => $jamMulai,
                     'waktu_selesai'  => $jamSelesai,
-                    'platform'       => $faker->randomElement(['Offline', 'Zoom Cloud Meetings', 'Google Meet']),
+                    'platform'       => $faker->randomElement(['Offline', 'Zoom Cloud Meetings']),
                     'keterangan'     => $faker->sentence(),
                     'status'         => $status,
                     'alasan_batal'   => $alasanBatal,

@@ -19,6 +19,10 @@ use Illuminate\Database\Eloquent\Model;
         'keterangan',
         'status',
         'alasan_batal',
+        'zoom_meeting_id',
+        'zoom_password',
+        'zoom_account',
+        'link_otomatis',
     ];
 
     public function operators()
@@ -26,7 +30,8 @@ use Illuminate\Database\Eloquent\Model;
         return $this->belongsToMany(User::class, 'jadwal_operator', 'id_penjadwalan', 'id_user');
     }
     protected $casts = [
-        'tanggal' => 'date:Y-m-d',
+        'tanggal'       => 'date:Y-m-d',
+        'link_otomatis' => 'boolean',
     ];
 
     public function peminjaman()

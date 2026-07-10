@@ -97,7 +97,8 @@ class WhatsAppService
         string $judulKegiatan,
         string $platform,
         string $keterangan,
-        ?string $daftarPeralatan = null
+        ?string $daftarPeralatan = null,
+        ?string $zoomPassword = null
     ): string {
         $pesan = "📢 *JADWAL RAPAT BARU*\n\n"
             . "Halo *{$namaOperator}*,\n"
@@ -107,6 +108,9 @@ class WhatsAppService
             . "💻 Platform: {$platform}\n"
             . "📌 Keterangan: {$keterangan}\n";
 
+        if ($zoomPassword) {
+            $pesan .= "🔑 Password: {$zoomPassword}\n";
+        }
         if ($daftarPeralatan) {
             $pesan .= "🧰 Peralatan yang Harus Dipinjam:\n{$daftarPeralatan}\n";
         }
@@ -123,7 +127,8 @@ class WhatsAppService
         string $judulKegiatan,
         string $platform,
         string $keterangan,
-        ?string $daftarPeralatan = null
+        ?string $daftarPeralatan = null,
+        ?string $zoomPassword = null
     ): string {
         $pesan = "✏️ *JADWAL RAPAT DIUBAH*\n\n"
             . "Halo *{$namaOperator}*,\n"
@@ -133,6 +138,9 @@ class WhatsAppService
             . "💻 Platform: {$platform}\n"
             . "📌 Keterangan: {$keterangan}\n";
 
+        if ($zoomPassword) {
+            $pesan .= "🔑 Password: {$zoomPassword}\n";
+        }
         if ($daftarPeralatan) {
             $pesan .= "🧰 Peralatan yang Harus Dipinjam:\n{$daftarPeralatan}\n";
         }

@@ -6,6 +6,7 @@ use App\Models\Penjadwalan;
 use App\Models\User;
 use App\Services\PenjadwalanService;
 use App\Services\WhatsAppService;
+use App\Services\ZoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -18,6 +19,7 @@ class PenjadwalanServiceTest extends TestCase
     private User $admin;
     private User $operator1;
     private User $operator2;
+    private $zoomMock;
 
     protected function setUp(): void
     {
@@ -26,9 +28,15 @@ class PenjadwalanServiceTest extends TestCase
         // Mock WhatsAppService - kita tidak mau benar-benar kirim WA saat test
         $waMock = Mockery::mock(WhatsAppService::class);
         $waMock->shouldReceive('templateJadwalBaru')->andReturn('pesan test');
+        $waMock->shouldReceive('templateJadwalDiubah')->andReturn('pesan test');
         $waMock->shouldReceive('templateJadwalDibatalkan')->andReturn('pesan test');
         $waMock->shouldReceive('kirim')->andReturn(true);
         $this->app->instance(WhatsAppService::class, $waMock);
+
+        // Mock ZoomService - default tidak pernah dipanggil, tiap test yang butuh
+        // link_otomatis akan set expectation-nya sendiri.
+        $this->zoomMock = Mockery::mock(ZoomService::class);
+        $this->app->instance(ZoomService::class, $this->zoomMock);
 
         $this->service = $this->app->make(PenjadwalanService::class);
 
@@ -138,6 +146,178 @@ class PenjadwalanServiceTest extends TestCase
             'status'         => 'dibatalkan',
             'alasan_batal'   => 'Kuorum tidak terpenuhi',
         ]);
+    }
+
+    /** @test */
+    public function buat_jadwal_dengan_link_otomatis_sukses(): void
+    {
+        $this->zoomMock->shouldReceive('buatMeeting')
+            ->once()
+            ->with('akun_1', Mockery::any())
+            ->andReturn(['meeting_id' => 'MTG123', 'join_url' => 'https://zoom.us/j/123', 'password' => 'ab12cd']);
+
+        $data = $this->dataJadwal('2030-05-01');
+        $data['link_otomatis'] = true;
+
+        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator1->id_user]);
+
+        $this->assertDatabaseHas('penjadwalan', [
+            'id_penjadwalan'  => $jadwal->id_penjadwalan,
+            'link_otomatis'   => true,
+            'zoom_meeting_id' => 'MTG123',
+            'zoom_password'   => 'ab12cd',
+            'zoom_account'    => 'akun_1',
+            'keterangan'      => 'https://zoom.us/j/123',
+        ]);
+        $this->assertNull($this->service->peringatanZoom());
+    }
+
+    /** @test */
+    public function buat_jadwal_dengan_link_otomatis_gagal_tetap_tersimpan(): void
+    {
+        $this->zoomMock->shouldReceive('buatMeeting')->once()->andReturn(null);
+
+        $data = $this->dataJadwal('2030-05-02');
+        $data['link_otomatis'] = true;
+
+        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator1->id_user]);
+
+        $this->assertDatabaseHas('penjadwalan', [
+            'id_penjadwalan' => $jadwal->id_penjadwalan,
+            'link_otomatis'  => false,
+        ]);
+        $this->assertNotNull($this->service->peringatanZoom());
+        $this->assertStringContainsString('gagal dibuat', $this->service->peringatanZoom());
+    }
+
+    /** @test */
+    public function buat_jadwal_link_otomatis_kedua_akun_bentrok_tidak_generate(): void
+    {
+        // Isi akun_1 dan akun_2 dengan jadwal otomatis di jam yang sama.
+        Penjadwalan::create(array_merge($this->dataJadwal('2030-05-03', '09:00', '10:00'), [
+            'id_penjadwalan' => 'JDW-901', 'link_otomatis' => true, 'zoom_account' => 'akun_1', 'zoom_meeting_id' => 'A1',
+        ]));
+        Penjadwalan::create(array_merge($this->dataJadwal('2030-05-03', '09:00', '10:00'), [
+            'id_penjadwalan' => 'JDW-902', 'link_otomatis' => true, 'zoom_account' => 'akun_2', 'zoom_meeting_id' => 'A2',
+        ]));
+
+        $this->zoomMock->shouldReceive('buatMeeting')->never();
+
+        $data = $this->dataJadwal('2030-05-03', '09:30', '10:30'); // overlap dgn keduanya
+        $data['link_otomatis'] = true;
+
+        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator2->id_user]);
+
+        $this->assertDatabaseHas('penjadwalan', [
+            'id_penjadwalan' => $jadwal->id_penjadwalan,
+            'link_otomatis'  => false,
+        ]);
+        $this->assertStringContainsString('sudah terpakai', $this->service->peringatanZoom());
+    }
+
+    /** @test */
+    public function buat_jadwal_dengan_akun_zoom_dipilih_manual(): void
+    {
+        $this->zoomMock->shouldReceive('buatMeeting')
+            ->once()
+            ->with('akun_2', Mockery::any())
+            ->andReturn(['meeting_id' => 'MTG222', 'join_url' => 'https://zoom.us/j/222', 'password' => 'zz22']);
+
+        $data = $this->dataJadwal('2030-05-06');
+        $data['link_otomatis'] = true;
+
+        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator1->id_user], akunPilihan: 'akun_2');
+
+        $this->assertDatabaseHas('penjadwalan', [
+            'id_penjadwalan' => $jadwal->id_penjadwalan,
+            'zoom_account'   => 'akun_2',
+        ]);
+    }
+
+    /** @test */
+    public function buat_jadwal_akun_zoom_pilihan_manual_bentrok_tidak_fallback_ke_akun_lain(): void
+    {
+        // Akun 2 sudah kepakai di jam ini, akun 1 masih kosong - tapi karena admin
+        // MEMAKSA pilih akun 2 secara manual, sistem TIDAK BOLEH otomatis pindah ke akun 1.
+        Penjadwalan::create(array_merge($this->dataJadwal('2030-05-07', '09:00', '10:00'), [
+            'id_penjadwalan' => 'JDW-903', 'link_otomatis' => true, 'zoom_account' => 'akun_2', 'zoom_meeting_id' => 'A3',
+        ]));
+
+        $this->zoomMock->shouldReceive('buatMeeting')->never();
+
+        $data = $this->dataJadwal('2030-05-07', '09:30', '10:30');
+        $data['link_otomatis'] = true;
+
+        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator1->id_user], akunPilihan: 'akun_2');
+
+        $this->assertDatabaseHas('penjadwalan', [
+            'id_penjadwalan' => $jadwal->id_penjadwalan,
+            'link_otomatis'  => false,
+        ]);
+        $this->assertStringContainsString('Akun 2 sudah terpakai', $this->service->peringatanZoom());
+    }
+
+    /** @test */
+    public function ubah_jadwal_pindah_akun_zoom_manual_membuat_meeting_baru(): void
+    {
+        $this->zoomMock->shouldReceive('buatMeeting')
+            ->once()
+            ->with('akun_1', Mockery::any())
+            ->andReturn(['meeting_id' => 'MTG-LAMA', 'join_url' => 'https://zoom.us/j/lama', 'password' => 'lama1']);
+
+        $data = $this->dataJadwal('2030-05-08');
+        $data['link_otomatis'] = true;
+        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator1->id_user], akunPilihan: 'akun_1');
+
+        $this->zoomMock->shouldReceive('hapusMeeting')->once()->with('akun_1', 'MTG-LAMA')->andReturn(true);
+        $this->zoomMock->shouldReceive('buatMeeting')
+            ->once()
+            ->with('akun_2', Mockery::any())
+            ->andReturn(['meeting_id' => 'MTG-BARU', 'join_url' => 'https://zoom.us/j/baru', 'password' => 'baru2']);
+
+        $dataUbah = $this->dataJadwal('2030-05-08');
+        $dataUbah['link_otomatis'] = true;
+        $jadwalBaru = $this->service->ubah($jadwal->fresh(), $dataUbah, [$this->operator1->id_user], akunPilihan: 'akun_2');
+
+        $this->assertSame('akun_2', $jadwalBaru->zoom_account);
+        $this->assertSame('MTG-BARU', $jadwalBaru->zoom_meeting_id);
+    }
+
+    /** @test */
+    public function ubah_jadwal_update_meeting_zoom_saat_waktu_berubah(): void
+    {
+        $this->zoomMock->shouldReceive('buatMeeting')
+            ->once()
+            ->andReturn(['meeting_id' => 'MTG555', 'join_url' => 'https://zoom.us/j/555', 'password' => 'xy99']);
+
+        $data = $this->dataJadwal('2030-05-04', '09:00', '10:00');
+        $data['link_otomatis'] = true;
+        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator1->id_user]);
+
+        $this->zoomMock->shouldReceive('updateMeeting')
+            ->once()
+            ->with('akun_1', 'MTG555', Mockery::any())
+            ->andReturn(true);
+
+        $dataUbah = $this->dataJadwal('2030-05-04', '11:00', '12:00'); // waktu berubah
+        $dataUbah['link_otomatis'] = true;
+        $this->service->ubah($jadwal->fresh(), $dataUbah, [$this->operator1->id_user]);
+    }
+
+    /** @test */
+    public function hapus_jadwal_menghapus_meeting_zoom_jika_ada(): void
+    {
+        $this->zoomMock->shouldReceive('buatMeeting')
+            ->once()
+            ->andReturn(['meeting_id' => 'MTG777', 'join_url' => 'https://zoom.us/j/777', 'password' => 'zz11']);
+
+        $data = $this->dataJadwal('2030-05-05');
+        $data['link_otomatis'] = true;
+        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator1->id_user]);
+
+        $this->zoomMock->shouldReceive('hapusMeeting')->once()->with('akun_1', 'MTG777')->andReturn(true);
+
+        $this->service->hapus($jadwal->fresh());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
