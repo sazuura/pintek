@@ -9,7 +9,7 @@
                 <th class="bg-primary text-white text-left py-2 px-2.5 font-semibold">Judul Rapat</th>
                 <th class="bg-primary text-white text-left py-2 px-2.5 font-semibold">Tanggal</th>
                 <th class="bg-primary text-white text-left py-2 px-2.5 font-semibold">Platform</th>
-                <th class="bg-primary text-white text-left py-2 px-2.5 font-semibold">Status</th>
+                <th class="bg-primary text-white text-center py-2 px-2.5 font-semibold">Status</th>
             </tr>
         </thead>
         <tbody>
@@ -26,7 +26,7 @@
                     <td class="py-1.5 px-2.5 border-b border-gray-100">{{ $j->judul_kegiatan }}</td>
                     <td class="py-1.5 px-2.5 border-b border-gray-100">{{ $j->tanggal->translatedFormat('D, d/m/Y') }}</td>
                     <td class="py-1.5 px-2.5 border-b border-gray-100">{{ str_contains($j->platform, 'Online') ? 'Online' : 'Offline' }}</td>
-                    <td class="py-1.5 px-2.5 border-b border-gray-100"><span class="{{ $badgeColor }} py-0.5 px-2 rounded-full text-[10px] font-semibold">{{ $label }}</span></td>
+                    <td class="py-1.5 px-2.5 border-b border-gray-100 text-center"><span class="{{ $badgeColor }} py-0.5 px-2 rounded-full text-[10px] font-semibold">{{ $label }}</span></td>
                 </tr>
             @empty
                 <tr>

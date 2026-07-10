@@ -36,6 +36,7 @@ class PenjadwalanController extends Controller
         return view('admin.jadwal.create', [
             'operators'      => $this->operatorsWithJadwalDates(),
             'daftarPeralatan' => $this->peralatanUntukReferensi(),
+            'zoomJadwal'      => $this->zoomJadwalPerAkun(),
         ]);
     }
 
@@ -47,9 +48,15 @@ class PenjadwalanController extends Controller
                 data:          $data['jadwal'],
                 operatorIds:   $data['operator_ids'],
                 peralatanSync: $data['peralatan_sync'],
+                akunPilihan:   $data['zoom_akun_pilihan'],
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        if ($peringatan = $this->service->peringatanZoom()) {
+            return redirect()->route('admin.jadwal.index')
+                ->with('warning', "Jadwal berhasil disimpan. {$peringatan}");
         }
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil ditambahkan dan notifikasi WA telah dikirim.');
@@ -70,6 +77,7 @@ class PenjadwalanController extends Controller
             'selectedOperators'  => $jadwal->operators->pluck('id_user')->toArray(),
             'daftarPeralatan'    => $this->peralatanUntukReferensi(),
             'selectedPeralatan'  => $jadwal->peralatanReferensi,
+            'zoomJadwal'         => $this->zoomJadwalPerAkun($id),
         ]);
     }
 
@@ -83,9 +91,15 @@ class PenjadwalanController extends Controller
                 data:          $data['jadwal'],
                 operatorIds:   $data['operator_ids'],
                 peralatanSync: $data['peralatan_sync'],
+                akunPilihan:   $data['zoom_akun_pilihan'],
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        if ($peringatan = $this->service->peringatanZoom()) {
+            return redirect()->route('admin.jadwal.index')
+                ->with('warning', "Jadwal berhasil diperbarui. {$peringatan}");
         }
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil diperbarui.');
@@ -102,7 +116,27 @@ class PenjadwalanController extends Controller
 
     private function peralatanUntukReferensi()
     {
-        return Peralatan::orderBy('nama_peralatan')->get(['id_peralatan', 'nama_peralatan', 'gedung']);
+        // stok/rusak ikut diambil supaya accessor stok_tersedia bisa dipakai
+        // di view untuk menandai alat yang stoknya sedang habis (data-badge "Stok Habis").
+        return Peralatan::orderBy('nama_peralatan')->get(['id_peralatan', 'nama_peralatan', 'gedung', 'stok', 'rusak']);
+    }
+
+    /**
+     * Jadwal Zoom-otomatis existing, dikelompokkan per akun - dipakai JS di form
+     * create/edit untuk disable opsi "Akun 1"/"Akun 2" di dropdown pilihan akun
+     * kalau akun itu sudah bentrok jadwal di tanggal+jam yang sedang diisi.
+     */
+    private function zoomJadwalPerAkun(?string $excludeId = null)
+    {
+        return Penjadwalan::where('link_otomatis', true)
+            ->when($excludeId, fn($q) => $q->where('id_penjadwalan', '!=', $excludeId))
+            ->get(['zoom_account', 'tanggal', 'waktu_mulai', 'waktu_selesai'])
+            ->groupBy('zoom_account')
+            ->map(fn($grup) => $grup->map(fn($j) => [
+                'tanggal' => $j->tanggal->format('Y-m-d'),
+                'mulai'   => substr($j->waktu_mulai, 0, 5),
+                'selesai' => substr($j->waktu_selesai, 0, 5),
+            ])->values());
     }
 
     public function destroy(string $id)
@@ -125,6 +159,8 @@ class PenjadwalanController extends Controller
             'waktu_selesai'    => 'required|date_format:H:i|after:waktu_mulai',
             'platform'         => 'required|string|max:100',
             'keterangan'       => 'nullable|string|max:255',
+            'link_otomatis'      => 'nullable|boolean',
+            'zoom_akun_pilihan'  => 'nullable|in:akun_1,akun_2',
             'operator_ids'       => 'required|array|min:1',
             'operator_ids.*'     => 'exists:users,id_user',
             'peralatan_ids'      => 'nullable|array',
@@ -140,7 +176,9 @@ class PenjadwalanController extends Controller
                 'waktu_selesai'  => $validated['waktu_selesai'],
                 'platform'       => $validated['platform'],
                 'keterangan'     => $validated['keterangan'] ?? null,
+                'link_otomatis'  => $validated['link_otomatis'] ?? false,
             ],
+            'zoom_akun_pilihan' => $validated['zoom_akun_pilihan'] ?? null,
             'peralatan_sync' => $this->buildPeralatanSync($validated['peralatan_ids'] ?? [], $validated['peralatan_jumlah'] ?? []),
             'operator_ids' => $validated['operator_ids'],
         ];

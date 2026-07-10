@@ -17,28 +17,28 @@
         {{-- Stat cards --}}
         <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4 mb-6">
             <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] text-[#3C91E6]"><i class="bx bxs-data"></i></div>
+                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] dark:bg-[#3C91E6]/15 text-[#3C91E6]"><i class="bx bxs-data"></i></div>
                 <div>
                     <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $totalPeralatan }}</h3>
                     <p class="text-[13px] text-text-muted m-0">Total Peralatan</p>
                 </div>
             </div>
             <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e6f9f0] text-[#1abc9c]"><i class="bx bxs-check-circle"></i></div>
+                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e6f9f0] dark:bg-[#1abc9c]/15 text-[#1abc9c]"><i class="bx bxs-check-circle"></i></div>
                 <div>
                     <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $totalTersedia }}</h3>
                     <p class="text-[13px] text-text-muted m-0">Stok Tersedia</p>
                 </div>
             </div>
             <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#fdecea] text-[#e74c3c]"><i class="bx bxs-error"></i></div>
+                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#fdecea] dark:bg-[#e74c3c]/15 text-[#e74c3c]"><i class="bx bxs-error"></i></div>
                 <div>
                     <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $totalRusak }}</h3>
                     <p class="text-[13px] text-text-muted m-0">Unit Rusak</p>
                 </div>
             </div>
             <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
-                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#fff4e5] text-[#f39c12]"><i class="bx bxs-time"></i></div>
+                <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#fff4e5] dark:bg-[#f39c12]/15 text-[#f39c12]"><i class="bx bxs-time"></i></div>
                 <div>
                     <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $totalMenunggu }}</h3>
                     <p class="text-[13px] text-text-muted m-0">Menunggu Persetujuan</p>
@@ -72,8 +72,8 @@
                                 {{ $p->lokasi_detail ? '(' . $p->lokasi_detail . ')' : '' }}
                             </div>
                         </div>
-                        <x-badge :variant="($p->stok - ($p->rusak ?? 0) - ($p->perbaikan ?? 0)) == 0 ? 'badge-danger' : 'badge-warning'">
-                            {{ ($p->stok - ($p->rusak ?? 0) - ($p->perbaikan ?? 0)) }} unit
+                        <x-badge :variant="($p->stok - ($p->rusak ?? 0)) == 0 ? 'badge-danger' : 'badge-warning'">
+                            {{ ($p->stok - ($p->rusak ?? 0)) }} unit
                         </x-badge>
                     </div>
                 @empty
@@ -141,26 +141,10 @@
                                 </form>
                                 <button type="button"
                                     class="h-[34px] px-3 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white"
-                                    onclick="toggleTolak('tolak-{{ $p->id_peminjaman }}')">
+                                    onclick="bukaKonfirmasiTolak('{{ route('inventaris.peminjaman.reject', $p->id_peminjaman) }}')">
                                     <i class="bx bx-x"></i> Tolak
                                 </button>
                             </div>
-                        </div>
-                        {{-- Form tolak (tersembunyi) --}}
-                        <div id="tolak-{{ $p->id_peminjaman }}"
-                            class="hidden mt-3 pt-2.5 border-t border-page-bg dark:border-page-bg-dark">
-                            <form action="{{ route('inventaris.peminjaman.reject', $p->id_peminjaman) }}" method="POST"
-                                class="flex gap-2 items-center flex-wrap">
-                                @csrf
-                                <input type="text" name="catatan_inventaris"
-                                    class="flex-1 min-w-[200px] h-9 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans focus:border-primary focus:outline-none"
-                                    placeholder="Alasan penolakan (wajib)" required>
-                                <button type="submit"
-                                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white">Kirim Penolakan</button>
-                                <button type="button"
-                                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark"
-                                    onclick="toggleTolak('tolak-{{ $p->id_peminjaman }}')">Batal</button>
-                            </form>
                         </div>
                     </div>
                 @empty
@@ -172,6 +156,28 @@
             </div>
 
         </div>
+
+        <x-modal-konfirmasi id="modalKonfirmasiTolak" title="Tolak Pengajuan" icon="bx-x-circle" icon-class="text-danger-text">
+            <div class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
+                <div class="text-[13px] font-semibold text-danger-text">
+                    <i class="bx bx-error"></i> Tolak pengajuan peminjaman ini?
+                </div>
+            </div>
+            <form id="formKonfirmasiTolak" method="POST">
+                @csrf
+                <input type="text" name="catatan_inventaris" id="inputAlasanTolak"
+                    class="w-full h-9 px-3 mt-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans focus:border-primary focus:outline-none"
+                    placeholder="Alasan penolakan (wajib)" required>
+                <div class="flex justify-end gap-2.5 mt-3">
+                    <button type="button" data-modal-close
+                        class="h-9 px-3.5 rounded-lg bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                    <button type="submit"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white">
+                        <i class="bx bx-x"></i> Tolak
+                    </button>
+                </div>
+            </form>
+        </x-modal-konfirmasi>
     </main>
 @endsection
 
@@ -195,9 +201,10 @@
             }
         });
 
-        function toggleTolak(id) {
-            var el = document.getElementById(id);
-            el.classList.toggle('hidden');
+        function bukaKonfirmasiTolak(url) {
+            document.getElementById('formKonfirmasiTolak').action = url;
+            document.getElementById('inputAlasanTolak').value = '';
+            bukaModalKonfirmasi('modalKonfirmasiTolak');
         }
     </script>
 @endpush

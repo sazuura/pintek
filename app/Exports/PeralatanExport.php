@@ -34,6 +34,16 @@ class PeralatanExport implements FromCollection, WithHeadings, ShouldAutoSize, W
         if ($this->request->operator) {
             $query->where('id_user', $this->request->operator);
         }
+        if ($this->request->search) {
+            $s = $this->request->search;
+            $query->where(fn($q) => $q->where('keperluan', 'like', "%{$s}%")
+                ->orWhereHas('user', fn($qq) => $qq->where('nama_user', 'like', "%{$s}%"))
+                ->orWhereHas('items.peralatan', fn($qq) => $qq->where('nama_peralatan', 'like', "%{$s}%")));
+        }
+        if ($this->request->gedung) {
+            $gedung = $this->request->gedung;
+            $query->whereHas('items.peralatan', fn($q) => $q->where('gedung', $gedung));
+        }
 
         $baris = collect();
         foreach ($query->orderByDesc('tanggal_pinjam')->get() as $p) {

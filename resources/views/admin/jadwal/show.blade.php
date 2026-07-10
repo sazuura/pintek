@@ -29,8 +29,23 @@
                 <p class="text-text dark:text-text-dark m-0">{{ $jadwal->platform }}</p>
             </div>
             <div class="flex flex-col gap-1.5">
-                <label class="text-[13px] font-medium text-text dark:text-text-dark">Keterangan</label>
-                <p class="text-text dark:text-text-dark m-0">{{ $jadwal->keterangan ?? '-' }}</p>
+                <label class="text-[13px] font-medium text-text dark:text-text-dark flex items-center gap-1.5">
+                    Keterangan
+                    @if($jadwal->link_otomatis)
+                        <x-badge variant="badge-info">Zoom Otomatis</x-badge>
+                    @endif
+                </label>
+                <p class="text-text dark:text-text-dark m-0 break-all">{{ $jadwal->keterangan ?? '-' }}</p>
+                @if($jadwal->link_otomatis && $jadwal->zoom_password)
+                    <div class="flex items-center gap-2 text-[13px]">
+                        <span class="text-text-muted">Password meeting:</span>
+                        <code class="font-mono font-semibold text-text dark:text-text-dark">{{ $jadwal->zoom_password }}</code>
+                        <button type="button" data-copy="{{ $jadwal->zoom_password }}"
+                            class="text-primary bg-transparent border-0 cursor-pointer p-0.5" title="Copy password">
+                            <i class="bx bx-copy"></i>
+                        </button>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

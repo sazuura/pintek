@@ -14,12 +14,6 @@
             </a>
         </div>
 
-        @if($errors->any())
-            <div class="bg-danger dark:bg-danger-dark border-l-4 border-danger-text py-3 px-4 rounded-lg mb-4 text-sm text-[#c0392b]">
-                <ul class="m-0 pl-[18px]">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-        @endif
-
         <form action="{{ route('inventaris.peralatan.update', $peralatan->id_peralatan) }}" method="POST"
             enctype="multipart/form-data" novalidate>
             @csrf @method('PUT')
@@ -52,16 +46,14 @@
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
                     <i class="bx bx-data"></i> Data Stok</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <x-input type="number" name="stok" id="inp-stok" label="Stok Total" required min="0"
                         value="{{ old('stok', $peralatan->stok) }}" />
                     <x-input type="number" name="rusak" id="inp-rusak" label="Unit Rusak" min="0"
                         value="{{ old('rusak', $peralatan->rusak) }}" />
-                    <x-input type="number" name="perbaikan" id="inp-perbaikan" label="Dalam Perbaikan" min="0"
-                        value="{{ old('perbaikan', $peralatan->perbaikan) }}" />
                 </div>
                 <div class="mt-3 py-2.5 px-3.5 bg-page-bg dark:bg-page-bg-dark rounded-lg text-[13px]">
-                    <span class="text-text-muted">Stok tersedia = stok - rusak - perbaikan = </span>
+                    <span class="text-text-muted">Stok tersedia = stok - rusak = </span>
                     <strong class="text-primary" id="stok-preview">{{ $peralatan->stok_tersedia }}</strong>
                 </div>
             </div>
@@ -92,7 +84,7 @@
 
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
                 <a href="{{ route('inventaris.peralatan.index') }}"
-                    class="h-10 px-5 bg-page-bg dark:bg-page-bg-dark hover:bg-[#ddd] text-text dark:text-text-dark border-none rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                    class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
                     <i class="bx bx-save"></i> Simpan Perubahan
@@ -105,13 +97,12 @@
 @push('scripts')
     <script>
         // Live preview stok tersedia
-        ['inp-stok', 'inp-rusak', 'inp-perbaikan'].forEach(function (id) {
+        ['inp-stok', 'inp-rusak'].forEach(function (id) {
             var el = document.getElementById(id);
             if (el) el.addEventListener('input', function () {
                 var s = parseInt(document.getElementById('inp-stok').value) || 0;
                 var r = parseInt(document.getElementById('inp-rusak').value) || 0;
-                var p = parseInt(document.getElementById('inp-perbaikan').value) || 0;
-                document.getElementById('stok-preview').textContent = Math.max(0, s - r - p);
+                document.getElementById('stok-preview').textContent = Math.max(0, s - r);
             });
         });
 

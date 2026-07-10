@@ -2,7 +2,7 @@
     // Kalau validasi form gagal ($errors terisi) tapi controller tidak set session('error')
     // sendiri, tetap munculkan toast gagal generik - supaya semua form otomatis dapat
     // notifikasi kegagalan tanpa perlu ubah tiap controller satu-satu.
-    $errorMessage = session('error') ?: ($errors->any() ? 'Periksa kembali input yang belum diisi dengan benar.' : null);
+    $errorMessage = session('error') ?: ($errors->any() ? 'Periksa kembali input Anda.' : null);
 
     $messages = [
         'success' => session('success'),

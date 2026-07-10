@@ -14,12 +14,6 @@
             </a>
         </div>
 
-        @if($errors->any())
-            <div class="bg-danger dark:bg-danger-dark border-l-4 border-danger-text py-3 px-4 rounded-lg mb-4 text-sm text-[#c0392b]">
-                <ul class="m-0 pl-[18px]">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-        @endif
-
         <form action="{{ route('operator.peminjaman.store') }}" method="POST" id="form-peminjaman" novalidate>
             @csrf
 
@@ -34,7 +28,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2">
                         <x-select name="id_penjadwalan" id="id_penjadwalan"
-                            hint="Pilih kalau peminjaman ini untuk salah satu rapat yang kamu tugaskan - Keperluan & Tanggal Pinjam akan terisi otomatis (tetap bisa diedit). Kalau operator lain di jadwal yang sama sudah mengajukan alat tertentu, kamu tetap bisa mengajukan alat yang sama, tapi akan muncul konfirmasi dulu supaya tidak sengaja duplikat.">
+                            hint="Pilih apabila peminjaman ini terkait salah satu rapat yang Anda tugaskan. Keperluan dan Tanggal Pinjam akan terisi otomatis (dapat diubah). Konfirmasi akan ditampilkan apabila peralatan yang sama telah diajukan oleh operator lain untuk mencegah duplikasi.">
                             <x-slot:label>Kaitkan ke Jadwal <small class="font-normal text-text-muted ml-1">(opsional)</small></x-slot:label>
                             <option value="">-- Tidak terkait jadwal tertentu --</option>
                             @foreach($jadwalAktif as $j)
@@ -60,7 +54,7 @@
                     <x-input type="date" name="tanggal_pinjam" label="Tanggal Pinjam" required
                         min="{{ now()->format('Y-m-d') }}" value="{{ old('tanggal_pinjam') }}" />
                     <x-input type="date" name="tanggal_kembali_rencana" label="Rencana Kembali" required
-                        value="{{ old('tanggal_kembali_rencana') }}" hint="Harus setelah tanggal pinjam." />
+                        value="{{ old('tanggal_kembali_rencana') }}" hint="Boleh sama dengan atau setelah tanggal pinjam." />
                 </div>
             </div>
 
@@ -81,7 +75,7 @@
                                 <optgroup label="{{ $gedung }}">
                                     @foreach($items as $alat)
                                         <option value="{{ $alat->id_peralatan }}"
-                                            data-subtitle="Stok: {{ $alat->stok_tersedia }}"
+                                            data-subtitle="{{ $gedung }} &middot; Stok: {{ $alat->stok_tersedia }}"
                                             data-nama="{{ $alat->nama_peralatan }}"
                                             {{ (isset($selectedPeralatanId) && $selectedPeralatanId == $alat->id_peralatan) ? 'selected' : '' }}>
                                             {{ $alat->nama_peralatan }}
@@ -101,11 +95,14 @@
                     class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-1 w-fit hover:bg-primary-50">
                     <i class="bx bx-plus"></i> Tambah Peralatan
                 </button>
+                @error('peralatan_ids')
+                    <span class="text-xs text-danger-text mt-2 block">{{ $message }}</span>
+                @enderror
             </div>
 
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
                 <a href="{{ route('operator.peminjaman.index') }}"
-                    class="h-10 px-5 bg-page-bg dark:bg-page-bg-dark hover:bg-[#ddd] text-text dark:text-text-dark border-none rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                    class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
                     <i class="bx bx-send"></i> Kirim Pengajuan
@@ -122,6 +119,23 @@
                 <button type="button" data-modal-close
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
                 <button type="button" onclick="konfirmasiTetapAjukan()"
+                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-warning-text text-white">
+                    <i class="bx bx-check"></i> Ya, Tetap Ajukan
+                </button>
+            </div>
+        </x-modal-konfirmasi>
+
+        {{-- Modal peringatan pengajuan berulang (spam) - dicek lewat AJAX ke cek-spam
+             sesaat sebelum submit, supaya operator sadar kalau alat yang sama sudah
+             berkali-kali diajukan untuk tanggal pinjam yang sama. --}}
+        <x-modal-konfirmasi id="modalPeringatanSpam" title="Pengajuan Berulang Terdeteksi" icon="bx-error" icon-class="text-warning-text">
+            <p class="text-[13px] text-text dark:text-text-dark m-0 mb-2">Anda sudah beberapa kali mengajukan peralatan berikut untuk tanggal pinjam yang sama:</p>
+            <ul id="modalPeringatanSpamList" class="text-[13px] text-text dark:text-text-dark m-0 pl-[18px] flex flex-col gap-1"></ul>
+            <p class="text-[13px] text-text-muted m-0">Apakah Anda yakin ingin melanjutkan pengajuan ini?</p>
+            <div class="flex justify-end gap-2.5 mt-1">
+                <button type="button" data-modal-close
+                    class="h-9 px-3.5 rounded-lg bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                <button type="button" onclick="konfirmasiTetapAjukanSpam()"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-warning-text text-white">
                     <i class="bx bx-check"></i> Ya, Tetap Ajukan
                 </button>
@@ -160,7 +174,7 @@
         function autoIsiDariReferensi() {
             if (jadwalReferensi.length === 0) return;
 
-            var bisaDiisi = jadwalReferensi.filter(function (r) { return jadwalSudahDiajukan.indexOf(r.id) === -1; });
+            var bisaDiisi = jadwalReferensi.filter(function (r) { return jadwalSudahDiajukan.indexOf(r.nama) === -1; });
             if (bisaDiisi.length === 0) return;
 
             var list = document.getElementById('peralatan-list');
@@ -190,7 +204,7 @@
             }
 
             var teks = jadwalReferensi.map(function (r) {
-                var sudah = jadwalSudahDiajukan.indexOf(r.id) !== -1;
+                var sudah = jadwalSudahDiajukan.indexOf(r.nama) !== -1;
                 return r.nama + ' (x' + r.jumlah + ')' + (sudah ? ' - sudah diajukan, tidak diisi otomatis' : '');
             }).join(', ');
 
@@ -222,7 +236,10 @@
                     if (!opt.value) return;
                     opt.hidden = selected.includes(opt.value) && opt.value !== currentVal;
 
-                    var sudahDiajukan = jadwalSudahDiajukan.indexOf(opt.value) !== -1;
+                    // Dicocokkan lewat nama alat (bukan id_peralatan) supaya alat yang sama
+                    // tapi baris stoknya beda di gedung lain (mis. Kabel HDMI 15 Meter yang
+                    // ada di Gedung A & Gedung B) tetap kena tanda "Sudah Diajukan".
+                    var sudahDiajukan = jadwalSudahDiajukan.indexOf(opt.dataset.nama) !== -1;
 
                     // Alat yang sudah diajukan operator lain tetap bisa dipilih (tidak diblokir),
                     // cuma diberi tanda peringatan - konfirmasi tetap muncul sebelum submit.
@@ -298,29 +315,74 @@
             return div.innerHTML;
         }
 
+        // Alur konfirmasi sebelum submit (dua tahap, berurutan):
+        //   1. Duplikasi alat vs jadwal (operator lain sudah ajukan alat sama untuk jadwal ini) - sinkron, dari data yang sudah dimuat di awal halaman.
+        //   2. Pengajuan berulang/spam (operator ini sendiri sudah berkali-kali ajukan alat sama di tanggal pinjam yang sama) - via AJAX ke server karena datanya baru diketahui setelah tanggal & alat dipilih.
+        // Keduanya cuma peringatan (bisa dilanjutkan setelah konfirmasi), bukan blokir keras.
         document.getElementById('form-peminjaman').addEventListener('submit', function (e) {
-            if (jadwalSudahDiajukan.length === 0) return;
-
-            var namaBentrok = [];
-            document.querySelectorAll('.peralatan-select').forEach(function (select) {
-                if (jadwalSudahDiajukan.indexOf(select.value) === -1) return;
-                var opt = select.options[select.selectedIndex];
-                namaBentrok.push(opt.dataset.nama || select.value);
-            });
-
-            if (namaBentrok.length === 0) return;
-
             e.preventDefault();
-            document.getElementById('modalKonfirmasiDuplikatList').innerHTML = namaBentrok.map(function (n) {
-                return '<li>' + escapeHtml(n) + '</li>';
-            }).join('');
-            bukaModalKonfirmasi('modalKonfirmasiDuplikat');
+            lanjutkanSetelahCekDuplikat();
         });
 
-        // form.submit() tidak memicu ulang event 'submit' (beda dengan klik tombol submit),
-        // jadi aman dipanggil langsung di sini tanpa terjebak infinite loop pengecekan duplikasi.
+        function lanjutkanSetelahCekDuplikat() {
+            var namaBentrok = [];
+            if (jadwalSudahDiajukan.length > 0) {
+                document.querySelectorAll('.peralatan-select').forEach(function (select) {
+                    var opt = select.options[select.selectedIndex];
+                    if (!opt || jadwalSudahDiajukan.indexOf(opt.dataset.nama) === -1) return;
+                    namaBentrok.push(opt.dataset.nama || select.value);
+                });
+            }
+
+            if (namaBentrok.length > 0) {
+                document.getElementById('modalKonfirmasiDuplikatList').innerHTML = namaBentrok.map(function (n) {
+                    return '<li>' + escapeHtml(n) + '</li>';
+                }).join('');
+                bukaModalKonfirmasi('modalKonfirmasiDuplikat');
+                return;
+            }
+
+            cekSpamLaluSubmit();
+        }
+
         function konfirmasiTetapAjukan() {
             tutupModalKonfirmasi('modalKonfirmasiDuplikat');
+            cekSpamLaluSubmit();
+        }
+
+        function cekSpamLaluSubmit() {
+            var form = document.getElementById('form-peminjaman');
+            var formData = new FormData(form);
+
+            fetch('{{ route('operator.peminjaman.cekSpam') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    var peringatan = data.peringatan || [];
+                    if (peringatan.length > 0) {
+                        document.getElementById('modalPeringatanSpamList').innerHTML = peringatan.map(function (p) {
+                            return '<li>' + escapeHtml(p.nama) + ' (sudah diajukan ' + p.jumlah_sebelumnya + 'x untuk tanggal pinjam ini)</li>';
+                        }).join('');
+                        bukaModalKonfirmasi('modalPeringatanSpam');
+                    } else {
+                        form.submit();
+                    }
+                })
+                .catch(function () {
+                    // Kalau pengecekan gagal (mis. jaringan bermasalah), jangan sampai
+                    // memblokir pengajuan asli - langsung submit saja.
+                    form.submit();
+                });
+        }
+
+        function konfirmasiTetapAjukanSpam() {
+            tutupModalKonfirmasi('modalPeringatanSpam');
             document.getElementById('form-peminjaman').submit();
         }
     </script>

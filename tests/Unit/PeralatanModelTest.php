@@ -11,25 +11,24 @@ use Tests\TestCase;
  */
 class PeralatanModelTest extends TestCase
 {
-    private function buat(int $stok, int $rusak = 0, int $perbaikan = 0): Peralatan
+    private function buat(int $stok, int $rusak = 0): Peralatan
     {
         $p = new Peralatan();
-        $p->stok      = $stok;
-        $p->rusak     = $rusak;
-        $p->perbaikan = $perbaikan;
+        $p->stok  = $stok;
+        $p->rusak = $rusak;
         return $p;
     }
 
     /** @test */
     public function stok_tersedia_dihitung_dengan_benar(): void
     {
-        $this->assertEquals(3, $this->buat(stok: 5, rusak: 1, perbaikan: 1)->stok_tersedia);
+        $this->assertEquals(4, $this->buat(stok: 5, rusak: 1)->stok_tersedia);
     }
 
     /** @test */
     public function stok_tersedia_tidak_boleh_negatif(): void
     {
-        $this->assertEquals(0, $this->buat(stok: 2, rusak: 2, perbaikan: 3)->stok_tersedia);
+        $this->assertEquals(0, $this->buat(stok: 2, rusak: 5)->stok_tersedia);
     }
 
     /** @test */

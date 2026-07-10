@@ -60,9 +60,9 @@
                             <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
                             <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Nama <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
                             <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Email</th>
-                            <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Role <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                            <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
-                            <th class="w-20 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Aksi</th>
+                            <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Role <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                            <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
+                            <th class="w-20 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,19 +77,19 @@
                                     <div class="text-xs text-text-muted mt-0.5">{{ $user->id_user }}</div>
                                 </td>
                                 <td class="max-md:hidden py-3.5 px-4 text-[13px] text-text dark:text-text-dark align-middle">{{ $user->email }}</td>
-                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     @php $roleColor = ['admin' => 'badge-danger', 'operator' => 'badge-info', 'inventaris' => 'badge-purple'][$user->role] ?? ''; @endphp
                                     <x-badge :variant="$roleColor">{{ ucfirst($user->role) }}</x-badge>
                                 </td>
-                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     @if($user->isActive())
                                         <x-badge variant="badge-active"><i class="bx bx-check-circle"></i> Active</x-badge>
                                     @else
                                         <x-badge variant="badge-inactive"><i class="bx bx-x-circle"></i> Inactive</x-badge>
                                     @endif
                                 </td>
-                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
-                                    <div class="flex gap-1.5 items-center">
+                                <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
+                                    <div class="flex gap-1.5 items-center justify-center">
                                         <a href="{{ route('admin.users.edit', $user->id_user) }}"
                                             class="{{ $actionClass }} bg-warning dark:bg-warning-dark text-warning-text">
                                             <i class="bx bx-edit"></i>

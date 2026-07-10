@@ -14,12 +14,6 @@
             </a>
         </div>
 
-        @if($errors->any())
-            <div class="bg-danger dark:bg-danger-dark border-l-4 border-danger-text py-3 px-4 rounded-lg mb-4 text-sm text-[#c0392b]">
-                <ul class="m-0 pl-[18px]">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-        @endif
-
         <form action="{{ route('inventaris.alat-terpasang.store') }}" method="POST" enctype="multipart/form-data" novalidate>
             @csrf
 
@@ -29,16 +23,49 @@
 
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
-                    <i class="bx bx-info-circle"></i> Informasi Alat</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <x-select name="id_peralatan" label="Nama Alat" required placeholder="-- Pilih Peralatan --">
+                    <i class="bx bx-info-circle"></i> Alat yang Dipasang</h3>
+                <p class="text-xs text-text-muted mb-3">
+                    Bisa pilih beberapa alat sekaligus dalam satu kali pemasangan. Jumlah tidak boleh melebihi
+                    stok yang masih bisa dipasang (stok tersedia dikurangi yang sudah terpasang).
+                </p>
+                <div class="dynamic-list flex flex-col gap-2.5" id="peralatan-list">
+                    <div class="dynamic-item flex gap-2.5 items-center">
+                        <select name="id_peralatan[]" class="peralatan-select searchable flex-1"
+                            data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
+                            <option value="" selected>-- Pilih Alat --</option>
                             @foreach($daftarPeralatan as $p)
-                                <option value="{{ $p->id_peralatan }}" data-subtitle="{{ $p->gedung }}" {{ old('id_peralatan') == $p->id_peralatan ? 'selected' : '' }}>{{ $p->nama_peralatan }}</option>
+                                <option value="{{ $p->id_peralatan }}"
+                                    data-subtitle="{{ $p->gedung }} &middot; Bisa dipasang: {{ $p->sisa_bisa_dipasang }}"
+                                    data-sisa="{{ $p->sisa_bisa_dipasang }}"
+                                    @if($p->sisa_bisa_dipasang <= 0) data-badge="Stok Habis" data-badge-variant="danger" @endif>
+                                    {{ $p->nama_peralatan }}
+                                </option>
                             @endforeach
-                        </x-select>
+                        </select>
+                        <input type="number" name="jumlah[]" class="jumlah-input {{ $inputClass }} flex-[0_0_80px]" min="1"
+                            placeholder="Jml" style="display:none;">
+                        <button type="button" onclick="removePeralatan(this)"
+                            class="btn-remove w-9 h-9 rounded-lg border-none bg-danger dark:bg-danger-dark text-danger-text cursor-pointer flex items-center justify-center shrink-0 text-base transition-colors duration-200 hover:bg-danger-text hover:text-white">
+                            <i class="bx bx-trash"></i>
+                        </button>
                     </div>
-                    <x-input name="gedung" label="Gedung" required
+                </div>
+                <button type="button" id="add-peralatan"
+                    class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-3 w-fit hover:bg-primary-50">
+                    <i class="bx bx-plus"></i> Tambah Peralatan
+                </button>
+                @foreach($errors->keys() as $key)
+                    @if($key === 'id_peralatan' || str_starts_with($key, 'id_peralatan.') || str_starts_with($key, 'jumlah.'))
+                        <span class="text-xs text-danger-text mt-2 block">{{ $errors->first($key) }}</span>
+                    @endif
+                @endforeach
+            </div>
+
+            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
+                    <i class="bx bx-map"></i> Lokasi & Kondisi</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <x-input name="gedung" label="Gedung / Tempat" required
                         placeholder="Gedung A" value="{{ old('gedung') }}" />
                     <x-input name="lokasi_detail" label="Lokasi Detail"
                         placeholder="cth: Ruang Rapat Lt.2" value="{{ old('lokasi_detail') }}" />
@@ -46,7 +73,6 @@
                         value="{{ old('tanggal_pasang', now()->format('Y-m-d')) }}" />
                     <x-select name="kondisi" label="Kondisi" required>
                         <option value="baik" {{ old('kondisi', 'baik') == 'baik' ? 'selected' : '' }}>Baik</option>
-                        <option value="perlu_servis" {{ old('kondisi') == 'perlu_servis' ? 'selected' : '' }}>Perlu Servis</option>
                         <option value="rusak" {{ old('kondisi') == 'rusak' ? 'selected' : '' }}>Rusak</option>
                     </x-select>
                     <div class="md:col-span-2">
@@ -68,7 +94,7 @@
             </div>
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
                 <a href="{{ route('inventaris.alat-terpasang.index') }}"
-                    class="h-10 px-5 bg-page-bg dark:bg-page-bg-dark hover:bg-[#ddd] text-text dark:text-text-dark border-none rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                    class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
                     <i class="bx bx-save"></i> Simpan
@@ -87,5 +113,65 @@
             if (file) { img.src = URL.createObjectURL(file); prev.classList.remove('hidden'); }
             else { prev.classList.add('hidden'); }
         });
+
+        // ── Alat yang dipasang: cegah alat yang sama dipilih dobel, tampilkan input Jml ──
+        function refreshPeralatanOptions() {
+            var selected = Array.from(document.querySelectorAll('.peralatan-select'))
+                .map(function (s) { return s.value; })
+                .filter(function (v) { return v !== ''; });
+
+            document.querySelectorAll('.peralatan-select').forEach(function (select) {
+                var currentVal = select.value;
+                Array.from(select.options).forEach(function (opt) {
+                    if (!opt.value) return;
+                    opt.hidden = selected.includes(opt.value) && opt.value !== currentVal;
+                });
+
+                var jumlahInput = select.closest('.dynamic-item').querySelector('.jumlah-input');
+                var opt = select.options[select.selectedIndex];
+                var sisa = opt ? parseInt(opt.dataset.sisa) : NaN;
+
+                if (currentVal) {
+                    jumlahInput.style.display = '';
+                    if (!jumlahInput.value) jumlahInput.value = 1;
+                    if (!isNaN(sisa)) {
+                        jumlahInput.max = sisa;
+                        jumlahInput.title = 'Bisa dipasang: ' + sisa;
+                    }
+                } else {
+                    jumlahInput.style.display = 'none';
+                    jumlahInput.value = '';
+                    jumlahInput.removeAttribute('max');
+                }
+            });
+            window.SearchableSelect && window.SearchableSelect.refreshAll();
+        }
+
+        function removePeralatan(btn) {
+            var list = document.getElementById('peralatan-list');
+            var item = btn.closest('.dynamic-item');
+            if (list.children.length > 1) {
+                item.remove();
+            } else {
+                item.querySelector('select').value = '';
+            }
+            refreshPeralatanOptions();
+        }
+
+        function addPeralatan() {
+            var list = document.getElementById('peralatan-list');
+            var first = list.querySelector('.dynamic-item');
+            var clone = first.cloneNode(true);
+            clone.querySelectorAll('option').forEach(function (opt) { opt.hidden = false; });
+            clone.querySelector('select').value = '';
+            clone.querySelector('.jumlah-input').value = '';
+            clone.querySelector('.jumlah-input').style.display = 'none';
+            clone.querySelector('select').onchange = refreshPeralatanOptions;
+            window.SearchableSelect && window.SearchableSelect.reinitRow(clone);
+            list.appendChild(clone);
+            refreshPeralatanOptions();
+        }
+
+        document.getElementById('add-peralatan').addEventListener('click', addPeralatan);
     </script>
 @endpush

@@ -16,11 +16,6 @@ class AlatTerpasangRiwayat extends Model
         'tanggal' => 'date',
     ];
 
-    public function alatTerpasang()
-    {
-        return $this->belongsTo(AlatTerpasang::class, 'id_alat_terpasang', 'id_alat_terpasang');
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');

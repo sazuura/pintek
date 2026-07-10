@@ -14,12 +14,6 @@
             </a>
         </div>
 
-        @if($errors->any())
-            <div class="bg-danger dark:bg-danger-dark border-l-4 border-danger-text py-3 px-4 rounded-lg mb-4 text-sm text-[#c0392b]">
-                <ul class="m-0 pl-[18px]">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-        @endif
-
         <form action="{{ route('inventaris.alat-terpasang.update', $alat->id_alat_terpasang) }}" method="POST"
             enctype="multipart/form-data" novalidate>
             @csrf @method('PUT')
@@ -42,7 +36,7 @@
                             <option value="{{ $p->id_peralatan }}" data-subtitle="{{ $p->gedung }}" {{ old('id_peralatan', $alat->id_peralatan) == $p->id_peralatan ? 'selected' : '' }}>{{ $p->nama_peralatan }}</option>
                         @endforeach
                     </x-select>
-                    <x-input name="gedung" label="Gedung" required
+                    <x-input name="gedung" label="Gedung / Tempat" required
                         value="{{ old('gedung', $alat->gedung) }}" />
                     <x-input name="lokasi_detail" label="Lokasi Detail" placeholder="cth: Ruang Rapat Lt.2"
                         value="{{ old('lokasi_detail', $alat->lokasi_detail) }}" />
@@ -50,7 +44,6 @@
                         value="{{ old('tanggal_pasang', $alat->tanggal_pasang->format('Y-m-d')) }}" />
                     <x-select name="kondisi" label="Kondisi" required>
                         <option value="baik" {{ old('kondisi', $alat->kondisi) == 'baik' ? 'selected' : '' }}>Baik</option>
-                        <option value="perlu_servis" {{ old('kondisi', $alat->kondisi) == 'perlu_servis' ? 'selected' : '' }}>Perlu Servis</option>
                         <option value="rusak" {{ old('kondisi', $alat->kondisi) == 'rusak' ? 'selected' : '' }}>Rusak</option>
                     </x-select>
                     <div class="md:col-span-2">
@@ -85,69 +78,13 @@
 
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
                 <a href="{{ route('inventaris.alat-terpasang.index') }}"
-                    class="h-10 px-5 bg-page-bg dark:bg-page-bg-dark hover:bg-[#ddd] text-text dark:text-text-dark border-none rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                    class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
                     <i class="bx bx-save"></i> Simpan Perubahan
                 </button>
             </div>
         </form>
-
-        {{-- Riwayat servis/maintenance - terpisah dari form utama, submit sendiri --}}
-        <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mt-5">
-            <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
-                <i class="bx bx-history"></i> Riwayat Servis / Maintenance</h3>
-
-            <form action="{{ route('inventaris.alat-terpasang.riwayat.store', $alat->id_alat_terpasang) }}" method="POST" novalidate class="mb-5">
-                @csrf
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
-                    <x-input type="date" name="tanggal" label="Tanggal" required value="{{ old('tanggal', now()->format('Y-m-d')) }}" />
-                    <x-select name="jenis" label="Jenis" required>
-                        <option value="pemeriksaan" {{ old('jenis') == 'pemeriksaan' ? 'selected' : '' }}>Pemeriksaan</option>
-                        <option value="servis" {{ old('jenis') == 'servis' ? 'selected' : '' }}>Servis</option>
-                        <option value="perbaikan" {{ old('jenis') == 'perbaikan' ? 'selected' : '' }}>Perbaikan</option>
-                    </x-select>
-                    <div class="md:col-span-2">
-                        <x-input name="keterangan" label="Keterangan" required
-                            placeholder="cth: Ganti lampu proyektor" value="{{ old('keterangan') }}" />
-                    </div>
-                </div>
-                <button type="submit"
-                    class="h-9 px-3.5 mt-1 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary text-white">
-                    <i class="bx bx-plus"></i> Tambah Riwayat
-                </button>
-            </form>
-
-            @if($alat->riwayat->isEmpty())
-                <p class="text-[13px] text-text-muted m-0">Belum ada riwayat servis/maintenance.</p>
-            @else
-                <div class="flex flex-col gap-2.5">
-                    @foreach($alat->riwayat as $r)
-                        <div class="flex items-start justify-between gap-3 py-3 px-3.5 bg-page-bg dark:bg-page-bg-dark rounded-lg">
-                            <div class="flex items-start gap-2.5 min-w-0">
-                                <i class="bx bx-note text-lg text-primary mt-0.5 shrink-0"></i>
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="text-[13px] font-semibold text-text dark:text-text-dark">{{ $r->tanggal->translatedFormat('d M Y') }}</span>
-                                        <x-badge :variant="$r->jenis === 'perbaikan' ? 'badge-danger' : ($r->jenis === 'servis' ? 'badge-warning' : 'badge-info')">{{ $r->jenisLabel }}</x-badge>
-                                    </div>
-                                    <p class="text-[13px] text-text dark:text-text-dark m-0 mt-1 break-words">{{ $r->keterangan }}</p>
-                                    <p class="text-xs text-text-muted m-0 mt-0.5">Dicatat oleh {{ $r->user->nama_user ?? '-' }}</p>
-                                </div>
-                            </div>
-                            <form action="{{ route('inventaris.alat-terpasang.riwayat.destroy', [$alat->id_alat_terpasang, $r->id]) }}" method="POST" onsubmit="return confirm('Hapus riwayat ini?')">
-                                @csrf @method('DELETE')
-                                <button type="submit"
-                                    class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-sm transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
-                                    title="Hapus riwayat">
-                                    <i class="bx bx-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-        </div>
     </main>
 @endsection
 

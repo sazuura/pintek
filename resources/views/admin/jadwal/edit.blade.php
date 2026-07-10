@@ -14,18 +14,21 @@
             </a>
         </div>
 
-        @if($errors->any())
-            <div class="bg-danger dark:bg-danger-dark border-l-4 border-danger-text py-3 px-4 rounded-lg mb-4 text-sm text-[#c0392b]">
-                <ul class="m-0 pl-[18px]">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-        @endif
-
         <form action="{{ route('admin.jadwal.update', $jadwal->id_penjadwalan) }}" method="POST" novalidate>
             @csrf @method('PUT')
 
             @php
                 $inputClass = 'h-10 px-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
                 $hintClass = 'text-xs text-text-muted mt-0.5';
+
+                $platformAwal = old('platform', $jadwal->platform);
+                $ketHintAwal = match(true) {
+                    str_contains($platformAwal, 'Offline') => 'Masukkan lokasi rapat (Gedung, Ruangan, Lantai).',
+                    str_contains($platformAwal, 'Online')  => 'Keterangan tambahan (opsional), misalnya link meeting.',
+                    $platformAwal === 'Hybrid'              => 'Masukkan link meeting dan lokasi fisik.',
+                    default                                  => 'Pilih platform untuk petunjuk pengisian.',
+                };
+                $pakaiZoomAwal = str_contains($platformAwal, 'Zoom') || $platformAwal === 'Hybrid';
             @endphp
 
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
@@ -43,7 +46,7 @@
                         </div>
                         <div class="flex-1 basis-[200px]">
                             <x-select name="platform" label="Platform" required>
-                                @foreach(['Online (Zoom)', 'Online (Google Meet)', 'Offline', 'Hybrid'] as $p)
+                                @foreach(['Online (Zoom)', 'Offline', 'Hybrid'] as $p)
                                     <option value="{{ $p }}" {{ old('platform', $jadwal->platform) == $p ? 'selected' : '' }}>{{ $p }}
                                     </option>
                                 @endforeach
@@ -56,14 +59,34 @@
                         value="{{ old('waktu_selesai', substr($jadwal->waktu_selesai, 0, 5)) }}" />
                     <div class="md:col-span-2">
                         <x-input name="keterangan" label="Keterangan"
-                            value="{{ old('keterangan', $jadwal->keterangan) }}" />
+                            value="{{ old('keterangan', $jadwal->keterangan) }}"
+                            hint="{{ $ketHintAwal }}" hint-id="ket-hint" />
+                    </div>
+                    <div class="md:col-span-2" id="link-otomatis-wrap" style="{{ $pakaiZoomAwal ? '' : 'display:none;' }}">
+                        <div class="[&>label]:text-text [&>label]:dark:text-text-dark">
+                            <x-checkbox name="link_otomatis" id="link_otomatis" :checked="$jadwal->link_otomatis">Buat link Zoom otomatis</x-checkbox>
+                        </div>
+                        <div class="mt-2.5" id="zoom-akun-wrap" style="{{ $jadwal->link_otomatis ? '' : 'display:none;' }}">
+                            <x-select name="zoom_akun_pilihan" id="zoom_akun_pilihan" label="Pilih Akun Zoom">
+                                <option value="">Otomatis (pilih akun yang kosong)</option>
+                                <option value="akun_1" data-jadwal='@json($zoomJadwal['akun_1'] ?? [])' {{ old('zoom_akun_pilihan', $jadwal->zoom_account) == 'akun_1' ? 'selected' : '' }}>Akun 1</option>
+                                <option value="akun_2" data-jadwal='@json($zoomJadwal['akun_2'] ?? [])' {{ old('zoom_akun_pilihan', $jadwal->zoom_account) == 'akun_2' ? 'selected' : '' }}>Akun 2</option>
+                            </x-select>
+                        </div>
+                        @if($jadwal->link_otomatis && $jadwal->zoom_password)
+                            <div class="flex items-center gap-2 mt-2 text-[13px]">
+                                <span class="text-text-muted">Password meeting:</span>
+                                <code class="font-mono font-semibold text-text dark:text-text-dark">{{ $jadwal->zoom_password }}</code>
+                                <button type="button" data-copy="{{ $jadwal->zoom_password }}"
+                                    class="copy-password-btn text-primary bg-transparent border-0 cursor-pointer p-0.5" title="Copy password">
+                                    <i class="bx bx-copy"></i>
+                                </button>
+                            </div>
+                        @endif
                     </div>
                     <div class="flex flex-col gap-1.5 md:col-span-2">
                         <label class="text-[13px] font-medium text-text dark:text-text-dark">Alat yang Dibutuhkan <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
-                        <p class="{{ $hintClass }} mb-3">
-                            Ini cuma catatan acuan buat operator, bukan pengajuan peminjaman. Operator tetap harus
-                            ajukan sendiri lewat menu Peminjaman kalau mau benar-benar memakai alatnya.
-                        </p>
+                        <p class="{{ $hintClass }} mb-3">Catatan acuan saja, bukan pengajuan peminjaman.</p>
                         <div class="dynamic-list flex flex-col gap-2.5" id="peralatan-list">
                             @forelse($selectedPeralatan as $alatTerpilih)
                                 <div class="dynamic-item flex gap-2.5 items-center">
@@ -71,7 +94,12 @@
                                         data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
                                         <option value="">-- Pilih Alat --</option>
                                         @foreach($daftarPeralatan as $alat)
-                                            <option value="{{ $alat->id_peralatan }}" data-subtitle="{{ $alat->gedung }}" {{ $alat->id_peralatan == $alatTerpilih->id_peralatan ? 'selected' : '' }}>{{ $alat->nama_peralatan }}</option>
+                                            <option value="{{ $alat->id_peralatan }}"
+                                                data-subtitle="{{ $alat->gedung }} &middot; Stok: {{ $alat->stok_tersedia }}"
+                                                @if($alat->stok_tersedia <= 0) data-badge="Stok Habis" data-badge-variant="danger" @endif
+                                                {{ $alat->id_peralatan == $alatTerpilih->id_peralatan ? 'selected' : '' }}>
+                                                {{ $alat->nama_peralatan }}
+                                            </option>
                                         @endforeach
                                     </select>
                                     <input type="number" name="peralatan_jumlah[]" class="peralatan-jumlah {{ $inputClass }} flex-[0_0_80px]" min="1"
@@ -87,7 +115,11 @@
                                         data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
                                         <option value="" selected>-- Pilih Alat --</option>
                                         @foreach($daftarPeralatan as $alat)
-                                            <option value="{{ $alat->id_peralatan }}" data-subtitle="{{ $alat->gedung }}">{{ $alat->nama_peralatan }}</option>
+                                            <option value="{{ $alat->id_peralatan }}"
+                                                data-subtitle="{{ $alat->gedung }} &middot; Stok: {{ $alat->stok_tersedia }}"
+                                                @if($alat->stok_tersedia <= 0) data-badge="Stok Habis" data-badge-variant="danger" @endif>
+                                                {{ $alat->nama_peralatan }}
+                                            </option>
                                         @endforeach
                                     </select>
                                     <input type="number" name="peralatan_jumlah[]" class="peralatan-jumlah {{ $inputClass }} flex-[0_0_80px]" min="1"
@@ -118,7 +150,7 @@
                 @foreach($selectedOperators as $idUser)
                     <div class="dynamic-item flex gap-2.5 items-center">
                         <select name="operator_ids[]" class="operator-select searchable flex-1" required
-                            data-placeholder="Cari operator..." onchange="refreshOperatorOptions()">
+                            data-placeholder="-- Pilih Operator --" onchange="refreshOperatorOptions()">
                             <option value="" disabled selected>-- Pilih Operator --</option>
                             @foreach($operators as $op)
                                 <option value="{{ $op->id_user }}" data-subtitle="{{ $op->nohp ?? '-' }}"
@@ -139,11 +171,14 @@
                 class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-1 w-fit hover:bg-primary-50">
                 <i class="bx bx-plus"></i> Tambah Operator
             </button>
+            @error('operator_ids')
+                <span class="text-xs text-danger-text mt-2 block">{{ $message }}</span>
+            @enderror
         </div>
 
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
                 <a href="{{ route('admin.jadwal.index') }}"
-                    class="h-10 px-5 bg-page-bg dark:bg-page-bg-dark hover:bg-[#ddd] text-text dark:text-text-dark border-none rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                    class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
                     <i class="bx bx-save"></i> Simpan Perubahan
@@ -155,6 +190,92 @@
 
 @push('scripts')
     <script>
+        // ── Platform hint & Link Zoom otomatis ─────────────────────────────────────
+        function platformPakaiZoom(v) {
+            return v.includes('Zoom') || v === 'Hybrid';
+        }
+
+        document.getElementById('platform').addEventListener('change', function () {
+            var v = this.value;
+            var hint = document.getElementById('ket-hint');
+            var inp = document.getElementById('keterangan');
+            if (v.includes('Offline')) {
+                hint.textContent = 'Masukkan lokasi rapat (Gedung, Ruangan, Lantai).';
+                inp.placeholder = 'cth: Gedung A Lt.2 Ruang Rapat 1';
+            } else if (v.includes('Online')) {
+                hint.textContent = 'Keterangan tambahan (opsional), misalnya link meeting.';
+                inp.placeholder = 'cth: https://zoom.us/j/xxxxxxx';
+            } else if (v === 'Hybrid') {
+                hint.textContent = 'Masukkan link meeting dan lokasi fisik.';
+                inp.placeholder = 'cth: zoom.us/j/xxx | Gedung A Lt.2';
+            }
+
+            var zoomWrap = document.getElementById('link-otomatis-wrap');
+            var zoomCheckbox = document.getElementById('link_otomatis');
+            var pakaiZoom = platformPakaiZoom(v);
+            zoomWrap.style.display = pakaiZoom ? '' : 'none';
+            if (!pakaiZoom && zoomCheckbox.checked) {
+                zoomCheckbox.checked = false;
+                zoomCheckbox.dispatchEvent(new Event('change'));
+            }
+        });
+
+        function syncZoomCheckboxUI(isFreshToggle) {
+            var checkbox = document.getElementById('link_otomatis');
+            var inp = document.getElementById('keterangan');
+            var akunWrap = document.getElementById('zoom-akun-wrap');
+            if (checkbox.checked) {
+                if (isFreshToggle) {
+                    inp.value = '';
+                    inp.placeholder = 'Link akan dibuat otomatis setelah disimpan';
+                }
+                inp.readOnly = true;
+                inp.style.backgroundColor = '#f3f4f6';
+                akunWrap.style.display = '';
+                refreshZoomAkunOptions();
+            } else {
+                inp.readOnly = false;
+                inp.style.backgroundColor = '';
+                akunWrap.style.display = 'none';
+            }
+        }
+
+        document.getElementById('link_otomatis').addEventListener('change', function () {
+            syncZoomCheckboxUI(true);
+        });
+
+        // ── Pilih Akun Zoom: disable opsi yang bentrok jadwal di tanggal+jam ini ───
+        function refreshZoomAkunOptions() {
+            var select = document.getElementById('zoom_akun_pilihan');
+            if (!select) return;
+            var tanggal = document.getElementById('tanggal').value;
+            var mulai   = document.getElementById('waktu_mulai').value;
+            var selesai = document.getElementById('waktu_selesai').value;
+
+            Array.from(select.options).forEach(function (opt) {
+                if (!opt.value) return; // skip opsi "Otomatis"
+
+                var daftarJadwal = [];
+                try { daftarJadwal = JSON.parse(opt.dataset.jadwal || '[]'); } catch (e) { }
+
+                var bentrok = !!(tanggal && mulai && selesai) && daftarJadwal.some(function (j) {
+                    return j.tanggal === tanggal && mulai < j.selesai && selesai > j.mulai;
+                });
+
+                opt.disabled = bentrok;
+                var namaBersih = opt.textContent.replace(' (bentrok jadwal)', '');
+                opt.textContent = bentrok ? namaBersih + ' (bentrok jadwal)' : namaBersih;
+
+                if (bentrok && select.value === opt.value) {
+                    select.value = '';
+                }
+            });
+        }
+
+        ['tanggal', 'waktu_mulai', 'waktu_selesai'].forEach(function (id) {
+            document.getElementById(id).addEventListener('change', refreshZoomAkunOptions);
+        });
+
         // ── Operator: hide yang sudah dipilih, disable yang bentrok tanggal ────────
         function getSelectedOperators() {
             return Array.from(document.querySelectorAll('.operator-select'))
@@ -308,6 +429,7 @@
             updateRemoveButtons();
             refreshPeralatanOptions();
             updatePeralatanRemoveButtons();
+            syncZoomCheckboxUI(false);
         });
     </script>
 @endpush

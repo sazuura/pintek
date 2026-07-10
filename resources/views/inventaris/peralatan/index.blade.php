@@ -21,21 +21,36 @@
                     <input type="text" name="search" data-live-search="#hasil-peralatan-inv" autocomplete="off" placeholder="Cari nama / kode barang..." value="{{ request('search') }}"
                         class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
                 </div>
-                {{-- <select name="gedung" class="toolbar-select">
+                <select name="gedung" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Gedung</option>
                     @foreach($gedungList as $g)
-                    <option value="{{ $g }}" {{ request('gedung')==$g ? 'selected' : '' }}>{{ $g }}</option>
+                        <option value="{{ $g }}" {{ request('gedung') == $g ? 'selected' : '' }}>{{ $g }}</option>
                     @endforeach
-                </select> --}}
+                </select>
                 <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
                     <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
-                    <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak
-                        Tersedia
-                    </option>
+                    <option value="kritis" {{ request('status') == 'kritis' ? 'selected' : '' }}>Hampir Habis</option>
+                    <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak Tersedia</option>
                 </select>
-                @if(request()->hasAny(['search', 'gedung', 'status']))
+                <select name="kondisi" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="">Semua Kondisi</option>
+                    <option value="baik" {{ request('kondisi') == 'baik' ? 'selected' : '' }}>Baik</option>
+                    <option value="rusak" {{ request('kondisi') == 'rusak' ? 'selected' : '' }}>Rusak</option>
+                </select>
+                <select name="urutkan" onchange="this.form.submit()" data-placeholder="-- Urutkan --"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="" disabled {{ request('urutkan') ? '' : 'selected' }}>-- Urutkan --</option>
+                    <option value="gedung" {{ request('urutkan') == 'gedung' ? 'selected' : '' }}>Gedung</option>
+                    <option value="nama_asc" {{ request('urutkan') == 'nama_asc' ? 'selected' : '' }}>Nama (A-Z)</option>
+                    <option value="nama_desc" {{ request('urutkan') == 'nama_desc' ? 'selected' : '' }}>Nama (Z-A)</option>
+                    <option value="stok_desc" {{ request('urutkan') == 'stok_desc' ? 'selected' : '' }}>Stok Terbanyak</option>
+                    <option value="stok_asc" {{ request('urutkan') == 'stok_asc' ? 'selected' : '' }}>Stok Tersedikit</option>
+                </select>
+                @if(request()->hasAny(['search', 'gedung', 'status', 'kondisi', 'urutkan']))
                     <a href="{{ route('inventaris.peralatan.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                         <i class="bx bx-x"></i> Reset</a>
@@ -49,7 +64,7 @@
         {{-- Grid marketplace --}}
         <div id="hasil-peralatan-inv">
         @if($peralatan->count())
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
+            <div class="grid grid-cols-5 max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 @foreach($peralatan as $item)
                     <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
                         {{-- Foto --}}
@@ -62,21 +77,32 @@
                         @endif
 
                         <div class="p-3.5 flex flex-col gap-2 flex-1">
-                            <div class="text-sm font-semibold text-text dark:text-text-dark leading-tight">{{ $item->nama_peralatan }}</div>
+                            <div class="text-base font-bold text-text dark:text-text-dark leading-tight">{{ $item->nama_peralatan }}</div>
 
                             @if($item->kode_barang)
-                                <div class="text-[11px] text-text-muted flex items-center gap-1">
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                     <i class="bx bx-barcode"></i> {{ $item->kode_barang }}
                                 </div>
                             @endif
 
-                            <div class="text-xs text-text-muted flex items-center gap-1">
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                 <i class="bx bx-building"></i> {{ $item->lokasi_detail }}
                             </div>
 
-                            <div class="text-[13px] text-text dark:text-text-dark flex items-center justify-between">
-                                <span class="text-[13px] text-text-muted">Stok tersedia</span>
-                                <span class="font-bold text-lg text-text dark:text-text-dark">{{ $item->stok_tersedia }}</span>
+                            <div class="border border-page-bg dark:border-page-bg-dark rounded-lg overflow-hidden mt-1">
+                                <div class="text-center py-2 text-[13px] text-text dark:text-text-dark">
+                                    Total Stok: <span class="font-bold text-[15px]">{{ $item->stok }}</span>
+                                </div>
+                                <div class="grid grid-cols-2 border-t border-page-bg dark:border-page-bg-dark">
+                                    <div class="flex items-center justify-center gap-1.5 py-2.5 border-r border-page-bg dark:border-page-bg-dark">
+                                        <i class="bx bxs-check-circle text-success-text text-base"></i>
+                                        <span class="text-[13px] font-semibold text-success-text">{{ $item->stok_tersedia }} Baik</span>
+                                    </div>
+                                    <div class="flex items-center justify-center gap-1.5 py-2.5">
+                                        <i class="bx bxs-error text-warning-text text-base"></i>
+                                        <span class="text-[13px] font-semibold text-warning-text">{{ $item->rusak }} Rusak</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <x-badge :variant="$item->statusBadgeClass">{{ $item->statusLabel }}</x-badge>

@@ -43,6 +43,29 @@
         return (opt.textContent || '').replace(/\s+/g, ' ').trim();
     }
 
+    var MIN_TRIGGER_WIDTH = 190;
+    var MAX_TRIGGER_WIDTH = 340;
+    var measureCtx = null;
+
+    // Select filter di toolbar (bukan yang 'fill') dibuat menyesuaikan isi, bukan
+    // selebar-lebarnya - tapi kalau opsinya berupa nama panjang (mis. "Clara Safitri
+    // (Operator)"), lebar minimum bawaan (190px) bikin teks di trigger & tiap item
+    // dropdown kepotong ellipsis. Di sini lebar dihitung dari opsi terpanjang supaya
+    // select dengan data pendek (mis. "Semua Status") tetap ringkas, sementara yang
+    // datanya panjang otomatis dilebarkan (dibatasi MAX supaya tidak berlebihan).
+    function computeTriggerWidth(select) {
+        if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
+        measureCtx.font = '400 14px ui-sans-serif, system-ui, sans-serif';
+        var longest = 0;
+        selectableOptions(select).forEach(function (o) {
+            var w = measureCtx.measureText(optionLabel(o)).width;
+            if (w > longest) longest = w;
+        });
+        // padding trigger (px-3 kiri+kanan) + gap + lebar ikon chevron + sedikit buffer.
+        var width = longest + 24 + 8 + 16 + 12;
+        return Math.max(MIN_TRIGGER_WIDTH, Math.min(MAX_TRIGGER_WIDTH, Math.ceil(width)));
+    }
+
     // Opsi yang dianggap "bisa dipilih & tampil di daftar": bukan disabled (placeholder
     // mis. "-- Pilih X --" selalu ditandai disabled) dan tidak hidden. Opsi dengan
     // value="" TETAP dimasukkan selama tidak disabled (mis. "Semua Status" di filter).
@@ -69,7 +92,7 @@
 
         matched.forEach(function (opt) {
             var item = document.createElement('div');
-            item.className = 'searchable-select-item flex items-center justify-between gap-2 py-2 px-2.5 rounded-lg cursor-pointer [&:hover:not(.is-disabled)]:bg-page-bg dark:[&:hover:not(.is-disabled)]:bg-page-bg-dark [&.is-active]:bg-primary-50 dark:[&.is-active]:bg-[#0d2a40] [&.is-disabled]:opacity-50 [&.is-disabled]:cursor-not-allowed';
+            item.className = 'searchable-select-item flex items-center justify-between gap-2 py-2 px-2.5 rounded-lg cursor-pointer [&:hover:not(.is-disabled)]:bg-page-bg dark:[&:hover:not(.is-disabled)]:bg-page-bg-dark [&.is-active]:bg-primary-50 dark:[&.is-active]:bg-[#0d2a40]/60 [&.is-disabled]:opacity-50 [&.is-disabled]:cursor-not-allowed';
             if (opt.disabled) item.classList.add('is-disabled');
             if (opt.value === select.value) item.classList.add('is-active');
 
@@ -159,11 +182,14 @@
         // dinamis peralatan/operator, atau field form lewat <x-select>) ditandai lewat
         // class 'flex-1' / 'w-full' di elemen aslinya - wrapper ikut melebar. Selain
         // itu (mis. select filter di toolbar) wrapper dibuat menyesuaikan isi saja,
-        // supaya tidak melebar aneh mengisi sisa ruang flex toolbar.
+        // supaya tidak melebar aneh mengisi sisa ruang flex toolbar - tapi tetap diberi
+        // lebar minimum supaya label seperti "Gedung B (Persandian)" tidak kepotong
+        // ellipsis di kotak yang terlalu sempit.
         var fill = select.classList.contains('flex-1') || select.classList.contains('w-full');
 
         var wrapper = document.createElement('div');
         wrapper.className = 'searchable-select relative' + (fill ? ' flex-1 min-w-0' : ' inline-block');
+        if (!fill) wrapper.style.minWidth = computeTriggerWidth(select) + 'px';
         select.parentNode.insertBefore(wrapper, select);
         wrapper.appendChild(select);
         select.classList.add('searchable-select-native', 'hidden');
@@ -186,9 +212,11 @@
         var dropdown = document.createElement('div');
         dropdown.className = DROPDOWN_CLASSES;
 
-        // Search bar cuma dibuat kalau opsinya banyak - select kecil (mis. filter
-        // status/role/kondisi) langsung tampil daftarnya tanpa kotak pencarian.
-        var showSearch = selectableOptions(select).length > SEARCH_THRESHOLD;
+        // Search bar cuma dibuat kalau opsinya banyak, ATAU select-nya memang ditandai
+        // eksplisit class 'searchable' (mis. pilih operator/peralatan) - select kecil
+        // lain (mis. filter status/role/kondisi) langsung tampil daftarnya tanpa kotak
+        // pencarian.
+        var showSearch = select.classList.contains('searchable') || selectableOptions(select).length > SEARCH_THRESHOLD;
         var input = null, clearBtn = null;
         if (showSearch) {
             var searchWrap = document.createElement('div');
@@ -211,7 +239,7 @@
         }
 
         var listEl = document.createElement('div');
-        listEl.className = 'searchable-select-list max-h-[220px] overflow-y-auto flex flex-col gap-0.5';
+        listEl.className = 'searchable-select-list custom-scrollbar max-h-[220px] overflow-y-auto flex flex-col gap-0.5';
         dropdown.appendChild(listEl);
 
         wrapper.appendChild(dropdown);

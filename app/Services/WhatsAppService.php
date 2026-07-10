@@ -96,16 +96,26 @@ class WhatsAppService
         string $waktuSelesai,
         string $judulKegiatan,
         string $platform,
-        string $keterangan 
+        string $keterangan,
+        ?string $daftarPeralatan = null,
+        ?string $zoomPassword = null
     ): string {
-        return "📢 *JADWAL RAPAT BARU*\n\n"
+        $pesan = "📢 *JADWAL RAPAT BARU*\n\n"
             . "Halo *{$namaOperator}*,\n"
             . "Anda ditugaskan untuk menangani rapat *{$judulKegiatan}* berikut:\n\n"
             . "📅 Tanggal : {$tanggal}\n"
             . "⏰ Waktu   : {$waktuMulai} - {$waktuSelesai} WIB\n"
             . "💻 Platform: {$platform}\n"
-            . "📌 Keterangan: {$keterangan}\n\n"
-            . "Harap cek sistem untuk detail lengkap dan konfirmasi kehadiran Anda.\n"
+            . "📌 Keterangan: {$keterangan}\n";
+
+        if ($zoomPassword) {
+            $pesan .= "🔑 Password: {$zoomPassword}\n";
+        }
+        if ($daftarPeralatan) {
+            $pesan .= "🧰 Peralatan yang Harus Dipinjam:\n{$daftarPeralatan}\n";
+        }
+
+        return $pesan . "\nHarap cek sistem untuk detail lengkap dan konfirmasi kehadiran Anda.\n"
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
     }
 
@@ -116,16 +126,26 @@ class WhatsAppService
         string $waktuSelesai,
         string $judulKegiatan,
         string $platform,
-        string $keterangan
+        string $keterangan,
+        ?string $daftarPeralatan = null,
+        ?string $zoomPassword = null
     ): string {
-        return "✏️ *JADWAL RAPAT DIUBAH*\n\n"
+        $pesan = "✏️ *JADWAL RAPAT DIUBAH*\n\n"
             . "Halo *{$namaOperator}*,\n"
             . "Detail rapat *{$judulKegiatan}* yang Anda tangani telah diperbarui:\n\n"
             . "📅 Tanggal : {$tanggal}\n"
             . "⏰ Waktu   : {$waktuMulai} - {$waktuSelesai} WIB\n"
             . "💻 Platform: {$platform}\n"
-            . "📌 Keterangan: {$keterangan}\n\n"
-            . "Harap cek sistem untuk detail terbaru.\n"
+            . "📌 Keterangan: {$keterangan}\n";
+
+        if ($zoomPassword) {
+            $pesan .= "🔑 Password: {$zoomPassword}\n";
+        }
+        if ($daftarPeralatan) {
+            $pesan .= "🧰 Peralatan yang Harus Dipinjam:\n{$daftarPeralatan}\n";
+        }
+
+        return $pesan . "\nHarap cek sistem untuk detail terbaru.\n"
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
     }
 
@@ -184,6 +204,31 @@ class WhatsAppService
         }
         $baris .= "\n*Peralatan yang dipinjam:*\n{$daftarPeralatan}\n\n"
             . "Silakan login ke sistem untuk menyetujui atau menolak pengajuan ini.\n"
+            . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
+        return $baris;
+    }
+
+    public function templatePeminjamanDiubah(
+        string $namaInventaris,
+        string $namaOperator,
+        string $gedung,
+        string $tanggalPinjam,
+        string $tanggalKembali,
+        string $keperluan,
+        string $daftarPeralatan,
+        ?string $terkaitJadwal = null
+    ): string {
+        $baris = "✏️ *PENGAJUAN PEMINJAMAN DIUBAH*\n\n"
+            . "Halo *{$namaInventaris}*,\n"
+            . "Pengajuan peminjaman peralatan dari *{$gedung}* berikut telah diperbarui oleh pemohon:\n\n"
+            . "👤 Pemohon  : {$namaOperator}\n"
+            . "📅 Tanggal  : {$tanggalPinjam} - {$tanggalKembali}\n"
+            . "📋 Keperluan: {$keperluan}\n";
+        if ($terkaitJadwal) {
+            $baris .= "🗓️ Terkait Rapat: {$terkaitJadwal}\n";
+        }
+        $baris .= "\n*Peralatan yang dipinjam (terbaru):*\n{$daftarPeralatan}\n\n"
+            . "Silakan login ke sistem untuk meninjau perubahan ini.\n"
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
         return $baris;
     }

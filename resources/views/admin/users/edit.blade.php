@@ -14,12 +14,6 @@
             </a>
         </div>
 
-        @if($errors->any())
-            <div class="bg-danger dark:bg-danger-dark border-l-4 border-danger-text py-3 px-4 rounded-lg mb-4 text-sm text-[#c0392b]">
-                <ul class="m-0 pl-[18px]">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-        @endif
-
         <form action="{{ route('admin.users.update', $user->id_user) }}" method="POST" novalidate>
             @csrf @method('PUT')
 
@@ -46,20 +40,16 @@
                     <x-input name="password" label="Password Baru" type="password" toggleable
                         placeholder="Min. 6 karakter" hint="Kosongkan jika tidak berubah" />
 
-                    <x-select name="role" label="Role" required onchange="toggleGedung(this.value)">
+                    <x-select name="role" label="Role" required>
                         @foreach(['admin', 'operator', 'inventaris'] as $r)
                             <option value="{{ $r }}" {{ old('role', $user->role) == $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
                         @endforeach
                     </x-select>
-
-                    <div id="gedung-field" class="hidden">
-                        <x-input name="gedung" label="Gedung" placeholder="cth: Gedung A" value="{{ old('gedung', $user->gedung) }}" />
-                    </div>
                 </div>
             </div>
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
                 <a href="{{ route('admin.users.index') }}"
-                    class="h-10 px-5 bg-page-bg dark:bg-page-bg-dark hover:bg-[#ddd] text-text dark:text-text-dark border-none rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                    class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
                     <i class="bx bx-save"></i> Simpan Perubahan
@@ -68,15 +58,3 @@
         </form>
     </main>
 @endsection
-
-@push('scripts')
-    <script>
-        function toggleGedung(role) {
-            var field = document.getElementById('gedung-field');
-            field.classList.toggle('hidden', role !== 'inventaris');
-            var input = field.querySelector('input');
-            if (input) input.required = role === 'inventaris';
-        }
-        toggleGedung('{{ old("role", $user->role) }}');
-    </script>
-@endpush

@@ -188,3 +188,25 @@ document.addEventListener('keydown', function (e) {
         m.classList.remove('open');
     });
 });
+
+
+// ═══════════════════════════════════════════════════
+// 5. COPY TO CLIPBOARD (global, reusable)
+//    Tombol mana pun dengan [data-copy="teks"] - dipakai mis. buat copy
+//    password meeting Zoom di halaman jadwal. Ikon di dalam tombol (kalau ada)
+//    berubah jadi centang sesaat sebagai konfirmasi visual.
+// ═══════════════════════════════════════════════════
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-copy]');
+    if (!btn || !navigator.clipboard) return;
+    var teks = btn.dataset.copy;
+    if (!teks) return;
+
+    navigator.clipboard.writeText(teks).then(function () {
+        var icon = btn.querySelector('i');
+        if (!icon) return;
+        var kelasAsal = icon.className;
+        icon.className = 'bx bx-check';
+        setTimeout(function () { icon.className = kelasAsal; }, 1500);
+    });
+});

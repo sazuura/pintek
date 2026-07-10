@@ -25,3 +25,8 @@
         <i class='bx bxs-tv min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Alat Terpasang</span>
     </a>
 </li>
+<li>
+    <a href="{{ route('inventaris.laporan.index') }}" class="{{ $aBase }} {{ request()->is('inventaris/laporan*') ? $aActive : $aInactive }}">
+        <i class='bx bxs-file min-w-10 group-[.hide]:min-w-6 flex justify-center'></i><span class="text group-[.hide]:hidden">Laporan</span>
+    </a>
+</li>

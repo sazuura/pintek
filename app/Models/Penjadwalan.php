@@ -19,6 +19,10 @@ use Illuminate\Database\Eloquent\Model;
         'keterangan',
         'status',
         'alasan_batal',
+        'zoom_meeting_id',
+        'zoom_password',
+        'zoom_account',
+        'link_otomatis',
     ];
 
     public function operators()
@@ -26,7 +30,8 @@ use Illuminate\Database\Eloquent\Model;
         return $this->belongsToMany(User::class, 'jadwal_operator', 'id_penjadwalan', 'id_user');
     }
     protected $casts = [
-        'tanggal' => 'date:Y-m-d',
+        'tanggal'       => 'date:Y-m-d',
+        'link_otomatis' => 'boolean',
     ];
 
     public function peminjaman()
@@ -35,18 +40,24 @@ use Illuminate\Database\Eloquent\Model;
     }
 
     /**
-     * ID peralatan yang sudah diajukan operator manapun untuk jadwal ini (lewat modul
+     * Nama peralatan yang sudah diajukan operator manapun untuk jadwal ini (lewat modul
      * Peminjaman, status diajukan/disetujui/dikembalikan - bukan yang ditolak/dibatalkan).
-     * Dipakai buat kasih peringatan (bukan blokir) kalau operator lain mau mengajukan alat
-     * yang sama utk jadwal yang sama - operator tetap boleh lanjut setelah konfirmasi.
+     * Dicocokkan lewat NAMA (bukan id_peralatan) supaya alat yang sama tapi tercatat
+     * sebagai baris stok berbeda di gedung lain (mis. "Kabel HDMI 15 Meter" ada di
+     * Gedung A maupun Gedung B) tetap kena tanda "Sudah Diajukan", bukan cuma baris
+     * persis yang sama. Dipakai buat kasih peringatan (bukan blokir) kalau operator lain
+     * mau mengajukan alat yang sama utk jadwal yang sama - operator tetap boleh lanjut
+     * setelah konfirmasi.
      */
-    public function peralatanSudahDiajukan(): array
+    public function peralatanSudahDiajukan(?string $kecualiIdPeminjaman = null): array
     {
         return $this->peminjaman()
             ->whereIn('status', ['diajukan', 'disetujui', 'dikembalikan'])
-            ->with('items')
+            ->when($kecualiIdPeminjaman, fn ($q, $id) => $q->where('id_peminjaman', '!=', $id))
+            ->with('items.peralatan')
             ->get()
-            ->flatMap(fn ($p) => $p->items->pluck('id_peralatan'))
+            ->flatMap(fn ($p) => $p->items->pluck('peralatan.nama_peralatan'))
+            ->filter()
             ->unique()
             ->values()
             ->all();
@@ -58,7 +69,7 @@ use Illuminate\Database\Eloquent\Model;
      */
     public function peralatanReferensi()
     {
-        return $this->belongsToMany(Peralatan::class, 'jadwal_peralatan_referensi', 'id_penjadwalan', 'id_peralatan')
+        return $this->belongsToMany(Peralatan::class, 'jadwal_peralatan', 'id_penjadwalan', 'id_peralatan')
             ->withPivot('jumlah');
     }
 

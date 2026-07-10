@@ -14,23 +14,17 @@ class Peralatan extends Model
         'id_peralatan',   
         'kode_barang',   
         'nama_peralatan',
-        'gedung',         
-        'lokasi_detail',  
+        'gedung',
+        'lokasi_detail',
         'stok',
         'rusak',
-        'perbaikan',
         'keterangan',
         'foto',
     ];
 
-    public function peminjamanItems()
-    {
-        return $this->hasMany(PeminjamanItem::class, 'id_peralatan', 'id_peralatan');
-    }
-
     public function getStokTersediaAttribute(): int
     {
-        return max(0, $this->stok - ($this->rusak ?? 0) - ($this->perbaikan ?? 0));
+        return max(0, $this->stok - ($this->rusak ?? 0));
     }
     public function getStatusLabelAttribute(): string
     {

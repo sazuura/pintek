@@ -21,7 +21,6 @@ class User extends Authenticatable
         'password',
         'role',
         'status',
-        'gedung',
     ];
     protected $hidden = ['password', 'remember_token'];
 
@@ -35,10 +34,7 @@ class User extends Authenticatable
         return $this->hasMany(Peminjaman::class, 'id_user', 'id_user');
     }
 
-    public function isAdmin(): bool      { return $this->role === 'admin'; }
-    public function isOperator(): bool   { return $this->role === 'operator'; }
-    public function isInventaris(): bool { return $this->role === 'inventaris'; }
-    public function isActive(): bool     { return $this->status === 'active'; }
+    public function isActive(): bool { return $this->status === 'active'; }
 
     /**
      * Nomor HP dinormalisasi ke format internasional (62xxx) yang dibutuhkan Fonnte -

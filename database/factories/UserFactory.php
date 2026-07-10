@@ -14,16 +14,15 @@ class UserFactory extends Factory
             'password'  => Hash::make('password'),
             'role'      => 'operator',
             'status'    => 'active',
-            'gedung'    => null,
         ];
     }
     public function asAdmin(): static
     {
-        return $this->state(['role' => 'admin', 'gedung' => null]);
+        return $this->state(['role' => 'admin']);
     }
-    public function asInventaris(string $gedung): static
+    public function asInventaris(): static
     {
-        return $this->state(['role' => 'inventaris', 'gedung' => $gedung]);
+        return $this->state(['role' => 'inventaris']);
     }
     public function inactive(): static
     {
