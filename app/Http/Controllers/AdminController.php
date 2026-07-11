@@ -78,7 +78,7 @@ class AdminController extends Controller
 
         $totalOperatorAkun = User::where('role', 'operator')->count();
 
-        return view('admin.dashboard', array_merge($stats, compact(
+        return view('dashboard.beranda.admin', array_merge($stats, compact(
             'operatorChart', 'topPeralatan', 'activities', 'kalender',
             'trenRapat', 'trenJadwal', 'trenPeralatan', 'totalOperatorAkun'
         )));
@@ -205,7 +205,7 @@ class AdminController extends Controller
         $jadwal    = $this->queryJadwalLaporan($request)->paginate(10, ['*'], 'jadwal_page')->withQueryString();
         $peralatan = $this->queryPeralatanLaporan($request)->paginate(10, ['*'], 'peralatan_page')->withQueryString();
 
-        return view('admin.laporan.index', compact('jadwal', 'peralatan', 'operators'));
+        return view('dashboard.laporan.admin-index', compact('jadwal', 'peralatan', 'operators'));
     }
 
     /**
@@ -221,7 +221,7 @@ class AdminController extends Controller
 
         if ($request->tab === 'panel-peralatan') {
             $peralatan = $this->queryPeralatanLaporan($request)->get();
-            return view('admin.laporan.print_peralatan', [
+            return view('dashboard.laporan.print_peralatan', [
                 'peralatan'      => $peralatan,
                 'namaFile'       => $namaFile,
                 'judul'          => 'LAPORAN PERALATAN DIGUNAKAN',
@@ -232,7 +232,7 @@ class AdminController extends Controller
         }
 
         $jadwal = $this->queryJadwalLaporan($request)->get();
-        return view('admin.laporan.print_jadwal', [
+        return view('dashboard.laporan.print_jadwal', [
             'jadwal'         => $jadwal,
             'namaFile'       => $namaFile,
             'judul'          => 'LAPORAN JADWAL & OPERATOR',

@@ -19,14 +19,15 @@ class UserController extends Controller
             ->orderBy('nama_user')
             ->paginate(10)
             ->withQueryString();
-        return view('admin.users.index', compact('users'));
+        return view('dashboard.users.index', compact('users'));
     }
     public function create()
     {
-        return view('admin.users.create');
+        return view('dashboard.users.create');
     }
     public function store(Request $request)
     {
+        abort_if(!auth()->user()->punyaAkses('users', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah user.');
         $data = $request->validate([
             'nama_user'     => 'required|string|max:100',
             'jenis_kelamin' => 'required|in:L,P',
@@ -52,10 +53,11 @@ class UserController extends Controller
     }
     public function edit(string $id)
     {
-        return view('admin.users.edit', ['user' => User::findOrFail($id)]);
+        return view('dashboard.users.edit', ['user' => User::findOrFail($id)]);
     }
     public function update(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('users', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah user.');
         $user = User::findOrFail($id);
         $data = $request->validate([
             'nama_user'     => 'required|string|max:100',
@@ -83,6 +85,7 @@ class UserController extends Controller
     }
     public function destroy(string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('users', 'hapus'), 403, 'Anda tidak memiliki akses untuk mengaktifkan/menonaktifkan user.');
         $user = User::findOrFail($id);
         if ($user->id_user === auth()->user()->id_user) {
             return back()->with('error', 'Tidak dapat menonaktifkan akun Anda sendiri.');

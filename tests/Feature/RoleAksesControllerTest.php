@@ -1,0 +1,208 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Menu;
+use App\Models\Role;
+use App\Models\RoleMenuAkses;
+use App\Models\User;
+use Database\Seeders\RoleAksesSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class RoleAksesControllerTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RoleAksesSeeder::class);
+
+        $this->admin = User::create([
+            'id_user'   => 'US001',
+            'nama_user' => 'Admin Test',
+            'nohp'      => '081234567890',
+            'email'     => 'admin@test.com',
+            'password'  => bcrypt('password'),
+            'role'      => 'admin',
+            'status'    => 'active',
+        ]);
+    }
+
+    /** @test */
+    public function seeder_mereplikasi_3_role_bawaan_dengan_slug_yang_sama_persis_dengan_users_role(): void
+    {
+        $this->assertDatabaseHas('roles', ['slug' => 'admin', 'is_terkunci' => true]);
+        $this->assertDatabaseHas('roles', ['slug' => 'operator', 'is_terkunci' => true]);
+        $this->assertDatabaseHas('roles', ['slug' => 'inventaris', 'is_terkunci' => true]);
+        $this->assertSame(8, Menu::count());
+    }
+
+    /** @test */
+    public function admin_bisa_lihat_halaman_sistem_settings(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('admin.pengaturan.role-akses.index'))
+            ->assertOk()
+            ->assertSee('Sistem Settings')
+            ->assertSee('Admin')
+            ->assertSee('Operator')
+            ->assertSee('Inventaris');
+    }
+
+    /** @test */
+    public function admin_bisa_tambah_role_baru(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.pengaturan.role-akses.store'), [
+                'nama_role' => 'Resepsionis',
+            ])
+            ->assertRedirect(route('admin.pengaturan.role-akses.index'));
+
+        $this->assertDatabaseHas('roles', [
+            'nama_role'   => 'Resepsionis',
+            'slug'        => 'resepsionis',
+            'is_terkunci' => false,
+        ]);
+
+        // Baris akses kosong (semua false) otomatis dibuat untuk tiap menu yang ada.
+        $role = Role::where('slug', 'resepsionis')->first();
+        $this->assertSame(8, RoleMenuAkses::where('id_role', $role->id)->count());
+        $this->assertSame(0, RoleMenuAkses::where('id_role', $role->id)->where('bisa_lihat', true)->count());
+    }
+
+    /** @test */
+    public function role_bawaan_tidak_bisa_dihapus(): void
+    {
+        $roleAdmin = Role::where('slug', 'admin')->first();
+
+        $this->actingAs($this->admin)
+            ->delete(route('admin.pengaturan.role-akses.destroy', $roleAdmin))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('roles', ['id' => $roleAdmin->id]);
+    }
+
+    /** @test */
+    public function role_baru_yang_masih_dipakai_user_tidak_bisa_dihapus(): void
+    {
+        $role = Role::create(['nama_role' => 'Resepsionis', 'slug' => 'resepsionis', 'status' => 'aktif', 'is_terkunci' => false]);
+        User::create([
+            'id_user' => 'US002', 'nama_user' => 'Resep Test', 'nohp' => '081200000000',
+            'email' => 'resep@test.com', 'password' => bcrypt('password'),
+            'role' => 'resepsionis', 'status' => 'active',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->delete(route('admin.pengaturan.role-akses.destroy', $role))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('roles', ['id' => $role->id]);
+    }
+
+    /** @test */
+    public function role_baru_yang_tidak_dipakai_user_bisa_dihapus(): void
+    {
+        $role = Role::create(['nama_role' => 'Resepsionis', 'slug' => 'resepsionis', 'status' => 'aktif', 'is_terkunci' => false]);
+
+        $this->actingAs($this->admin)
+            ->delete(route('admin.pengaturan.role-akses.destroy', $role))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('roles', ['id' => $role->id]);
+    }
+
+    /** @test */
+    public function admin_bisa_ubah_hak_akses_menu_untuk_sebuah_role(): void
+    {
+        $roleOperator = Role::where('slug', 'operator')->first();
+        $menuLaporan  = Menu::where('slug', 'laporan')->first();
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.pengaturan.role-akses.updateAkses', $roleOperator), [
+                'akses' => [
+                    $menuLaporan->id => ['bisa_lihat' => '1', 'bisa_tambah' => '0', 'bisa_ubah' => '0', 'bisa_hapus' => '0'],
+                ],
+            ])
+            ->assertRedirect(route('admin.pengaturan.role-akses.index'));
+
+        $this->assertDatabaseHas('role_menu_akses', [
+            'id_role'    => $roleOperator->id,
+            'id_menu'    => $menuLaporan->id,
+            'bisa_lihat' => true,
+        ]);
+    }
+
+    /** @test */
+    public function role_punya_akses_helper_mengecek_dengan_benar(): void
+    {
+        $roleAdmin = Role::where('slug', 'admin')->first();
+        $roleOperator = Role::where('slug', 'operator')->first();
+
+        $this->assertTrue($roleAdmin->punyaAkses('jadwal', 'hapus'));
+        $this->assertFalse($roleOperator->punyaAkses('jadwal', 'hapus'));
+        $this->assertTrue($roleOperator->punyaAkses('peminjaman', 'tambah'));
+    }
+
+    /** @test */
+    public function mencabut_akses_tambah_lewat_settings_benar_benar_memblokir_operator_mengajukan_peminjaman(): void
+    {
+        $operator = User::create([
+            'id_user' => 'US010', 'nama_user' => 'Operator Test', 'nohp' => '081211112222',
+            'email' => 'operator@test.com', 'password' => bcrypt('password'),
+            'role' => 'operator', 'status' => 'active',
+        ]);
+
+        // Sebelum dicabut: operator memang bisa akses halaman buat pengajuan.
+        $this->actingAs($operator)
+            ->get(route('operator.peminjaman.create'))
+            ->assertOk();
+
+        // Admin mencabut akses "tambah" untuk menu peminjaman milik role operator lewat Settings.
+        $roleOperator = Role::where('slug', 'operator')->first();
+        $menuPeminjaman = Menu::where('slug', 'peminjaman')->first();
+        $this->actingAs($this->admin)->put(route('admin.pengaturan.role-akses.updateAkses', $roleOperator), [
+            'akses' => [
+                $menuPeminjaman->id => ['bisa_lihat' => '1', 'bisa_tambah' => '0', 'bisa_ubah' => '1', 'bisa_hapus' => '0'],
+            ],
+        ]);
+
+        // Sekarang operator MASIH bisa lihat daftar (bisa_lihat tetap true)...
+        $this->actingAs($operator)
+            ->get(route('operator.peminjaman.index'))
+            ->assertOk();
+
+        // ...tapi submit pengajuan baru (aksi "tambah") ditolak 403, tanpa perlu deploy kode apa pun.
+        $this->actingAs($operator)
+            ->post(route('operator.peminjaman.store'), [
+                'tanggal_pinjam'          => now()->addDay()->toDateString(),
+                'tanggal_kembali_rencana' => now()->addDays(2)->toDateString(),
+                'keperluan'               => 'Test',
+                'peralatan_ids'           => [],
+                'peralatan_jumlah'        => [],
+            ])
+            ->assertForbidden();
+    }
+
+    /** @test */
+    public function operator_tetap_tidak_bisa_masuk_prefix_admin_walau_akses_menu_dashboard_sama_sama_true(): void
+    {
+        // Regresi untuk bug yang sempat ketemu: menu "dashboard" dipakai bareng oleh
+        // admin/operator/inventaris (semuanya bisa_lihat=true), jadi middleware
+        // menu-akses SENDIRIAN tidak cukup untuk memisahkan prefix URL antar role -
+        // gerbang 'role:X' di level grup tetap wajib dipertahankan (lihat routes/web.php).
+        $operator = User::create([
+            'id_user' => 'US011', 'nama_user' => 'Operator Test 2', 'nohp' => '081233334444',
+            'email' => 'operator2@test.com', 'password' => bcrypt('password'),
+            'role' => 'operator', 'status' => 'active',
+        ]);
+
+        $this->actingAs($operator)->get('/admin/dashboard')->assertForbidden();
+        $this->actingAs($operator)->get('/inventaris/dashboard')->assertForbidden();
+        $this->actingAs($operator)->get('/operator/dashboard')->assertOk();
+    }
+}

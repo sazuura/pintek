@@ -49,15 +49,16 @@ class PeralatanController extends Controller
             ->paginate(10)
             ->withQueryString();
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('inventaris.peralatan.index', compact('peralatan', 'gedungList'));
+        return view('dashboard.peralatan.index', compact('peralatan', 'gedungList'));
     }
     public function create()
     {
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('inventaris.peralatan.create', compact('gedungList'));
+        return view('dashboard.peralatan.create', compact('gedungList'));
     }
     public function store(Request $request)
     {
+        abort_if(!auth()->user()->punyaAkses('peralatan', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah peralatan.');
         $data = $request->validate([
             'kode_barang'       => 'nullable|string|max:50|unique:peralatan,kode_barang',
             'nama_peralatan'    => 'required|string|max:100',
@@ -78,13 +79,14 @@ class PeralatanController extends Controller
     public function edit(string $id)
     {
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('inventaris.peralatan.edit', [
+        return view('dashboard.peralatan.edit', [
             'peralatan' => Peralatan::findOrFail($id),
             'gedungList' => $gedungList,
         ]);
     }
     public function update(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peralatan', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah peralatan.');
         $peralatan = Peralatan::findOrFail($id);
         $data = $request->validate([
             'kode_barang'       => 'nullable|string|max:50|unique:peralatan,kode_barang,' . $id . ',id_peralatan',
@@ -108,6 +110,7 @@ class PeralatanController extends Controller
     }
     public function destroy(string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peralatan', 'hapus'), 403, 'Anda tidak memiliki akses untuk menghapus peralatan.');
         $peralatan = Peralatan::findOrFail($id);
         try {
             if ($peralatan->foto) {

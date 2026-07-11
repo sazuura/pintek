@@ -28,12 +28,14 @@ class PenjadwalanController extends Controller
             ->orderByDesc('tanggal')
             ->paginate(10)
             ->withQueryString();
-        return view('admin.jadwal.index', compact('jadwal'));
+        $bisaTambah = auth()->user()->punyaAkses('jadwal', 'tambah');
+        $bisaUbah   = auth()->user()->punyaAkses('jadwal', 'ubah');
+        return view('dashboard.jadwal.index', compact('jadwal', 'bisaTambah', 'bisaUbah'));
     }
 
     public function create()
     {
-        return view('admin.jadwal.create', [
+        return view('dashboard.jadwal.create', [
             'operators'      => $this->operatorsWithJadwalDates(),
             'daftarPeralatan' => $this->peralatanUntukReferensi(),
             'zoomJadwal'      => $this->zoomJadwalPerAkun(),
@@ -42,6 +44,7 @@ class PenjadwalanController extends Controller
 
     public function store(Request $request)
     {
+        abort_if(!auth()->user()->punyaAkses('jadwal', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah jadwal.');
         $data = $this->validasiForm($request);
         try {
             $this->service->buat(
@@ -65,13 +68,13 @@ class PenjadwalanController extends Controller
     public function show(string $id)
     {
         $jadwal = Penjadwalan::with(['operators', 'peminjaman.user', 'peralatanReferensi'])->findOrFail($id);
-        return view('admin.jadwal.show', compact('jadwal'));
+        return view('dashboard.jadwal.show', compact('jadwal'));
     }
 
     public function edit(string $id)
     {
         $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])->findOrFail($id);
-        return view('admin.jadwal.edit', [
+        return view('dashboard.jadwal.edit', [
             'jadwal'             => $jadwal,
             'operators'          => $this->operatorsWithJadwalDates(),
             'selectedOperators'  => $jadwal->operators->pluck('id_user')->toArray(),
@@ -83,6 +86,7 @@ class PenjadwalanController extends Controller
 
     public function update(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('jadwal', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah jadwal.');
         $jadwal = Penjadwalan::findOrFail($id);
         $data   = $this->validasiForm($request, isUpdate: true);
         try {
@@ -141,6 +145,7 @@ class PenjadwalanController extends Controller
 
     public function destroy(string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('jadwal', 'hapus'), 403, 'Anda tidak memiliki akses untuk menghapus jadwal.');
         $this->service->hapus(Penjadwalan::findOrFail($id));
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil dihapus.');
@@ -197,6 +202,7 @@ class PenjadwalanController extends Controller
 
     public function batalkan(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('jadwal', 'ubah'), 403, 'Anda tidak memiliki akses untuk membatalkan jadwal.');
         $request->validate([
             'alasan_batal' => 'required|string|max:255',
         ], [

@@ -32,7 +32,7 @@ class InventarisController extends Controller
 
         $totalMenunggu = Peminjaman::where('status', 'diajukan')->count();
 
-        return view('inventaris.dashboard', compact(
+        return view('dashboard.beranda.inventaris', compact(
             'totalPeralatan',
             'totalTersedia',
             'totalRusak',
@@ -60,7 +60,7 @@ class InventarisController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('inventaris.peralatan.index', compact('peralatan'));
+        return view('dashboard.peralatan.index', compact('peralatan'));
     }
 
     public function laporanIndex(Request $request)
@@ -75,7 +75,7 @@ class InventarisController extends Controller
         $terpasang  = $this->queryTerpasangLaporan($request)->paginate(10, ['*'], 'terpasang_page')->withQueryString();
         $peminjaman = $this->queryPeminjamanLaporan($request)->paginate(10, ['*'], 'peminjaman_page')->withQueryString();
 
-        return view('inventaris.laporan.index', compact('stok', 'terpasang', 'peminjaman', 'gedungList'));
+        return view('dashboard.laporan.inventaris-index', compact('stok', 'terpasang', 'peminjaman', 'gedungList'));
     }
 
     /**
@@ -89,7 +89,7 @@ class InventarisController extends Controller
 
         if ($request->tab === 'panel-terpasang') {
             $terpasang = $this->queryTerpasangLaporan($request)->get();
-            return view('inventaris.laporan.print_terpasang', [
+            return view('dashboard.laporan.print_terpasang', [
                 'terpasang'      => $terpasang,
                 'namaFile'       => $namaFile,
                 'judul'          => 'LAPORAN ALAT TERPASANG',
@@ -101,7 +101,7 @@ class InventarisController extends Controller
 
         if ($request->tab === 'panel-peminjaman') {
             $peminjaman = $this->queryPeminjamanLaporan($request)->get();
-            return view('admin.laporan.print_peralatan', [
+            return view('dashboard.laporan.print_peralatan', [
                 'peralatan'      => $peminjaman,
                 'namaFile'       => $namaFile,
                 'judul'          => 'LAPORAN RIWAYAT PEMINJAMAN',
@@ -112,7 +112,7 @@ class InventarisController extends Controller
         }
 
         $stok = $this->queryStokLaporan($request)->get();
-        return view('inventaris.laporan.print_stok', [
+        return view('dashboard.laporan.print_stok', [
             'stok'           => $stok,
             'namaFile'       => $namaFile,
             'judul'          => 'LAPORAN STOK PERALATAN',

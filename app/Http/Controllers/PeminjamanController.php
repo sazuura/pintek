@@ -18,7 +18,7 @@ class PeminjamanController extends Controller
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
-        return view('operator.peminjaman.index', compact('peminjaman'));
+        return view('dashboard.peminjaman.operator-index', compact('peminjaman'));
     }
     public function operatorCreate(Request $request)
     {
@@ -30,10 +30,11 @@ class PeminjamanController extends Controller
 
         $selectedPeralatanId = $request->query('id_peralatan');
         $jadwalAktif          = $this->jadwalAktifOperator();
-        return view('operator.peminjaman.create', compact('peralatan', 'selectedPeralatanId', 'jadwalAktif'));
+        return view('dashboard.peminjaman.create', compact('peralatan', 'selectedPeralatanId', 'jadwalAktif'));
     }
     public function operatorStore(Request $request)
     {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'tambah'), 403, 'Anda tidak memiliki akses untuk mengajukan peminjaman.');
         $idJadwalAktif = $this->jadwalAktifOperator()->pluck('id_penjadwalan');
         $request->validate($this->aturanValidasiPengajuan($idJadwalAktif), $this->pesanValidasiPengajuan());
 
@@ -134,11 +135,12 @@ class PeminjamanController extends Controller
             ->groupBy('gedung');
 
         $jadwalAktif = $this->jadwalAktifOperator();
-        return view('operator.peminjaman.edit', compact('peminjaman', 'peralatan', 'jadwalAktif'));
+        return view('dashboard.peminjaman.edit', compact('peminjaman', 'peralatan', 'jadwalAktif'));
     }
 
     public function operatorUpdate(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah pengajuan peminjaman.');
         $peminjaman = Peminjaman::findOrFail($id);
         abort_if($peminjaman->id_user !== auth()->user()->id_user, 403);
 
@@ -212,10 +214,11 @@ class PeminjamanController extends Controller
             ->where('status', 'active')
             ->orderBy('nama_user')
             ->get();
-        return view('inventaris.peminjaman.index', compact('peminjaman', 'operatorList'));
+        return view('dashboard.peminjaman.inventaris-index', compact('peminjaman', 'operatorList'));
     }
     public function inventarisApprove(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'ubah'), 403, 'Anda tidak memiliki akses untuk menyetujui pengajuan.');
         $request->validate([
             'catatan_inventaris' => 'nullable|string|max:255',
         ]);
@@ -232,6 +235,7 @@ class PeminjamanController extends Controller
     }
     public function inventarisReject(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'ubah'), 403, 'Anda tidak memiliki akses untuk menolak pengajuan.');
         $request->validate([
             'catatan_inventaris' => 'required|string|max:255',
         ], [
@@ -250,6 +254,7 @@ class PeminjamanController extends Controller
     }
     public function inventarisKembali(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengonfirmasi pengembalian.');
         $peminjaman = Peminjaman::findOrFail($id);
         if (!$peminjaman->isDisetujui()) {
             return back()->with('error', 'Hanya peminjaman berstatus "Disetujui" yang bisa dikonfirmasi kembali.');
@@ -263,6 +268,7 @@ class PeminjamanController extends Controller
     }
     public function operatorBatalkan(Request $request, string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'ubah'), 403, 'Anda tidak memiliki akses untuk membatalkan pengajuan.');
         $request->validate([
             'alasan_batal' => 'required|string|max:255',
         ], [

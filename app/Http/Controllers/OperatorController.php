@@ -65,7 +65,7 @@ class OperatorController extends Controller
         $activities = $this->recentActivities($userId);
         $kalender   = $this->jadwalKalender($request->query('bulan'), $userId);
 
-        return view('operator.dashboard', array_merge($stats, compact('perluDikembalikan', 'topPeralatan', 'activities', 'kalender')));
+        return view('dashboard.beranda.operator', array_merge($stats, compact('perluDikembalikan', 'topPeralatan', 'activities', 'kalender')));
     }
 
     /**
@@ -179,7 +179,9 @@ class OperatorController extends Controller
             ->whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
             ->orderByDesc('tanggal')
             ->paginate(10);
-        return view('operator.jadwal.index', compact('jadwal'));
+        $bisaTambah = auth()->user()->punyaAkses('jadwal', 'tambah');
+        $bisaUbah   = auth()->user()->punyaAkses('jadwal', 'ubah');
+        return view('dashboard.jadwal.index', compact('jadwal', 'bisaTambah', 'bisaUbah'));
     }
 
     public function peralatanIndex(Request $request)
@@ -217,6 +219,6 @@ class OperatorController extends Controller
             ->paginate(10)
             ->withQueryString();
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('operator.peralatan.index', compact('peralatan', 'gedungList'));
+        return view('dashboard.peralatan.operator-index', compact('peralatan', 'gedungList'));
     }
 }
