@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV">
+    <title>Data Users - Diskominfotik</title>
+
+    
+        <script>
+            if (localStorage.getItem('theme') === 'dark') {
+                document.write('<body class="dark">');
+            }
+        </script>
+
+        <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="http://localhost/css/adminhub.css">
+
+        </head>
+
+
+
+    <body>
+
+        <section id="sidebar">
+            <a href="http://localhost/admin/dashboard" class="brand">
+                <img src="http://localhost/img/logo.png" alt="Logo Diskominfotik" class="brand-logo">
+                <span class="text">DISKOMINFOTIK</span>
+            </a>
+            <ul class="side-menu top">
+                 <li class="">
+    <a href="http://localhost/admin/dashboard"><i class='bx bxs-dashboard'></i><span class="text">Dashboard</span></a>
+</li>
+<li class="">
+    <a href="http://localhost/admin/users"><i class='bx bxs-group'></i><span class="text">Users</span></a>
+</li>
+<li class="">
+    <a href="http://localhost/admin/jadwal"><i class='bx bxs-calendar'></i><span class="text">Jadwal</span></a>
+</li>
+
+<li class="">
+    <a href="http://localhost/admin/laporan"><i class='bx bxs-file'></i><span class="text">Laporan</span></a>
+</li>             </ul>
+            <ul class="side-menu">
+                <li>
+                    <a href="http://localhost/logout" class="logout"
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <i class='bx bxs-log-out'></i>
+                        <span class="text">Logout</span>
+                    </a>
+                    <form id="logout-form" action="http://localhost/logout" method="POST" style="display:none;">
+                        <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off">                    </form>
+                </li>
+            </ul>
+        </section>
+
+        <section id="content">
+            <div id="sidebar-overlay"></div>
+            <nav>
+                <i class="bx bx-menu" id="sidebar-toggle"></i>
+                <div style="display:flex; align-items:center; gap:16px; margin-left:auto;">
+                    <div class="nav-badges">
+                        <img src="http://localhost/img/amanah.png" alt="Bandung Barat Amanah">
+                        <img src="http://localhost/img/jabaristimewa.png" alt="Jabar Istimewa">
+                        <img src="http://localhost/img/berakhlak.png" alt="ASN BerAKHLAK">
+                    </div>
+                    <div class="theme-toggle">
+                        <input type="checkbox" id="switch-mode">
+                        <label for="switch-mode" class="toggle">
+                            <span class="icon" id="theme-icon">🌞</span>
+                        </label>
+                    </div>
+                    <a href="#" class="profile">
+                        <span style="font-size:14px; color:var(--dark);">
+                            Hallo, Admin Sazuura
+                        </span>
+                    </a>
+                </div>
+            </nav>
+
+            <style>
+    .flash-toast {
+        position: fixed;
+        top: 1.25rem;
+        right: 1.25rem;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        padding: .75rem 1.1rem;
+        border-radius: 10px;
+        font-size: .875rem;
+        font-weight: 500;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+        animation: flash-in .25s ease;
+        max-width: 360px;
+    }
+
+    .flash-success {
+        background: #d4edda;
+        color: #1a6b30;
+        border-left: 4px solid #28a745;
+    }
+
+    .flash-error {
+        background: #f8d7da;
+        color: #842029;
+        border-left: 4px solid #dc3545;
+    }
+
+    .flash-warning {
+        background: #fff3cd;
+        color: #856404;
+        border-left: 4px solid #ffc107;
+    }
+
+    .flash-info {
+        background: #d0e8ff;
+        color: #0a4a8a;
+        border-left: 4px solid #3c91e6;
+    }
+
+    .flash-close {
+        margin-left: auto;
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        cursor: pointer;
+        opacity: .6;
+        color: inherit;
+        line-height: 1;
+        padding: 0 0 0 .5rem;
+    }
+
+    .flash-close:hover {
+        opacity: 1;
+    }
+
+    @keyframes flash-in {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+    // Auto dismiss setelah 4 detik
+    document.querySelectorAll('.flash-toast').forEach(function (el) {
+        setTimeout(function () {
+            el.style.transition = 'opacity .4s';
+            el.style.opacity = '0';
+            setTimeout(function () { el.remove(); }, 400);
+        }, 4000);
+    });
+</script>
+                <main>
+        <div class="head-title">
+            <div class="left">
+                <h1>Data Users</h1>
+            </div>
+            <a href="http://localhost/admin/users/create" class="btn-download">
+                <i class="bx bx-plus"></i><span class="text">Tambah User</span>
+            </a>
+        </div>
+
+        <div class="content-toolbar">
+            <form method="GET" action="http://localhost/admin/users" style="display:contents;">
+                <div class="toolbar-search">
+                    <i class="bx bx-search"></i>
+                    <input type="text" name="search" placeholder="Cari nama / email..." value="">
+                </div>
+                <select name="role" class="toolbar-select">
+                    <option value="">Semua Role</option>
+                    <option value="admin" >Admin</option>
+                    <option value="operator" >Operator</option>
+                    <option value="inventaris" >Inventaris</option>
+                </select>
+                <select name="status" class="toolbar-select">
+                    <option value="">Semua Status</option>
+                    <option value="active" >Active</option>
+                    <option value="inactive" >Inactive</option>
+                </select>
+                <button type="submit" class="toolbar-btn primary"><i class="bx bx-filter"></i> Filter</button>
+                            </form>
+        </div>
+
+        <div class="data-table-wrap users-table-desktop">
+            <div class="data-table-head">
+                <h3>Daftar User</h3>
+                <small style="color:var(--dark-grey);">Tap baris untuk detail</small>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width:32px;"></th>
+                            <th style="width:40px;">#</th>
+                            <th class="sortable">Nama <span class="sort-icon">⇅</span></th>
+                            <th class="hide-mobile">Email</th>
+                            <th class="sortable">Role <span class="sort-icon">⇅</span></th>
+                            
+                            <th>Status</th>
+                            <th style="width:80px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                                                    
+                            <tr class="accordion-row " data-target="usr-USR-14167">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
+                                <td>1</td>
+                                <td>
+                                    <div style="font-weight:500;">Admin Sazuura</div>
+                                    <div style="font-size:12px;color:var(--dark-grey);">USR-14167</div>
+                                </td>
+                                <td class="hide-mobile" style="font-size:13px;">admin@diskominfotik.go.id</td>
+                                <td>
+                                                                        <span class="badge badge-danger">Admin</span>
+                                </td>
+                                
+                                <td>
+                                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                                    </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="http://localhost/admin/users/USR-14167/edit" class="btn-icon edit">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        <form action="http://localhost/admin/users/USR-14167" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button type="submit"
+                                                class="btn-icon delete">
+                                                <i class="bx bx-user-x"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="accordion-detail" id="usr-USR-14167">
+                                <td colspan="7">
+                                                                        <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-id-card"></i>
+                                            <div>
+                                                <label>ID User</label>
+                                                <p>USR-14167</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bxl-whatsapp"></i>
+                                            <div>
+                                                <label>No. HP</label>
+                                                                                                    <p><a href="https://wa.me/6281200180186" target="_blank" rel="noopener">081200180186 <i class="bx bx-link-external" style="font-size:11px;"></i></a></p>
+                                                                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bx-male-sign"></i>
+                                            <div>
+                                                <label>Jenis Kelamin</label>
+                                                <p>Laki-laki</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-map"></i>
+                                            <div>
+                                                <label>Alamat</label>
+                                                <p>Kpg. Urip Sumoharjo No. 475, Padangsidempuan 18977, Sumbar</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                                                    
+                            <tr class="accordion-row " data-target="usr-USR-53063">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
+                                <td>2</td>
+                                <td>
+                                    <div style="font-weight:500;">Daliono Rahimah (Operator)</div>
+                                    <div style="font-size:12px;color:var(--dark-grey);">USR-53063</div>
+                                </td>
+                                <td class="hide-mobile" style="font-size:13px;">operator1@diskominfotik.go.id</td>
+                                <td>
+                                                                        <span class="badge badge-info">Operator</span>
+                                </td>
+                                
+                                <td>
+                                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                                    </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="http://localhost/admin/users/USR-53063/edit" class="btn-icon edit">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        <form action="http://localhost/admin/users/USR-53063" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button type="submit"
+                                                class="btn-icon delete">
+                                                <i class="bx bx-user-x"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="accordion-detail" id="usr-USR-53063">
+                                <td colspan="7">
+                                                                        <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-id-card"></i>
+                                            <div>
+                                                <label>ID User</label>
+                                                <p>USR-53063</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bxl-whatsapp"></i>
+                                            <div>
+                                                <label>No. HP</label>
+                                                                                                    <p><a href="https://wa.me/6281384282700" target="_blank" rel="noopener">081384282700 <i class="bx bx-link-external" style="font-size:11px;"></i></a></p>
+                                                                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bx-male-sign"></i>
+                                            <div>
+                                                <label>Jenis Kelamin</label>
+                                                <p>Laki-laki</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-map"></i>
+                                            <div>
+                                                <label>Alamat</label>
+                                                <p>Jr. Bahagia No. 828, Padangsidempuan 17948, Papua</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                                                    
+                            <tr class="accordion-row " data-target="usr-USR-43240">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
+                                <td>3</td>
+                                <td>
+                                    <div style="font-weight:500;">Kartika Usamah (Operator)</div>
+                                    <div style="font-size:12px;color:var(--dark-grey);">USR-43240</div>
+                                </td>
+                                <td class="hide-mobile" style="font-size:13px;">operator2@diskominfotik.go.id</td>
+                                <td>
+                                                                        <span class="badge badge-info">Operator</span>
+                                </td>
+                                
+                                <td>
+                                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                                    </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="http://localhost/admin/users/USR-43240/edit" class="btn-icon edit">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        <form action="http://localhost/admin/users/USR-43240" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button type="submit"
+                                                class="btn-icon delete">
+                                                <i class="bx bx-user-x"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="accordion-detail" id="usr-USR-43240">
+                                <td colspan="7">
+                                                                        <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-id-card"></i>
+                                            <div>
+                                                <label>ID User</label>
+                                                <p>USR-43240</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bxl-whatsapp"></i>
+                                            <div>
+                                                <label>No. HP</label>
+                                                                                                    <p><a href="https://wa.me/6281350936016" target="_blank" rel="noopener">081350936016 <i class="bx bx-link-external" style="font-size:11px;"></i></a></p>
+                                                                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bx-female-sign"></i>
+                                            <div>
+                                                <label>Jenis Kelamin</label>
+                                                <p>Perempuan</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-map"></i>
+                                            <div>
+                                                <label>Alamat</label>
+                                                <p>Ds. Agus Salim No. 623, Padangsidempuan 42426, Aceh</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                                                    
+                            <tr class="accordion-row " data-target="usr-USR-93895">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
+                                <td>4</td>
+                                <td>
+                                    <div style="font-weight:500;">Laras Nugroho (Operator)</div>
+                                    <div style="font-size:12px;color:var(--dark-grey);">USR-93895</div>
+                                </td>
+                                <td class="hide-mobile" style="font-size:13px;">operator4@diskominfotik.go.id</td>
+                                <td>
+                                                                        <span class="badge badge-info">Operator</span>
+                                </td>
+                                
+                                <td>
+                                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                                    </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="http://localhost/admin/users/USR-93895/edit" class="btn-icon edit">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        <form action="http://localhost/admin/users/USR-93895" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button type="submit"
+                                                class="btn-icon delete">
+                                                <i class="bx bx-user-x"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="accordion-detail" id="usr-USR-93895">
+                                <td colspan="7">
+                                                                        <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-id-card"></i>
+                                            <div>
+                                                <label>ID User</label>
+                                                <p>USR-93895</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bxl-whatsapp"></i>
+                                            <div>
+                                                <label>No. HP</label>
+                                                                                                    <p><a href="https://wa.me/6281347465771" target="_blank" rel="noopener">081347465771 <i class="bx bx-link-external" style="font-size:11px;"></i></a></p>
+                                                                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bx-female-sign"></i>
+                                            <div>
+                                                <label>Jenis Kelamin</label>
+                                                <p>Perempuan</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-map"></i>
+                                            <div>
+                                                <label>Alamat</label>
+                                                <p>Ki. Yoga No. 137, Singkawang 36148, Sultra</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                                                    
+                            <tr class="accordion-row " data-target="usr-USR-93384">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
+                                <td>5</td>
+                                <td>
+                                    <div style="font-weight:500;">Nilam Zulkarnain (Operator)</div>
+                                    <div style="font-size:12px;color:var(--dark-grey);">USR-93384</div>
+                                </td>
+                                <td class="hide-mobile" style="font-size:13px;">operator3@diskominfotik.go.id</td>
+                                <td>
+                                                                        <span class="badge badge-info">Operator</span>
+                                </td>
+                                
+                                <td>
+                                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                                    </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="http://localhost/admin/users/USR-93384/edit" class="btn-icon edit">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        <form action="http://localhost/admin/users/USR-93384" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button type="submit"
+                                                class="btn-icon delete">
+                                                <i class="bx bx-user-x"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="accordion-detail" id="usr-USR-93384">
+                                <td colspan="7">
+                                                                        <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-id-card"></i>
+                                            <div>
+                                                <label>ID User</label>
+                                                <p>USR-93384</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bxl-whatsapp"></i>
+                                            <div>
+                                                <label>No. HP</label>
+                                                                                                    <p><a href="https://wa.me/6281347282373" target="_blank" rel="noopener">081347282373 <i class="bx bx-link-external" style="font-size:11px;"></i></a></p>
+                                                                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bx-female-sign"></i>
+                                            <div>
+                                                <label>Jenis Kelamin</label>
+                                                <p>Perempuan</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-map"></i>
+                                            <div>
+                                                <label>Alamat</label>
+                                                <p>Gg. Gambang No. 875, Palu 22222, NTB</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                                                    
+                            <tr class="accordion-row row-inactive" data-target="usr-USR-06723">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
+                                <td>6</td>
+                                <td>
+                                    <div style="font-weight:500;">Titi Wasita (Operator)</div>
+                                    <div style="font-size:12px;color:var(--dark-grey);">USR-06723</div>
+                                </td>
+                                <td class="hide-mobile" style="font-size:13px;">operator5@diskominfotik.go.id</td>
+                                <td>
+                                                                        <span class="badge badge-info">Operator</span>
+                                </td>
+                                
+                                <td>
+                                                                            <span class="badge badge-inactive"><i class="bx bx-x-circle"></i> Inactive</span>
+                                                                    </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="http://localhost/admin/users/USR-06723/edit" class="btn-icon edit">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        <form action="http://localhost/admin/users/USR-06723" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Aktifkan user ini?')">
+                                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button type="submit"
+                                                class="btn-icon success">
+                                                <i class="bx bx-user-check"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="accordion-detail" id="usr-USR-06723">
+                                <td colspan="7">
+                                                                        <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-id-card"></i>
+                                            <div>
+                                                <label>ID User</label>
+                                                <p>USR-06723</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bxl-whatsapp"></i>
+                                            <div>
+                                                <label>No. HP</label>
+                                                                                                    <p><a href="https://wa.me/6281336297501" target="_blank" rel="noopener">081336297501 <i class="bx bx-link-external" style="font-size:11px;"></i></a></p>
+                                                                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bx-female-sign"></i>
+                                            <div>
+                                                <label>Jenis Kelamin</label>
+                                                <p>Perempuan</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-map"></i>
+                                            <div>
+                                                <label>Alamat</label>
+                                                <p>Ki. Sampangan No. 645, Bukittinggi 43088, Jabar</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                                                    
+                            <tr class="accordion-row " data-target="usr-USR-68451">
+                                <td style="text-align:center;"><i class="bx bx-chevron-down accordion-chevron"></i></td>
+                                <td>7</td>
+                                <td>
+                                    <div style="font-weight:500;">Fadhil (Staf Inventaris Utama)</div>
+                                    <div style="font-size:12px;color:var(--dark-grey);">USR-68451</div>
+                                </td>
+                                <td class="hide-mobile" style="font-size:13px;">inventaris@diskominfotik.go.id</td>
+                                <td>
+                                                                        <span class="badge badge-purple">Inventaris</span>
+                                </td>
+                                
+                                <td>
+                                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                                    </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="http://localhost/admin/users/USR-68451/edit" class="btn-icon edit">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        <form action="http://localhost/admin/users/USR-68451" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button type="submit"
+                                                class="btn-icon delete">
+                                                <i class="bx bx-user-x"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="accordion-detail" id="usr-USR-68451">
+                                <td colspan="7">
+                                                                        <div class="detail-panel">
+                                        <div class="detail-row">
+                                            <i class="bx bx-id-card"></i>
+                                            <div>
+                                                <label>ID User</label>
+                                                <p>USR-68451</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bxl-whatsapp"></i>
+                                            <div>
+                                                <label>No. HP</label>
+                                                                                                    <p><a href="https://wa.me/6285708832430" target="_blank" rel="noopener">085708832430 <i class="bx bx-link-external" style="font-size:11px;"></i></a></p>
+                                                                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="bx bx-male-sign"></i>
+                                            <div>
+                                                <label>Jenis Kelamin</label>
+                                                <p>Laki-laki</p>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row full">
+                                            <i class="bx bx-map"></i>
+                                            <div>
+                                                <label>Alamat</label>
+                                                <p>Psr. Dewi Sartika No. 549, Ambon 50299, Lampung</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                                            </tbody>
+                </table>
+            </div>
+                        </div>
+        </div>
+
+        
+        <div class="users-mobile-list">
+                                            <div class="user-card">
+                    <div class="user-card-top" data-open-user-modal
+                         data-nama="Admin Sazuura"
+                         data-id="USR-14167"
+                         data-nohp="081200180186"
+                         data-wa="6281200180186"
+                         data-jk="Laki-laki"
+                         data-alamat="Kpg. Urip Sumoharjo No. 475, Padangsidempuan 18977, Sumbar">
+                        <div class="user-avatar">A</div>
+                        <div class="user-card-info">
+                            <div class="user-card-name">Admin Sazuura</div>
+                            <div class="user-card-sub">admin@diskominfotik.go.id</div>
+                        </div>
+                        <i class="bx bx-chevron-right user-card-arrow"></i>
+                    </div>
+                    <div class="user-card-meta">
+                        <div class="user-card-meta-row">
+                            <span>Peran</span>
+                            <span class="badge badge-danger">Admin</span>
+                        </div>
+                        <div class="user-card-meta-row">
+                            <span>Status</span>
+                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                    </div>
+                    </div>
+                    <div class="user-card-actions">
+                        <a href="http://localhost/admin/users/USR-14167/edit" class="btn-icon edit">
+                            <i class="bx bx-edit"></i>
+                        </a>
+                        <form action="http://localhost/admin/users/USR-14167" method="POST"
+                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn-icon delete">
+                                <i class="bx bx-user-x"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                                            <div class="user-card">
+                    <div class="user-card-top" data-open-user-modal
+                         data-nama="Daliono Rahimah (Operator)"
+                         data-id="USR-53063"
+                         data-nohp="081384282700"
+                         data-wa="6281384282700"
+                         data-jk="Laki-laki"
+                         data-alamat="Jr. Bahagia No. 828, Padangsidempuan 17948, Papua">
+                        <div class="user-avatar">D</div>
+                        <div class="user-card-info">
+                            <div class="user-card-name">Daliono Rahimah (Operator)</div>
+                            <div class="user-card-sub">operator1@diskominfotik.go.id</div>
+                        </div>
+                        <i class="bx bx-chevron-right user-card-arrow"></i>
+                    </div>
+                    <div class="user-card-meta">
+                        <div class="user-card-meta-row">
+                            <span>Peran</span>
+                            <span class="badge badge-info">Operator</span>
+                        </div>
+                        <div class="user-card-meta-row">
+                            <span>Status</span>
+                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                    </div>
+                    </div>
+                    <div class="user-card-actions">
+                        <a href="http://localhost/admin/users/USR-53063/edit" class="btn-icon edit">
+                            <i class="bx bx-edit"></i>
+                        </a>
+                        <form action="http://localhost/admin/users/USR-53063" method="POST"
+                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn-icon delete">
+                                <i class="bx bx-user-x"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                                            <div class="user-card">
+                    <div class="user-card-top" data-open-user-modal
+                         data-nama="Kartika Usamah (Operator)"
+                         data-id="USR-43240"
+                         data-nohp="081350936016"
+                         data-wa="6281350936016"
+                         data-jk="Perempuan"
+                         data-alamat="Ds. Agus Salim No. 623, Padangsidempuan 42426, Aceh">
+                        <div class="user-avatar">K</div>
+                        <div class="user-card-info">
+                            <div class="user-card-name">Kartika Usamah (Operator)</div>
+                            <div class="user-card-sub">operator2@diskominfotik.go.id</div>
+                        </div>
+                        <i class="bx bx-chevron-right user-card-arrow"></i>
+                    </div>
+                    <div class="user-card-meta">
+                        <div class="user-card-meta-row">
+                            <span>Peran</span>
+                            <span class="badge badge-info">Operator</span>
+                        </div>
+                        <div class="user-card-meta-row">
+                            <span>Status</span>
+                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                    </div>
+                    </div>
+                    <div class="user-card-actions">
+                        <a href="http://localhost/admin/users/USR-43240/edit" class="btn-icon edit">
+                            <i class="bx bx-edit"></i>
+                        </a>
+                        <form action="http://localhost/admin/users/USR-43240" method="POST"
+                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn-icon delete">
+                                <i class="bx bx-user-x"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                                            <div class="user-card">
+                    <div class="user-card-top" data-open-user-modal
+                         data-nama="Laras Nugroho (Operator)"
+                         data-id="USR-93895"
+                         data-nohp="081347465771"
+                         data-wa="6281347465771"
+                         data-jk="Perempuan"
+                         data-alamat="Ki. Yoga No. 137, Singkawang 36148, Sultra">
+                        <div class="user-avatar">L</div>
+                        <div class="user-card-info">
+                            <div class="user-card-name">Laras Nugroho (Operator)</div>
+                            <div class="user-card-sub">operator4@diskominfotik.go.id</div>
+                        </div>
+                        <i class="bx bx-chevron-right user-card-arrow"></i>
+                    </div>
+                    <div class="user-card-meta">
+                        <div class="user-card-meta-row">
+                            <span>Peran</span>
+                            <span class="badge badge-info">Operator</span>
+                        </div>
+                        <div class="user-card-meta-row">
+                            <span>Status</span>
+                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                    </div>
+                    </div>
+                    <div class="user-card-actions">
+                        <a href="http://localhost/admin/users/USR-93895/edit" class="btn-icon edit">
+                            <i class="bx bx-edit"></i>
+                        </a>
+                        <form action="http://localhost/admin/users/USR-93895" method="POST"
+                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn-icon delete">
+                                <i class="bx bx-user-x"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                                            <div class="user-card">
+                    <div class="user-card-top" data-open-user-modal
+                         data-nama="Nilam Zulkarnain (Operator)"
+                         data-id="USR-93384"
+                         data-nohp="081347282373"
+                         data-wa="6281347282373"
+                         data-jk="Perempuan"
+                         data-alamat="Gg. Gambang No. 875, Palu 22222, NTB">
+                        <div class="user-avatar">N</div>
+                        <div class="user-card-info">
+                            <div class="user-card-name">Nilam Zulkarnain (Operator)</div>
+                            <div class="user-card-sub">operator3@diskominfotik.go.id</div>
+                        </div>
+                        <i class="bx bx-chevron-right user-card-arrow"></i>
+                    </div>
+                    <div class="user-card-meta">
+                        <div class="user-card-meta-row">
+                            <span>Peran</span>
+                            <span class="badge badge-info">Operator</span>
+                        </div>
+                        <div class="user-card-meta-row">
+                            <span>Status</span>
+                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                    </div>
+                    </div>
+                    <div class="user-card-actions">
+                        <a href="http://localhost/admin/users/USR-93384/edit" class="btn-icon edit">
+                            <i class="bx bx-edit"></i>
+                        </a>
+                        <form action="http://localhost/admin/users/USR-93384" method="POST"
+                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn-icon delete">
+                                <i class="bx bx-user-x"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                                            <div class="user-card">
+                    <div class="user-card-top" data-open-user-modal
+                         data-nama="Titi Wasita (Operator)"
+                         data-id="USR-06723"
+                         data-nohp="081336297501"
+                         data-wa="6281336297501"
+                         data-jk="Perempuan"
+                         data-alamat="Ki. Sampangan No. 645, Bukittinggi 43088, Jabar">
+                        <div class="user-avatar">T</div>
+                        <div class="user-card-info">
+                            <div class="user-card-name">Titi Wasita (Operator)</div>
+                            <div class="user-card-sub">operator5@diskominfotik.go.id</div>
+                        </div>
+                        <i class="bx bx-chevron-right user-card-arrow"></i>
+                    </div>
+                    <div class="user-card-meta">
+                        <div class="user-card-meta-row">
+                            <span>Peran</span>
+                            <span class="badge badge-info">Operator</span>
+                        </div>
+                        <div class="user-card-meta-row">
+                            <span>Status</span>
+                                                            <span class="badge badge-inactive"><i class="bx bx-x-circle"></i> Inactive</span>
+                                                    </div>
+                    </div>
+                    <div class="user-card-actions">
+                        <a href="http://localhost/admin/users/USR-06723/edit" class="btn-icon edit">
+                            <i class="bx bx-edit"></i>
+                        </a>
+                        <form action="http://localhost/admin/users/USR-06723" method="POST"
+                            onsubmit="return confirm('Aktifkan user ini?')">
+                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn-icon success">
+                                <i class="bx bx-user-check"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                                            <div class="user-card">
+                    <div class="user-card-top" data-open-user-modal
+                         data-nama="Fadhil (Staf Inventaris Utama)"
+                         data-id="USR-68451"
+                         data-nohp="085708832430"
+                         data-wa="6285708832430"
+                         data-jk="Laki-laki"
+                         data-alamat="Psr. Dewi Sartika No. 549, Ambon 50299, Lampung">
+                        <div class="user-avatar">F</div>
+                        <div class="user-card-info">
+                            <div class="user-card-name">Fadhil (Staf Inventaris Utama)</div>
+                            <div class="user-card-sub">inventaris@diskominfotik.go.id</div>
+                        </div>
+                        <i class="bx bx-chevron-right user-card-arrow"></i>
+                    </div>
+                    <div class="user-card-meta">
+                        <div class="user-card-meta-row">
+                            <span>Peran</span>
+                            <span class="badge badge-purple">Inventaris</span>
+                        </div>
+                        <div class="user-card-meta-row">
+                            <span>Status</span>
+                                                            <span class="badge badge-active"><i class="bx bx-check-circle"></i> Active</span>
+                                                    </div>
+                    </div>
+                    <div class="user-card-actions">
+                        <a href="http://localhost/admin/users/USR-68451/edit" class="btn-icon edit">
+                            <i class="bx bx-edit"></i>
+                        </a>
+                        <form action="http://localhost/admin/users/USR-68451" method="POST"
+                            onsubmit="return confirm('Nonaktifkan user ini?')">
+                            <input type="hidden" name="_token" value="gSIPlt73FNYpaQk94NbnYqvdbYiZPfJjy34AenlV" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn-icon delete">
+                                <i class="bx bx-user-x"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                    </div>
+        <div class="data-table-wrap users-mobile-pagination">
+                    </div>
+
+        
+        <div id="modalUserDetail" class="detail-modal-overlay">
+            <div class="detail-modal">
+                <div class="detail-modal-header">
+                    <h3 id="modalUserDetailLabel">Detail User</h3>
+                    <button type="button" class="detail-modal-close" onclick="document.getElementById('modalUserDetail').classList.remove('open')"><i class="bx bx-x"></i></button>
+                </div>
+                <div class="detail-panel" id="modalUserDetailBody"></div>
+            </div>
+        </div>
+    </main>
+        </section>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="http://localhost/js/adminhub.js"></script>
+        <script src="http://localhost/js/content.js"></script>
+        <script>
+function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+}
+
+document.querySelectorAll('[data-open-user-modal]').forEach(function (el) {
+    el.addEventListener('click', function () {
+        document.getElementById('modalUserDetailLabel').textContent = el.dataset.nama;
+
+        var waNumber = el.dataset.wa || '';
+        var waRow = waNumber && waNumber !== '-'
+            ? '<a href="https://wa.me/' + encodeURIComponent(waNumber) + '" target="_blank" rel="noopener">' + escapeHtml(el.dataset.nohp) + ' <i class="bx bx-link-external" style="font-size:11px;"></i></a>'
+            : '<p>' + escapeHtml(el.dataset.nohp) + '</p>';
+
+        document.getElementById('modalUserDetailBody').innerHTML =
+            '<div class="detail-row"><i class="bx bx-id-card"></i><div><label>ID User</label><p>' + escapeHtml(el.dataset.id) + '</p></div></div>' +
+            '<div class="detail-row"><i class="bx bxl-whatsapp"></i><div><label>No. HP</label>' + waRow + '</div></div>' +
+            '<div class="detail-row"><i class="bx bx-male-sign"></i><div><label>Jenis Kelamin</label><p>' + escapeHtml(el.dataset.jk) + '</p></div></div>' +
+            '<div class="detail-row full"><i class="bx bx-map"></i><div><label>Alamat</label><p>' + escapeHtml(el.dataset.alamat) + '</p></div></div>';
+
+        document.getElementById('modalUserDetail').classList.add('open');
+    });
+});
+
+document.getElementById('modalUserDetail').addEventListener('click', function (e) {
+    if (e.target.id === 'modalUserDetail') e.currentTarget.classList.remove('open');
+});
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.getElementById('modalUserDetail').classList.remove('open');
+});
+</script>
+    </body>
+
+</html>

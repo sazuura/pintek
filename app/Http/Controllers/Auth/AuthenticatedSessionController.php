@@ -1,8 +1,6 @@
 <?php
 namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,12 +41,14 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        $flashSukses = 'Login berhasil. Selamat datang, ' . $user->nama_user . '!';
+
         return match($user->role) {
-            'admin'      => redirect()->route('admin.dashboard'),
-            'operator'   => redirect()->route('operator.dashboard'),
-            'inventaris' => redirect()->route('inventaris.dashboard'),
+            'admin'      => redirect()->route('admin.dashboard')->with('success', $flashSukses),
+            'operator'   => redirect()->route('operator.dashboard')->with('success', $flashSukses),
+            'inventaris' => redirect()->route('inventaris.dashboard')->with('success', $flashSukses),
             default      => redirect('/'),
-        }; 
+        };
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -56,6 +56,6 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        return redirect('/')->with('success', 'Anda berhasil logout.');
     }
 }

@@ -3,82 +3,58 @@
 @section('sidebar-menu') <x-sidebar-admin /> @endsection
 
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Edit User</h1>
+    <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div>
+                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Edit User</h1>
             </div>
-            <a href="{{ route('admin.users.index') }}" class="toolbar-btn neutral">
+            <a href="{{ route('admin.users.index') }}"
+                class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                 <i class="bx bx-arrow-back"></i> Kembali
             </a>
         </div>
 
-        @if($errors->any())
-            <div
-                style="background:#fdecea;border-left:4px solid #e74c3c;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;color:#c0392b;">
-                <ul style="margin:0;padding-left:18px;">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-        @endif
-
-        <form action="{{ route('admin.users.update', $user->id_user) }}" method="POST">
+        <form action="{{ route('admin.users.update', $user->id_user) }}" method="POST" novalidate>
             @csrf @method('PUT')
-            <div class="form-card">
-                <h3><i class="bx bxs-user-detail"></i> Edit: {{ $user->nama_user }}</h3>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">ID User</label>
-                        <input type="text" class="form-input" value="{{ $user->id_user }}" readonly>
+
+            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
+                    <i class="bx bxs-user-detail"></i> Edit: {{ $user->nama_user }}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <x-input name="nama_user" label="Nama Lengkap" required value="{{ $user->nama_user }}" />
+
+                    <x-input name="nohp" label="No. HP" required value="{{ $user->nohp }}"
+                        hint="Dipakai untuk notifikasi WhatsApp" />
+
+                    <x-input type="email" name="email" label="Email" required value="{{ $user->email }}" />
+
+                    <x-select name="jenis_kelamin" label="Jenis Kelamin" required>
+                        <option value="L" {{ old('jenis_kelamin', $user->jenis_kelamin) == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                        <option value="P" {{ old('jenis_kelamin', $user->jenis_kelamin) == 'P' ? 'selected' : '' }}>Perempuan</option>
+                    </x-select>
+
+                    <div class="md:col-span-2">
+                        <x-input type="textarea" name="alamat" label="Alamat" required value="{{ $user->alamat }}" />
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Lengkap <span class="req">*</span></label>
-                        <input type="text" name="nama_user" class="form-input"
-                            value="{{ old('nama_user', $user->nama_user) }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">No. HP <span class="req">*</span></label>
-                        <input type="text" name="nohp" class="form-input {{ $errors->has('nohp') ? 'error' : '' }}"
-                            value="{{ old('nohp', $user->nohp) }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Email <span class="req">*</span></label>
-                        <input type="email" name="email" class="form-input {{ $errors->has('email') ? 'error' : '' }}"
-                            value="{{ old('email', $user->email) }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Password Baru <small>(kosongkan jika tidak berubah)</small></label>
-                        <input type="password" name="password" class="form-input" placeholder="Min. 6 karakter">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Role <span class="req">*</span></label>
-                        <select name="role" id="role-select" class="form-select" onchange="toggleGedung(this.value)"
-                            required>
-                            @foreach(['admin', 'operator', 'inventaris'] as $r)
-                                <option value="{{ $r }}" {{ old('role', $user->role) == $r ? 'selected' : '' }}>{{ ucfirst($r) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    {{-- <div class="form-group" id="gedung-field"
-                        style="display:{{ $user->role=='inventaris'?'flex':'none' }};">
-                        <label class="form-label">Gedung <small>(wajib untuk Inventaris)</small></label>
-                        <input type="text" name="gedung" class="form-input" value="{{ old('gedung', $user->gedung) }}"
-                            placeholder="cth: Gedung A">
-                    </div> --}}
+
+                    <x-input name="password" label="Password Baru" type="password" toggleable
+                        placeholder="Min. 6 karakter" hint="Kosongkan jika tidak berubah" />
+
+                    <x-select name="role" label="Role" required>
+                        @foreach(['admin', 'operator', 'inventaris'] as $r)
+                            <option value="{{ $r }}" {{ old('role', $user->role) == $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
+                        @endforeach
+                    </x-select>
                 </div>
             </div>
-            <div class="form-actions">
-                <a href="{{ route('admin.users.index') }}" class="btn-cancel">Batal</a>
-                <button type="submit" class="btn-submit"><i class="bx bx-save"></i> Simpan Perubahan</button>
+            <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
+                <a href="{{ route('admin.users.index') }}"
+                    class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                <button type="submit"
+                    class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
+                    <i class="bx bx-save"></i> Simpan Perubahan
+                </button>
             </div>
         </form>
     </main>
 @endsection
-
-@push('scripts')
-    <script>
-        function toggleGedung(role) {
-            var field = document.getElementById('gedung-field');
-            field.style.display = role === 'inventaris' ? 'flex' : 'none';
-        }
-    </script>
-@endpush

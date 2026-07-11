@@ -9,8 +9,13 @@ class PeralatanController extends Controller
 {
     public function index(Request $request)
     {
-     auth()->user()->gedung;
-        $userRole   = auth()->user()->role; 
+        $userRole = auth()->user()->role;
+
+        // Ambang batas status disamakan persis dengan Peralatan::getStatusLabelAttribute()
+        // (>2 Tersedia, 1-2 Hampir Habis, <=0 Tidak Tersedia) supaya filter konsisten
+        // dengan badge status yang ditampilkan di tiap kartu.
+        $stokTersediaRaw = '(stok - COALESCE(rusak,0))';
+
         $peralatan = Peralatan::query()
             ->when($request->search, function ($q, $s) use ($userRole) {
                 return $q->where(function ($subQuery) use ($s, $userRole) {
@@ -21,21 +26,29 @@ class PeralatanController extends Controller
                     }
                 });
             })
-            // ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
+            ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
             ->when($request->status, fn($q, $v) => match ($v) {
-                'tersedia'       => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) > 0'),
-                'tidak_tersedia' => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) <= 0'),
+                'tersedia'       => $q->whereRaw("{$stokTersediaRaw} > 2"),
+                'kritis'         => $q->whereRaw("{$stokTersediaRaw} between 1 and 2"),
+                'tidak_tersedia' => $q->whereRaw("{$stokTersediaRaw} <= 0"),
                 default          => $q,
             })
-            ->orderBy('gedung')
-            ->orderBy('nama_peralatan')
-            ->paginate(12)
+            ->when($request->kondisi, fn($q, $v) => match ($v) {
+                'baik'  => $q->whereRaw('COALESCE(rusak,0) <= 0'),
+                'rusak' => $q->whereRaw('COALESCE(rusak,0) > 0'),
+                default => $q,
+            })
+            ->when($request->urutkan, fn($q, $v) => match ($v) {
+                'gedung'    => $q->orderBy('gedung')->orderBy('nama_peralatan'),
+                'nama_asc'  => $q->orderBy('nama_peralatan'),
+                'nama_desc' => $q->orderByDesc('nama_peralatan'),
+                'stok_asc'  => $q->orderByRaw("{$stokTersediaRaw} asc"),
+                'stok_desc' => $q->orderByRaw("{$stokTersediaRaw} desc"),
+                default     => $q->orderBy('gedung')->orderBy('nama_peralatan'),
+            }, fn($q) => $q->orderBy('gedung')->orderBy('nama_peralatan'))
+            ->paginate(10)
             ->withQueryString();
-        $gedungQuery = Peralatan::distinct()->orderBy('gedung');
-        if ($userRole !== 'admin') {
-            $gedungQuery->where('gedung', auth()->user()->gedung);
-        }
-        $gedungList = $gedungQuery->pluck('gedung');
+        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
         return view('inventaris.peralatan.index', compact('peralatan', 'gedungList'));
     }
     public function create()
@@ -46,13 +59,13 @@ class PeralatanController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'kode_barang'    => 'nullable|string|max:50|unique:peralatan,kode_barang',
-            'nama_peralatan' => 'required|string|max:100',
-            'gedung'         => 'required|string|max:100',
-            'lokasi_detail'  => 'nullable|string|max:255',
-            'stok'           => 'required|integer|min:0',
-            'keterangan'     => 'nullable|string|max:255',
-            'foto'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'kode_barang'       => 'nullable|string|max:50|unique:peralatan,kode_barang',
+            'nama_peralatan'    => 'required|string|max:100',
+            'gedung'            => 'required|string|max:100',
+            'lokasi_detail'     => 'nullable|string|max:255',
+            'stok'              => 'required|integer|min:0',
+            'keterangan'        => 'nullable|string|max:255',
+            'foto'              => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
         $data['id_peralatan'] = IdGenerator::next(Peralatan::class, 'id_peralatan', 'PR-');
         $data['foto']         = $request->hasFile('foto')
@@ -74,21 +87,19 @@ class PeralatanController extends Controller
     {
         $peralatan = Peralatan::findOrFail($id);
         $data = $request->validate([
-            'kode_barang'    => 'nullable|string|max:50|unique:peralatan,kode_barang,' . $id . ',id_peralatan',
-            'nama_peralatan' => 'required|string|max:100',
-            'gedung'         => 'required|string|max:100',
-            'lokasi_detail'  => 'nullable|string|max:255',
-            'stok'           => 'required|integer|min:0',
-            'rusak'          => 'nullable|integer|min:0',
-            'perbaikan'      => 'nullable|integer|min:0',
-            'keterangan'     => 'nullable|string|max:255',
-            'foto'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'kode_barang'       => 'nullable|string|max:50|unique:peralatan,kode_barang,' . $id . ',id_peralatan',
+            'nama_peralatan'    => 'required|string|max:100',
+            'gedung'            => 'required|string|max:100',
+            'lokasi_detail'     => 'nullable|string|max:255',
+            'stok'              => 'required|integer|min:0',
+            'rusak'             => 'nullable|integer|min:0',
+            'keterangan'        => 'nullable|string|max:255',
+            'foto'              => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
-        $rusak     = (int) ($data['rusak']     ?? 0);
-        $perbaikan = (int) ($data['perbaikan'] ?? 0);
-        if (($rusak + $perbaikan) > (int) $data['stok']) {
+        $rusak = (int) ($data['rusak'] ?? 0);
+        if ($rusak > (int) $data['stok']) {
             return back()->withInput()
-                ->withErrors(['rusak' => 'Jumlah rusak + perbaikan tidak boleh melebihi stok total.']);
+                ->withErrors(['rusak' => 'Jumlah rusak tidak boleh melebihi stok total.']);
         }
         $data['foto'] = $this->prosesUploadFoto($request, $peralatan);
         $peralatan->update($data);

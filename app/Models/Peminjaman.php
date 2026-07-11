@@ -6,8 +6,12 @@ class Peminjaman extends Model
 {
     protected $table      = 'peminjaman';
     protected $primaryKey = 'id_peminjaman';
+    public    $incrementing = false;
+    protected $keyType      = 'string';
     protected $fillable = [
+        'id_peminjaman',
         'id_user',
+        'id_penjadwalan',
         'tanggal_pinjam',
         'tanggal_kembali_rencana',
         'tanggal_kembali_aktual',
@@ -27,16 +31,19 @@ class Peminjaman extends Model
         return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
+    public function penjadwalan()
+    {
+        return $this->belongsTo(Penjadwalan::class, 'id_penjadwalan', 'id_penjadwalan');
+    }
+
     public function items()
     {
         return $this->hasMany(PeminjamanItem::class, 'id_peminjaman', 'id_peminjaman');
     }
 
-    public function isMenunggu(): bool     { return $this->status === 'diajukan'; }
-    public function isDisetujui(): bool    { return $this->status === 'disetujui'; }
-    public function isDitolak(): bool      { return $this->status === 'ditolak'; }
-    public function isDikembalikan(): bool { return $this->status === 'dikembalikan'; }
-    public function isDibatalkan(): bool   { return $this->status === 'dibatalkan'; }
+    public function isMenunggu(): bool   { return $this->status === 'diajukan'; }
+    public function isDisetujui(): bool  { return $this->status === 'disetujui'; }
+    public function isDibatalkan(): bool { return $this->status === 'dibatalkan'; }
 
     public function getBadgeAttribute(): array
     {
@@ -50,14 +57,4 @@ class Peminjaman extends Model
         };
     }
 
-    public function getGedungTerlibatAttribute(): array
-    {
-        return $this->items
-            ->load('peralatan')
-            ->pluck('peralatan.gedung')
-            ->unique()
-            ->filter()
-            ->values()
-            ->toArray();
-    }
 }

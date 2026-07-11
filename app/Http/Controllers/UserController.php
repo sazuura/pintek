@@ -28,22 +28,24 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nama_user' => 'required|string|max:100',
-            'nohp'      => 'required|string|max:20|unique:users,nohp',
-            'email'     => 'required|email|unique:users,email',
-            'password'  => 'required|string|min:6',
-            'role'      => 'required|in:admin,operator,inventaris',
-        ], [
-            'gedung.required_if' => 'Nama gedung wajib diisi untuk role inventaris.',
+            'nama_user'     => 'required|string|max:100',
+            'jenis_kelamin' => 'required|in:L,P',
+            'alamat'        => 'required|string|max:255',
+            'nohp'          => 'required|string|max:20|unique:users,nohp',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required|string|min:6',
+            'role'          => 'required|in:admin,operator,inventaris',
         ]);
         User::create([
-            'id_user'   => IdGenerator::next(User::class, 'id_user', 'USR-'),
-            'nama_user' => $data['nama_user'],
-            'nohp'      => $data['nohp'],
-            'email'     => $data['email'],
-            'password'  => bcrypt($data['password']),
-            'role'      => $data['role'],
-            'status'    => 'active',
+            'id_user'       => IdGenerator::next(User::class, 'id_user', 'USR-'),
+            'nama_user'     => $data['nama_user'],
+            'jenis_kelamin' => $data['jenis_kelamin'],
+            'alamat'        => $data['alamat'],
+            'nohp'          => $data['nohp'],
+            'email'         => $data['email'],
+            'password'      => bcrypt($data['password']),
+            'role'          => $data['role'],
+            'status'        => 'active',
         ]);
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil ditambahkan.');
@@ -56,19 +58,21 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         $data = $request->validate([
-            'nama_user' => 'required|string|max:100',
-            'nohp'      => 'required|string|max:20|unique:users,nohp,' . $id . ',id_user',
-            'email'     => 'required|email|unique:users,email,' . $id . ',id_user',
-            'password'  => 'nullable|string|min:6',
-            'role'      => 'required|in:admin,operator,inventaris',
-        ], [
-            'gedung.required_if' => 'Nama gedung wajib diisi untuk role inventaris.',
+            'nama_user'     => 'required|string|max:100',
+            'jenis_kelamin' => 'required|in:L,P',
+            'alamat'        => 'required|string|max:255',
+            'nohp'          => 'required|string|max:20|unique:users,nohp,' . $id . ',id_user',
+            'email'         => 'required|email|unique:users,email,' . $id . ',id_user',
+            'password'      => 'nullable|string|min:6',
+            'role'          => 'required|in:admin,operator,inventaris',
         ]);
         $update = [
-            'nama_user' => $data['nama_user'],
-            'nohp'      => $data['nohp'],
-            'email'     => $data['email'],
-            'role'      => $data['role'],
+            'nama_user'     => $data['nama_user'],
+            'jenis_kelamin' => $data['jenis_kelamin'],
+            'alamat'        => $data['alamat'],
+            'nohp'          => $data['nohp'],
+            'email'         => $data['email'],
+            'role'          => $data['role'],
         ];
         if (!empty($data['password'])) {
             $update['password'] = bcrypt($data['password']);
@@ -83,7 +87,16 @@ class UserController extends Controller
         if ($user->id_user === auth()->user()->id_user) {
             return back()->with('error', 'Tidak dapat menonaktifkan akun Anda sendiri.');
         }
+
         $newStatus = $user->isActive() ? 'inactive' : 'active';
+
+        if ($newStatus === 'inactive' && $user->role === 'admin') {
+            $jumlahAdminAktif = User::where('role', 'admin')->where('status', 'active')->count();
+            if ($jumlahAdminAktif <= 1) {
+                return back()->with('error', 'Tidak dapat menonaktifkan admin ini karena ini satu-satunya akun admin yang aktif.');
+            }
+        }
+
         $user->update(['status' => $newStatus]);
         $label = $newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan';
         return back()->with('success', "User berhasil {$label}.");

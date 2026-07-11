@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ═══════════════════════════════════════════════════
     // 1. ACCORDION
-    //    Delegation ke document — cocok untuk <tr> yang
+    //    Delegation ke document - cocok untuk <tr> yang
     //    di-render via @foreach di Blade.
     // ═══════════════════════════════════════════════════
     document.addEventListener('click', function (e) {
@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Tutup semua accordion yang sedang terbuka
         document.querySelectorAll('tr.accordion-detail.open').forEach(function (d) {
             d.classList.remove('open');
+            // Reset form konfirmasi inline (mis. form batalkan) yang mungkin
+            // masih terbuka di dalam baris ini, supaya tidak "nyangkut" aktif
+            // saat baris ditutup lewat klik dropdown.
+            d.querySelectorAll('.inline-confirm-form').forEach(function (f) {
+                f.style.display = 'none';
+            });
         });
         document.querySelectorAll('tr.accordion-row.open').forEach(function (r) {
             r.classList.remove('open');
@@ -36,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ═══════════════════════════════════════════════════
     // 2. TAB VIEW
-    //    Delegation ke document — tab bisa ada di mana
+    //    Delegation ke document - tab bisa ada di mana
     //    saja di halaman.
     // ═══════════════════════════════════════════════════
     document.addEventListener('click', function (e) {
@@ -109,9 +115,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var icon = th.querySelector('.sort-icon');
         if (icon) icon.textContent = asc ? '↑' : '↓';
 
-        // Ambil baris data (bukan baris detail accordion)
-        var rows = Array.from(tbody.querySelectorAll('tr')).filter(function (r) {
-            return !r.classList.contains('accordion-detail');
+        // Ambil baris data (bukan baris detail accordion). Pakai tbody.children (bukan
+        // querySelectorAll('tr')) supaya baris dari tabel BERSARANG di dalam kolom detail
+        // (mis. tabel "Daftar Peralatan" di laporan) tidak ikut tertarik keluar saat sort.
+        var rows = Array.from(tbody.children).filter(function (r) {
+            return r.tagName === 'TR' && !r.classList.contains('accordion-detail');
         });
 
         rows.sort(function (a, b) {
@@ -141,4 +149,64 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+});
+
+
+// ═══════════════════════════════════════════════════
+// 4. MODAL KONFIRMASI (global, reusable)
+//    Dipakai oleh <x-modal-konfirmasi> - dibuka/ditutup lewat class 'open', tombol
+//    [data-modal-close], klik backdrop, atau Escape. Fungsi buka/tutup ditaruh di
+//    scope global (bukan di dalam DOMContentLoaded) supaya bisa dipanggil langsung
+//    dari onclick="" di Blade file manapun.
+// ═══════════════════════════════════════════════════
+function bukaModalKonfirmasi(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.classList.add('open');
+}
+
+function tutupModalKonfirmasi(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.classList.remove('open');
+}
+
+document.addEventListener('click', function (e) {
+    var closeBtn = e.target.closest('[data-modal-close]');
+    if (closeBtn) {
+        var modal = closeBtn.closest('.modal-konfirmasi');
+        if (modal) modal.classList.remove('open');
+        return;
+    }
+    var backdrop = e.target.closest('.modal-konfirmasi.open');
+    if (backdrop && e.target === backdrop) {
+        backdrop.classList.remove('open');
+    }
+});
+
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.modal-konfirmasi.open').forEach(function (m) {
+        m.classList.remove('open');
+    });
+});
+
+
+// ═══════════════════════════════════════════════════
+// 5. COPY TO CLIPBOARD (global, reusable)
+//    Tombol mana pun dengan [data-copy="teks"] - dipakai mis. buat copy
+//    password meeting Zoom di halaman jadwal. Ikon di dalam tombol (kalau ada)
+//    berubah jadi centang sesaat sebagai konfirmasi visual.
+// ═══════════════════════════════════════════════════
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-copy]');
+    if (!btn || !navigator.clipboard) return;
+    var teks = btn.dataset.copy;
+    if (!teks) return;
+
+    navigator.clipboard.writeText(teks).then(function () {
+        var icon = btn.querySelector('i');
+        if (!icon) return;
+        var kelasAsal = icon.className;
+        icon.className = 'bx bx-check';
+        setTimeout(function () { icon.className = kelasAsal; }, 1500);
+    });
 });

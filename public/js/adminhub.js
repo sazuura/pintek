@@ -1,13 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── 1. Active state ───────────────────────────────────────────────────────
-    document.querySelectorAll('#sidebar .side-menu.top li a').forEach(function (link) {
-        var linkPath = new URL(link.href, window.location.origin).pathname;
-        if (linkPath !== '/' && window.location.pathname.startsWith(linkPath)) {
-            link.closest('li').classList.add('active');
-        }
-    });
-
 
     // ── 2 + 3. Sidebar toggle ─────────────────────────────────────────────────
     var sidebar        = document.getElementById('sidebar');
@@ -67,20 +59,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── 4. Dark mode ──────────────────────────────────────────────────────────
     var switchMode = document.getElementById('switch-mode');
     var themeIcon  = document.getElementById('theme-icon');
-    var isDark     = document.body.classList.contains('dark');
-    //   ^ baca dari body — sudah di-set oleh document.write di <head>,
-    //     tidak perlu baca localStorage lagi, sudah sinkron.
+    // Class 'dark' ditaruh di <html>, bukan <body> - sudah di-set oleh script anti-flash
+    // di <head> (lihat layouts/app.blade.php), tidak perlu baca localStorage lagi di sini.
+    var isDark = document.documentElement.classList.contains('dark');
 
-    // Sinkronkan checkbox dan icon dengan state body saat ini
-    if (switchMode) switchMode.checked    = isDark;
-    if (themeIcon)  themeIcon.textContent = isDark ? '🌙' : '🌞';
+    // Sinkronkan checkbox dan icon dengan state saat ini
+    if (switchMode) switchMode.checked = isDark;
+    if (themeIcon)  themeIcon.className = isDark ? 'bx bx-moon text-lg' : 'bx bx-sun text-lg';
 
     // Listener: update semua sekaligus saat user klik toggle
     if (switchMode) {
         switchMode.addEventListener('change', function () {
             var dark = this.checked;
-            document.body.classList.toggle('dark', dark);
-            if (themeIcon) themeIcon.textContent = dark ? '🌙' : '🌞';
+            document.documentElement.classList.toggle('dark', dark);
+            if (themeIcon) themeIcon.className = dark ? 'bx bx-moon text-lg' : 'bx bx-sun text-lg';
             localStorage.setItem('theme', dark ? 'dark' : 'light');
         });
     }
@@ -93,6 +85,26 @@ document.addEventListener('DOMContentLoaded', function () {
             el.style.opacity    = '0';
             setTimeout(function () { el.remove(); }, 400);
         }, 4000);
+    });
+
+
+    // ── 6. Show/hide password ───────────────────────────────────────────────
+    document.querySelectorAll('.password-wrap').forEach(function (wrap) {
+        var input   = wrap.querySelector('input');
+        var eyeBtn  = wrap.querySelector('.eye-btn');
+        var eyeIcon = eyeBtn ? eyeBtn.querySelector('i') : null;
+
+        if (!input || !eyeBtn || !eyeIcon) return;
+
+        eyeBtn.addEventListener('click', function () {
+            var isHidden = input.type === 'password';
+
+            input.type = isHidden ? 'text' : 'password';
+
+            // Ganti ikon bx-hide ↔ bx-show
+            eyeIcon.classList.toggle('bx-hide', !isHidden);
+            eyeIcon.classList.toggle('bx-show',  isHidden);
+        });
     });
 
 });

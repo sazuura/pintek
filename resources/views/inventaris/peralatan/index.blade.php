@@ -3,91 +3,120 @@
 @section('sidebar-menu') <x-sidebar-inventaris /> @endsection
 
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Data Peralatan</h1>
+    <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div>
+                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Data Peralatan</h1>
             </div>
-            <a href="{{ route('inventaris.peralatan.create') }}" class="btn-download">
+            <a href="{{ route('inventaris.peralatan.create') }}"
+                class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
                 <i class="bx bx-plus"></i><span class="text">Tambah Peralatan</span>
             </a>
         </div>
 
-        <div class="content-toolbar">
-            <form method="GET" action="{{ route('inventaris.peralatan.index') }}" style="display:contents;">
-                <div class="toolbar-search">
-                    <i class="bx bx-search"></i>
-                    <input type="text" name="search" placeholder="Cari nama / kode barang..."
-                        value="{{ request('search') }}">
+        <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-md:flex-col max-md:items-stretch">
+            <form method="GET" action="{{ route('inventaris.peralatan.index') }}" class="contents">
+                <div class="relative flex-1 min-w-[180px] max-w-[300px] max-md:max-w-full">
+                    <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
+                    <input type="text" name="search" data-live-search="#hasil-peralatan-inv" autocomplete="off" placeholder="Cari nama / kode barang..." value="{{ request('search') }}"
+                        class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
                 </div>
-                {{-- <select name="gedung" class="toolbar-select">
+                <select name="gedung" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Gedung</option>
                     @foreach($gedungList as $g)
-                    <option value="{{ $g }}" {{ request('gedung')==$g ? 'selected' : '' }}>{{ $g }}</option>
+                        <option value="{{ $g }}" {{ request('gedung') == $g ? 'selected' : '' }}>{{ $g }}</option>
                     @endforeach
-                </select> --}}
-                <select name="status" class="toolbar-select">
+                </select>
+                <select name="status" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
                     <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
-                    <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak
-                        Tersedia
-                    </option>
+                    <option value="kritis" {{ request('status') == 'kritis' ? 'selected' : '' }}>Hampir Habis</option>
+                    <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak Tersedia</option>
                 </select>
-                <button type="submit" class="toolbar-btn primary"><i class="bx bx-filter"></i> Filter</button>
-                @if(request()->hasAny(['search', 'gedung', 'status']))
-                    <a href="{{ route('inventaris.peralatan.index') }}" class="toolbar-btn neutral"><i class="bx bx-x"></i>
-                        Reset</a>
+                <select name="kondisi" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="">Semua Kondisi</option>
+                    <option value="baik" {{ request('kondisi') == 'baik' ? 'selected' : '' }}>Baik</option>
+                    <option value="rusak" {{ request('kondisi') == 'rusak' ? 'selected' : '' }}>Rusak</option>
+                </select>
+                <select name="urutkan" onchange="this.form.submit()" data-placeholder="-- Urutkan --"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="" disabled {{ request('urutkan') ? '' : 'selected' }}>-- Urutkan --</option>
+                    <option value="gedung" {{ request('urutkan') == 'gedung' ? 'selected' : '' }}>Gedung</option>
+                    <option value="nama_asc" {{ request('urutkan') == 'nama_asc' ? 'selected' : '' }}>Nama (A-Z)</option>
+                    <option value="nama_desc" {{ request('urutkan') == 'nama_desc' ? 'selected' : '' }}>Nama (Z-A)</option>
+                    <option value="stok_desc" {{ request('urutkan') == 'stok_desc' ? 'selected' : '' }}>Stok Terbanyak</option>
+                    <option value="stok_asc" {{ request('urutkan') == 'stok_asc' ? 'selected' : '' }}>Stok Tersedikit</option>
+                </select>
+                @if(request()->hasAny(['search', 'gedung', 'status', 'kondisi', 'urutkan']))
+                    <a href="{{ route('inventaris.peralatan.index') }}"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
+                        <i class="bx bx-x"></i> Reset</a>
                 @endif
             </form>
-            <div class="toolbar-right">
-                <span style="font-size:13px;color:var(--dark-grey);">{{ $peralatan->total() }} peralatan</span>
+            <div class="ml-auto flex gap-2 items-center max-md:ml-0 max-md:w-full">
+                <span class="text-[13px] text-text-muted">{{ $peralatan->total() }} peralatan</span>
             </div>
         </div>
 
         {{-- Grid marketplace --}}
+        <div id="hasil-peralatan-inv">
         @if($peralatan->count())
-            <div class="peralatan-grid">
+            <div class="grid grid-cols-5 max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 @foreach($peralatan as $item)
-                    <div class="peralatan-card">
+                    <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
                         {{-- Foto --}}
                         @if($item->foto)
-                            <img src="{{ Storage::url($item->foto) }}" alt="{{ $item->nama_peralatan }}" class="peralatan-card-img">
+                            <img src="{{ Storage::url($item->foto) }}" alt="{{ $item->nama_peralatan }}" class="w-full aspect-[4/3] object-cover bg-page-bg dark:bg-page-bg-dark">
                         @else
-                            <div class="peralatan-card-img-placeholder">
+                            <div class="w-full aspect-[4/3] bg-page-bg dark:bg-page-bg-dark flex items-center justify-center text-text-muted text-4xl">
                                 <i class="bx bx-package"></i>
                             </div>
                         @endif
 
-                        <div class="peralatan-card-body">
-                            <div class="peralatan-card-name">{{ $item->nama_peralatan }}</div>
+                        <div class="p-3.5 flex flex-col gap-2 flex-1">
+                            <div class="text-base font-bold text-text dark:text-text-dark leading-tight">{{ $item->nama_peralatan }}</div>
 
                             @if($item->kode_barang)
-                                <div class="peralatan-card-gedung" style="font-size:11px;color:var(--dark-grey);">
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                     <i class="bx bx-barcode"></i> {{ $item->kode_barang }}
                                 </div>
                             @endif
 
-                            <div class="peralatan-card-gedung">
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                 <i class="bx bx-building"></i> {{ $item->lokasi_detail }}
                             </div>
 
-                            <div class="peralatan-card-stok">
-                                <span style="font-size:13px;color:var(--dark-grey);">Stok tersedia</span>
-                                <span style="font-weight:700;font-size:18px;color:var(--dark);">{{ $item->stok_tersedia }}</span>
+                            <div class="border border-page-bg dark:border-page-bg-dark rounded-lg overflow-hidden mt-1">
+                                <div class="text-center py-2 text-[13px] text-text dark:text-text-dark">
+                                    Total Stok: <span class="font-bold text-[15px]">{{ $item->stok }}</span>
+                                </div>
+                                <div class="grid grid-cols-2 border-t border-page-bg dark:border-page-bg-dark">
+                                    <div class="flex items-center justify-center gap-1.5 py-2.5 border-r border-page-bg dark:border-page-bg-dark">
+                                        <i class="bx bxs-check-circle text-success-text text-base"></i>
+                                        <span class="text-[13px] font-semibold text-success-text">{{ $item->stok_tersedia }} Baik</span>
+                                    </div>
+                                    <div class="flex items-center justify-center gap-1.5 py-2.5">
+                                        <i class="bx bxs-error text-warning-text text-base"></i>
+                                        <span class="text-[13px] font-semibold text-warning-text">{{ $item->rusak }} Rusak</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <span class="badge {{ $item->statusBadgeClass }}">{{ $item->statusLabel }}</span>
+                            <x-badge :variant="$item->statusBadgeClass">{{ $item->statusLabel }}</x-badge>
                         </div>
 
-                        <div class="peralatan-card-footer">
-                            <a href="{{ route('inventaris.peralatan.edit', $item->id_peralatan) }}" class="toolbar-btn neutral"
-                                style="flex:1;justify-content:center;font-size:13px;">
+                        <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
+                            <a href="{{ route('inventaris.peralatan.edit', $item->id_peralatan) }}"
+                                class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                                 <i class="bx bx-edit"></i> Edit
                             </a>
-                            <form action="{{ route('inventaris.peralatan.destroy', $item->id_peralatan) }}" method="POST"
-                                style="flex:0;">
+                            <form action="{{ route('inventaris.peralatan.destroy', $item->id_peralatan) }}" method="POST">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="btn-icon delete"
+                                <button type="submit"
+                                    class="w-9 h-9 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
                                     onclick="return confirm('Hapus {{ $item->nama_peralatan }}?')" title="Hapus">
                                     <i class="bx bx-trash"></i>
                                 </button>
@@ -98,38 +127,20 @@
             </div>
 
             {{-- Pagination untuk grid --}}
-            <div style="margin-top:20px;" class="data-table-wrap">
-                <div class="pagination-wrap">
-                    <span>Menampilkan {{ $peralatan->firstItem() }}–{{ $peralatan->lastItem() }} dari {{ $peralatan->total() }}
-                        peralatan</span>
-                    <div class="pagination-links">
-                        @if($peralatan->onFirstPage())
-                            <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
-                        @else
-                            <a href="{{ $peralatan->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
-                        @endif
-                        @foreach(range(1, $peralatan->lastPage()) as $p)
-                            <a href="{{ $peralatan->url($p) }}"
-                                class="page-link {{ $peralatan->currentPage() == $p ? 'active' : '' }}">{{ $p }}</a>
-                        @endforeach
-                        @if($peralatan->hasMorePages())
-                            <a href="{{ $peralatan->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
-                        @else
-                            <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
-                        @endif
-                    </div>
-                </div>
+            <div class="mt-5 bg-surface dark:bg-surface-dark rounded-xl shadow-card">
+                <x-pagination :paginator="$peralatan" label="peralatan" />
             </div>
 
         @else
-            <div class="data-table-wrap" style="padding:60px;text-align:center;color:var(--dark-grey);">
-                <i class="bx bx-package" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-[60px] text-center text-text-muted">
+                <i class="bx bx-package text-5xl block mb-3"></i>
                 <p>Belum ada peralatan</p>
-                <a href="{{ route('inventaris.peralatan.create') }}" class="toolbar-btn primary"
-                    style="margin-top:12px;display:inline-flex;">
+                <a href="{{ route('inventaris.peralatan.create') }}"
+                    class="mt-3 inline-flex h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
                     <i class="bx bx-plus"></i> Tambah Sekarang
                 </a>
             </div>
         @endif
+        </div>
     </main>
 @endsection

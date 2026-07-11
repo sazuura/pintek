@@ -3,80 +3,64 @@
 @section('sidebar-menu') <x-sidebar-inventaris /> @endsection
 
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Tambah Peralatan</h1>
-                <div style="font-size:13px;color:var(--dark-grey);margin-top:4px;">
-                    <i class="bx bx-building"></i> {{ auth()->user()->gedung }}
-                </div>
+    <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+            <div>
+                <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Tambah Peralatan</h1>
             </div>
-            <a href="{{ route('inventaris.peralatan.index') }}" class="toolbar-btn neutral">
+            <a href="{{ route('inventaris.peralatan.index') }}"
+                class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                 <i class="bx bx-arrow-back"></i> Kembali
             </a>
         </div>
 
-        @if($errors->any())
-            <div
-                style="background:#fdecea;border-left:4px solid #e74c3c;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;color:#c0392b;">
-                <ul style="margin:0;padding-left:18px;">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-        @endif
-
-        <form action="{{ route('inventaris.peralatan.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('inventaris.peralatan.store') }}" method="POST" enctype="multipart/form-data" novalidate>
             @csrf
-            <div class="form-card">
-                <h3><i class="bx bx-info-circle"></i> Informasi Peralatan</h3>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Kode Barang <span class="req">*</span></label>
-                        <input type="text" name="kode_barang"
-                            class="form-input {{ $errors->has('kode_barang') ? 'error' : '' }}"
-                            value="{{ old('kode_barang') }}" placeholder="cth: GU/LAP/2024/001" required>
-                        <span class="form-hint">Kode inventaris fisik. Harus unik jika diisi.</span>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Peralatan <span class="req">*</span></label>
-                        <input type="text" name="nama_peralatan"
-                            class="form-input {{ $errors->has('nama_peralatan') ? 'error' : '' }}"
-                            value="{{ old('nama_peralatan') }}" placeholder="cth: Laptop Zoom Host" required>
-                    </div>
-                    {{-- Gedung otomatis dari akun inventaris yang login --}}
-                    <div class="form-group">
-                        <label class="form-label">Lokasi<span class="req">*</span></label>
-                        <input type="text" name="gedung" class="form-input" value="{{ old('gedung')}}"
-                            placeholder="Gedung A" required>
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Lokasi Detail</label>
-                        <input type="text" name="lokasi_detail" class="form-input" value="{{ old('lokasi_detail') }}"
-                            placeholder="cth: Rak 3, Lt.2">
+            @php
+                $inputClass = 'h-10 px-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:border-primary focus:outline-none focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
+            @endphp
+
+            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
+                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
+                    <i class="bx bx-info-circle"></i> Informasi Peralatan</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <x-input name="kode_barang" label="Nomor Seri" required
+                        placeholder="cth: GU/LAP/2024/001" value="{{ old('kode_barang') }}"
+                        hint="Nomor seri fisik barang. Harus unik jika diisi." />
+                    <x-input name="nama_peralatan" label="Nama Peralatan" required
+                        placeholder="cth: Laptop Zoom Host" value="{{ old('nama_peralatan') }}" />
+                    {{-- Gedung otomatis dari akun inventaris yang login --}}
+                    <x-input name="gedung" label="Lokasi" required
+                        placeholder="Gedung A" value="{{ old('gedung') }}" />
+                    <x-input name="lokasi_detail" label="Lokasi Detail"
+                        placeholder="cth: Rak 3, Lt.2" value="{{ old('lokasi_detail') }}" />
+                    <x-input type="number" name="stok" label="Stok Total" required min="0"
+                        value="{{ old('stok', 0) }}" />
+                    <div>
+                        <x-input name="keterangan" placeholder="Catatan tambahan" value="{{ old('keterangan') }}">
+                            <x-slot:label>Keterangan <small class="font-normal text-text-muted ml-1">(opsional)</small></x-slot:label>
+                        </x-input>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Stok Total <span class="req">*</span></label>
-                        <input type="number" name="stok" class="form-input {{ $errors->has('stok') ? 'error' : '' }}"
-                            value="{{ old('stok', 0) }}" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Keterangan <small>(opsional)</small></label>
-                        <input type="text" name="keterangan" class="form-input" value="{{ old('keterangan') }}"
-                            placeholder="Catatan tambahan">
-                    </div>
-                    <div class="form-group span-2">
-                        <label class="form-label">Foto <small>(opsional, max 2MB)</small></label>
-                        <input type="file" name="foto" class="form-input" id="foto-input"
-                            accept="image/jpg,image/jpeg,image/png,image/webp" style="height:auto;padding:8px 12px;">
-                        <div id="foto-preview" style="margin-top:10px;display:none;">
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="text-[13px] font-medium text-text dark:text-text-dark">Foto <small class="font-normal text-text-muted ml-1">(opsional, max 2MB)</small></label>
+                        <input type="file" name="foto" id="foto-input"
+                            accept="image/jpg,image/jpeg,image/png,image/webp"
+                            class="{{ $inputClass }} h-auto py-2 px-3">
+                        <div id="foto-preview" class="hidden mt-2.5">
                             <img id="foto-img" src="" alt="Preview"
-                                style="height:120px;border-radius:8px;object-fit:cover;border:1px solid var(--grey);">
+                                class="h-[120px] rounded-lg object-cover border border-page-bg dark:border-page-bg-dark">
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="form-actions">
-                <a href="{{ route('inventaris.peralatan.index') }}" class="btn-cancel">Batal</a>
-                <button type="submit" class="btn-submit"><i class="bx bx-save"></i> Simpan</button>
+            <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
+                <a href="{{ route('inventaris.peralatan.index') }}"
+                    class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
+                <button type="submit"
+                    class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
+                    <i class="bx bx-save"></i> Simpan
+                </button>
             </div>
         </form>
     </main>
@@ -88,8 +72,8 @@
             var file = this.files[0];
             var prev = document.getElementById('foto-preview');
             var img = document.getElementById('foto-img');
-            if (file) { img.src = URL.createObjectURL(file); prev.style.display = 'block'; }
-            else { prev.style.display = 'none'; }
+            if (file) { img.src = URL.createObjectURL(file); prev.classList.remove('hidden'); }
+            else { prev.classList.add('hidden'); }
         });
     </script>
 @endpush

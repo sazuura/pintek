@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Faker\Factory as Faker;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,52 +17,53 @@ class DatabaseSeeder extends Seeder
         DB::table('users')->truncate();
         DB::table('peralatan')->truncate();
         DB::table('penjadwalan')->truncate();
-        DB::table('absensi')->truncate();
-        DB::table('dokumentasi')->truncate();
         DB::table('peminjaman')->truncate();
         DB::table('peminjaman_item')->truncate();
-        DB::table('jadwal_peralatan')->truncate();
+        DB::table('jadwal_operator')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // 1. GENERATE USERS (7 Orang)
-        $gedungList = ['Gedung A (Kominfo)', 'Gedung B (Persandian)', 'Gedung C (TIK)'];
         $users = [];
 
         // 1 Admin
         $users[] = [
-            'id_user'   => 'USR-' . $faker->unique()->numerify('#####'),
-            'nama_user' => 'Admin Sazuura',
-            'nohp'      => '0812' . $faker->numerify('########'),
-            'email'     => 'admin@diskominfotik.go.id',
-            'password'  => Hash::make('password'),
-            'role'      => 'admin',
-            'status'    => 'active',
-            'gedung'    => null,
+            'id_user'       => 'USR-' . $faker->unique()->numerify('#####'),
+            'nama_user'     => 'Admin Sazuura',
+            'jenis_kelamin' => 'L',
+            'alamat'        => $faker->address(),
+            'nohp'          => '0812' . $faker->numerify('########'),
+            'email'         => 'admin@diskominfotik.go.id',
+            'password'      => Hash::make('password'),
+            'role'          => 'admin',
+            'status'        => 'active',
         ];
 
         // 1 Inventaris Utama (Sekarang menghandle semua gedung, kolom gedung di-set null/global)
         $users[] = [
-            'id_user'   => 'USR-' . $faker->unique()->numerify('#####'),
-            'nama_user' => 'Fadhil (Staf Inventaris Utama)',
-            'nohp'      => '0857' . $faker->numerify('########'),
-            'email'     => 'inventaris@diskominfotik.go.id',
-            'password'  => Hash::make('password'),
-            'role'      => 'inventaris',
-            'status'    => 'active',
-            'gedung'    => null, 
+            'id_user'       => 'USR-' . $faker->unique()->numerify('#####'),
+            'nama_user'     => 'Fadhil (Staf Inventaris Utama)',
+            'jenis_kelamin' => 'L',
+            'alamat'        => $faker->address(),
+            'nohp'          => '0857' . $faker->numerify('########'),
+            'email'         => 'inventaris@diskominfotik.go.id',
+            'password'      => Hash::make('password'),
+            'role'          => 'inventaris',
+            'status'        => 'active',
         ];
 
         // 5 Operator
         for ($i = 1; $i <= 5; $i++) {
+            $jenisKelamin = $faker->randomElement(['L', 'P']);
             $users[] = [
-                'id_user'   => 'USR-' . $faker->unique()->numerify('#####'),
-                'nama_user' => $faker->name . ' (Operator)',
-                'nohp'      => '0813' . $faker->numerify('########'),
-                'email'     => 'operator' . $i . '@diskominfotik.go.id',
-                'password'  => Hash::make('password'),
-                'role'      => 'operator',
-                'status'    => $faker->randomElement(['active', 'active', 'active', 'inactive']),
-                'gedung'    => null,
+                'id_user'       => 'USR-' . $faker->unique()->numerify('#####'),
+                'nama_user'     => ($jenisKelamin === 'L' ? $faker->firstNameMale() : $faker->firstNameFemale()) . ' ' . $faker->lastName() . ' (Operator)',
+                'jenis_kelamin' => $jenisKelamin,
+                'alamat'        => $faker->address(),
+                'nohp'          => '0813' . $faker->numerify('########'),
+                'email'         => 'operator' . $i . '@diskominfotik.go.id',
+                'password'      => Hash::make('password'),
+                'role'          => 'operator',
+                'status'        => $faker->randomElement(['active', 'active', 'active', 'inactive']),
             ];
         }
 
@@ -73,6 +75,7 @@ class DatabaseSeeder extends Seeder
         $peminjamIds    = DB::table('users')->whereIn('role', ['operator', 'admin'])->pluck('id_user')->toArray();
 
         // 2. GENERATE PERALATAN (3 Gedung x 15 Barang = 45 Barang Kantor Riil)
+        $gedungList = ['Gedung A (Kominfo)', 'Gedung B (Persandian)', 'Gedung C (TIK)'];
         $barangTemplate = [
             ['nama' => 'Laptop ASUS ExpertBook', 'kode' => 'LPT'],
             ['nama' => 'Proyektor Epson EB-X400', 'kode' => 'PRJ'],
@@ -95,9 +98,8 @@ class DatabaseSeeder extends Seeder
 
         foreach ($gedungList as $gedung) {
             foreach ($barangTemplate as $barang) {
-                $stok      = $faker->numberBetween(5, 20);
-                $rusak     = $faker->optional(0.3, 0)->numberBetween(0, 2); 
-                $perbaikan = $faker->optional(0.2, 0)->numberBetween(0, 1); 
+                $stok  = $faker->numberBetween(5, 20);
+                $rusak = $faker->optional(0.3, 0)->numberBetween(0, 2);
 
                 $idAlat = 'A-' . strtoupper($barang['kode']) . '-' . $faker->unique()->numerify('###');
                 $peralatanIds[] = $idAlat;
@@ -110,14 +112,14 @@ class DatabaseSeeder extends Seeder
                     'lokasi_detail'  => $faker->randomElement(['Ruang Rapat Utama', 'Aula Lantai 2', 'Gudang Logistik', 'Ruang Server']),
                     'stok'           => $stok,
                     'rusak'          => $rusak,
-                    'perbaikan'      => $perbaikan,
                     'keterangan'     => $faker->optional(0.4)->sentence(),
                     'foto'           => 'peralatan/' . $faker->numberBetween(1, 10) . '.jpg',
                 ]);
             }
         }
 
-        // 3. GENERATE JADWAL & ABSENSI (150 Data)
+        // 3. GENERATE JADWAL (realistis: 1-2 rapat per minggu, 2 bulan ke belakang s/d 2 bulan ke depan)
+        $jadwalPerOperator = [];
         $judulKegiatan = [
             'Rapat Koordinasi Evaluasi SPBE', 'Bimtek Pengelolaan Website Desa',
             'Sosialisasi Cyber Security Awareness', 'Focus Group Discussion Smart City',
@@ -125,65 +127,50 @@ class DatabaseSeeder extends Seeder
             'Workshop Pengembangan Aplikasi Internal', 'Audiensi Implementasi E-Office'
         ];
 
-        for ($i = 1; $i <= 150; $i++) {
-            $idJadwal = 'JDW-' . $faker->unique()->numerify('#####');
-            $tanggal  = $faker->dateTimeBetween('-3 months', '+1 months')->format('Y-m-d');
-            $status   = $faker->randomElement(['selesai', 'selesai', 'selesai', 'dibatalkan']);
-            $alasanBatal = ($status === 'dibatalkan') ? $faker->randomElement(['Kuorum tidak terpenuhi', 'Jadwal bentrok dengan pimpinan', 'Teknis jaringan bermasalah']) : null;
+        $awalRentang  = Carbon::now()->subMonths(2)->startOfWeek(Carbon::MONDAY);
+        $akhirRentang = Carbon::now()->addMonths(2)->endOfWeek(Carbon::SUNDAY);
 
-            $jamMulai = $faker->randomElement(['09:00:00', '10:00:00', '13:30:00']);
-            $jamSelesai = date('H:i:s', strtotime($jamMulai) + (3600 * $faker->numberBetween(1, 3)));
+        $cursorMinggu = $awalRentang->copy();
+        while ($cursorMinggu->lte($akhirRentang)) {
+            // 1-2 rapat per minggu, ditaruh di hari kerja (Senin-Jumat) acak agar tidak selalu di hari yang sama
+            $hariKerja = [0, 1, 2, 3, 4];
+            shuffle($hariKerja);
+            $hariTerpilih = array_slice($hariKerja, 0, $faker->numberBetween(1, 2));
 
-            DB::table('penjadwalan')->insert([
-                'id_penjadwalan' => $idJadwal,
-                'judul_kegiatan' => $faker->randomElement($judulKegiatan) . ' Angkatan ' . $faker->numberBetween(1, 5),
-                'tanggal'        => $tanggal,
-                'waktu_mulai'    => $jamMulai,
-                'waktu_selesai'  => $jamSelesai,
-                'platform'       => $faker->randomElement(['Offline', 'Zoom Cloud Meetings', 'Google Meet']),
-                'keterangan'     => $faker->sentence(),
-                'id_pemateri'    => $faker->randomElement($operatorIds),
-                'status'         => $status,
-                'alasan_batal'   => $alasanBatal,
-            ]);
+            foreach ($hariTerpilih as $offsetHari) {
+                $tanggal = $cursorMinggu->copy()->addDays($offsetHari)->format('Y-m-d');
 
-            $pesertaIds = $faker->randomElements($operatorIds, $faker->numberBetween(1, 3));
-            foreach ($pesertaIds as $pesertaId) {
-                $statusAbsen = $faker->randomElement(['hadir', 'hadir', 'hadir', 'izin', 'sakit', 'alpha']);
-                
-                $idAbsensi = DB::table('absensi')->insertGetId([
+                $idJadwal    = 'JDW-' . $faker->unique()->numerify('#####');
+                $status      = $faker->randomElement(['selesai', 'selesai', 'selesai', 'dibatalkan']);
+                $alasanBatal = ($status === 'dibatalkan') ? $faker->randomElement(['Kuorum tidak terpenuhi', 'Jadwal bentrok dengan pimpinan', 'Teknis jaringan bermasalah']) : null;
+
+                $jamMulai   = $faker->randomElement(['09:00:00', '10:00:00', '13:30:00']);
+                $jamSelesai = date('H:i:s', strtotime($jamMulai) + (3600 * $faker->numberBetween(1, 3)));
+
+                DB::table('penjadwalan')->insert([
                     'id_penjadwalan' => $idJadwal,
-                    'id_user'        => $pesertaId,
+                    'judul_kegiatan' => $faker->randomElement($judulKegiatan) . ' Angkatan ' . $faker->numberBetween(1, 5),
                     'tanggal'        => $tanggal,
-                    'status'         => $statusAbsen,
-                    'validated'      => $faker->boolean(80),
+                    'waktu_mulai'    => $jamMulai,
+                    'waktu_selesai'  => $jamSelesai,
+                    'platform'       => $faker->randomElement(['Offline', 'Zoom Cloud Meetings']),
+                    'keterangan'     => $faker->sentence(),
+                    'status'         => $status,
+                    'alasan_batal'   => $alasanBatal,
                 ]);
 
-                if (in_array($statusAbsen, ['hadir', 'izin', 'sakit'])) {
-                    $totalDokumen = $faker->numberBetween(1, 2);
-                    for ($d = 0; $d < $totalDokumen; $d++) {
-                        DB::table('dokumentasi')->insert([
-                            'id_absensi' => $idAbsensi,
-                            'file_path'  => 'dokumentasi/sample-absen-' . $faker->numberBetween(1, 5) . '.jpg',
-                            'keterangan' => 'Bukti ' . $statusAbsen,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
+                $operatorTerpilih = $faker->randomElements($operatorIds, $faker->numberBetween(1, 3));
+                foreach ($operatorTerpilih as $idOperator) {
+                    DB::table('jadwal_operator')->insert([
+                        'id_penjadwalan' => $idJadwal,
+                        'id_user'        => $idOperator,
+                    ]);
+                    // Simpan buat referensi opsional saat generate peminjaman (Bagian B)
+                    $jadwalPerOperator[$idOperator][] = $idJadwal;
                 }
             }
 
-            if ($faker->boolean(70) && $status !== 'dibatalkan') {
-                $alatTerpakai = $faker->randomElements($peralatanIds, $faker->numberBetween(1, 3));
-                foreach ($alatTerpakai as $alatId) {
-                    DB::table('jadwal_peralatan')->insert([
-                        'id_penjadwalan'    => $idJadwal,
-                        'id_peralatan'       => $alatId,
-                        'jumlah'            => $faker->numberBetween(1, 2),
-                        'status_pemasangan' => $faker->randomElement(['sudah_dipasang', 'belum_dipasang']),
-                    ]);
-                }
-            }
+            $cursorMinggu->addWeek();
         }
 
         // 4. GENERATE PEMINJAMAN (100 Data)
@@ -196,8 +183,20 @@ class DatabaseSeeder extends Seeder
             $tglKembaliAkt = ($statusPinjam === 'dikembalikan') ? clone $tglKembaliRcn : null;
             $alasanBatal   = ($statusPinjam === 'dibatalkan' || $statusPinjam === 'ditolak') ? $faker->sentence() : null;
 
-            $idPeminjaman = DB::table('peminjaman')->insertGetId([
-                'id_user'                 => $faker->randomElement($peminjamIds),
+            // Generate string ID manual
+            $idPeminjaman = 'PMJ-2026-' . sprintf('%04d', $i);
+            $idPeminjam   = $faker->randomElement($peminjamIds);
+
+            // 30% peminjaman dikaitkan ke salah satu jadwal milik peminjam (kalau ada)
+            $idPenjadwalanTerkait = null;
+            if (!empty($jadwalPerOperator[$idPeminjam]) && $faker->boolean(30)) {
+                $idPenjadwalanTerkait = $faker->randomElement($jadwalPerOperator[$idPeminjam]);
+            }
+
+            DB::table('peminjaman')->insert([
+                'id_peminjaman'           => $idPeminjaman,
+                'id_user'                 => $idPeminjam,
+                'id_penjadwalan'          => $idPenjadwalanTerkait,
                 'tanggal_pinjam'          => $tglPinjam->format('Y-m-d'),
                 'tanggal_kembali_rencana' => $tglKembaliRcn->format('Y-m-d'),
                 'tanggal_kembali_aktual'  => $tglKembaliAkt ? $tglKembaliAkt->format('Y-m-d') : null,

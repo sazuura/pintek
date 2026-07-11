@@ -3,14 +3,13 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class Penjadwalan extends Model
-{
-    protected $table        = 'penjadwalan';
-    protected $primaryKey   = 'id_penjadwalan';
-    public    $incrementing = false;
-    protected $keyType      = 'string';
-    public    $timestamps   = false;
-    protected $fillable = [
+    class Penjadwalan extends Model
+    {
+        protected $table        = 'penjadwalan';
+        protected $primaryKey   = 'id_penjadwalan';
+        public    $incrementing = false;
+        protected $keyType      = 'string';
+        protected $fillable = [
         'id_penjadwalan',
         'judul_kegiatan',
         'tanggal',
@@ -18,28 +17,60 @@ class Penjadwalan extends Model
         'waktu_selesai',
         'platform',
         'keterangan',
-        'id_pemateri',
         'status',
         'alasan_batal',
+        'zoom_meeting_id',
+        'zoom_password',
+        'zoom_account',
+        'link_otomatis',
     ];
+
+    public function operators()
+    {
+        return $this->belongsToMany(User::class, 'jadwal_operator', 'id_penjadwalan', 'id_user');
+    }
     protected $casts = [
-        'tanggal' => 'date:Y-m-d',
+        'tanggal'       => 'date:Y-m-d',
+        'link_otomatis' => 'boolean',
     ];
 
-    public function absensi()
+    public function peminjaman()
     {
-        return $this->hasMany(Absensi::class, 'id_penjadwalan', 'id_penjadwalan');
+        return $this->hasMany(Peminjaman::class, 'id_penjadwalan', 'id_penjadwalan');
     }
 
-    public function jadwalPeralatan()
+    /**
+     * Nama peralatan yang sudah diajukan operator manapun untuk jadwal ini (lewat modul
+     * Peminjaman, status diajukan/disetujui/dikembalikan - bukan yang ditolak/dibatalkan).
+     * Dicocokkan lewat NAMA (bukan id_peralatan) supaya alat yang sama tapi tercatat
+     * sebagai baris stok berbeda di gedung lain (mis. "Kabel HDMI 15 Meter" ada di
+     * Gedung A maupun Gedung B) tetap kena tanda "Sudah Diajukan", bukan cuma baris
+     * persis yang sama. Dipakai buat kasih peringatan (bukan blokir) kalau operator lain
+     * mau mengajukan alat yang sama utk jadwal yang sama - operator tetap boleh lanjut
+     * setelah konfirmasi.
+     */
+    public function peralatanSudahDiajukan(?string $kecualiIdPeminjaman = null): array
     {
-        return $this->hasMany(JadwalPeralatan::class, 'id_penjadwalan', 'id_penjadwalan');
+        return $this->peminjaman()
+            ->whereIn('status', ['diajukan', 'disetujui', 'dikembalikan'])
+            ->when($kecualiIdPeminjaman, fn ($q, $id) => $q->where('id_peminjaman', '!=', $id))
+            ->with('items.peralatan')
+            ->get()
+            ->flatMap(fn ($p) => $p->items->pluck('peralatan.nama_peralatan'))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
-    public function pemateri()
+    /**
+     * Alat yang dibutuhkan - murni acuan/checklist buat operator, bukan peminjaman
+     * sungguhan (operator tetap harus ajukan lewat modul Peminjaman kalau mau pakai).
+     */
+    public function peralatanReferensi()
     {
-        return $this->belongsTo(User::class, 'id_pemateri', 'id_user')
-                    ->withDefault(['nama_user' => '-']);
+        return $this->belongsToMany(Peralatan::class, 'jadwal_peralatan', 'id_penjadwalan', 'id_peralatan')
+            ->withPivot('jumlah');
     }
 
     public function isDibatalkan(): bool
