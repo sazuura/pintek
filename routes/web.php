@@ -21,7 +21,6 @@ Route::get('/dashboard', function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::resource('jadwal', PenjadwalanController::class)->names('jadwal');
-    Route::get('/peralatan', [AdminController::class, 'peralatanIndex'])->name('peralatan.index');
     Route::resource('users', UserController::class)->names('users')->except(['show']);
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/',            [AdminController::class, 'laporanIndex'])->name('index');
