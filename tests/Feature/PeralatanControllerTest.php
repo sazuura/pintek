@@ -17,8 +17,7 @@ class PeralatanControllerTest extends TestCase
     {
         parent::setUp();
 
-        // CRUD peralatan ada di role inventaris (bukan admin - admin cuma bisa lihat
-        // lewat admin.peralatan.index, read-only, untuk monitoring semua gedung).
+        // CRUD peralatan ada di role inventaris saja (admin tidak punya halaman peralatan).
         $this->inventaris = User::create([
             'id_user'   => 'US001',
             'nama_user' => 'Inventaris Test',
