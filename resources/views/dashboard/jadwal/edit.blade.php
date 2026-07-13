@@ -25,10 +25,11 @@
                 $ketHintAwal = match(true) {
                     str_contains($platformAwal, 'Offline') => 'Masukkan lokasi rapat (Gedung, Ruangan, Lantai).',
                     str_contains($platformAwal, 'Online')  => 'Keterangan tambahan (opsional), misalnya link meeting.',
-                    $platformAwal === 'Hybrid'              => 'Masukkan link meeting dan lokasi fisik.',
+                    $platformAwal === 'Hybrid'              => 'Isi link meeting di sini (bisa dibuat otomatis lewat opsi di bawah).',
                     default                                  => 'Pilih platform untuk petunjuk pengisian.',
                 };
                 $pakaiZoomAwal = str_contains($platformAwal, 'Zoom') || $platformAwal === 'Hybrid';
+                $lokasiFisikAwal = $platformAwal === 'Hybrid';
             @endphp
 
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
@@ -61,6 +62,11 @@
                         <x-input name="keterangan" label="Keterangan"
                             value="{{ old('keterangan', $jadwal->keterangan) }}"
                             hint="{{ $ketHintAwal }}" hint-id="ket-hint" />
+                    </div>
+                    <div class="md:col-span-2" id="lokasi-fisik-wrap" style="{{ $lokasiFisikAwal ? '' : 'display:none;' }}">
+                        <x-input name="lokasi_fisik" id="lokasi_fisik" label="Lokasi Fisik"
+                            value="{{ old('lokasi_fisik', $jadwal->lokasi_fisik) }}" placeholder="cth: Gedung A Lt.2 Ruang Rapat 1"
+                            hint="Lokasi untuk peserta yang hadir langsung (rapat Hybrid)." />
                     </div>
                     <div class="md:col-span-2" id="link-otomatis-wrap" style="{{ $pakaiZoomAwal ? '' : 'display:none;' }}">
                         <div class="[&>label]:text-text [&>label]:dark:text-text-dark">
@@ -199,15 +205,19 @@
             var v = this.value;
             var hint = document.getElementById('ket-hint');
             var inp = document.getElementById('keterangan');
+            var lokasiWrap = document.getElementById('lokasi-fisik-wrap');
             if (v.includes('Offline')) {
                 hint.textContent = 'Masukkan lokasi rapat (Gedung, Ruangan, Lantai).';
                 inp.placeholder = 'cth: Gedung A Lt.2 Ruang Rapat 1';
+                lokasiWrap.style.display = 'none';
             } else if (v.includes('Online')) {
                 hint.textContent = 'Keterangan tambahan (opsional), misalnya link meeting.';
                 inp.placeholder = 'cth: https://zoom.us/j/xxxxxxx';
+                lokasiWrap.style.display = 'none';
             } else if (v === 'Hybrid') {
-                hint.textContent = 'Masukkan link meeting dan lokasi fisik.';
-                inp.placeholder = 'cth: zoom.us/j/xxx | Gedung A Lt.2';
+                hint.textContent = 'Isi link meeting di sini (bisa dibuat otomatis lewat opsi di bawah).';
+                inp.placeholder = 'cth: https://zoom.us/j/xxxxxxx';
+                lokasiWrap.style.display = '';
             }
 
             var zoomWrap = document.getElementById('link-otomatis-wrap');

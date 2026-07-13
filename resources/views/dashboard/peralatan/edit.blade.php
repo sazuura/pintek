@@ -35,9 +35,21 @@
                         value="{{ old('kode_barang', $peralatan->kode_barang) }}" />
                     <x-input name="nama_peralatan" label="Nama Peralatan" required
                         value="{{ old('nama_peralatan', $peralatan->nama_peralatan) }}" />
-                    <x-input name="gedung" label="Lokasi" value="{{ $peralatan->gedung }}" />
-                    <x-input name="lokasi_detail" label="Lokasi Detail" placeholder="cth: Rak 3, Lt.2"
-                        value="{{ old('lokasi_detail', $peralatan->lokasi_detail) }}" />
+                    <div>
+                        <x-input name="gedung" id="gedung" label="Lokasi" required list="daftar-gedung"
+                            autocomplete="off" placeholder="Ketik atau pilih gedung" value="{{ old('gedung', $peralatan->gedung) }}"
+                            hint="Pilih gedung yang sudah ada, atau ketik nama gedung/tempat baru." />
+                        <datalist id="daftar-gedung">
+                            @foreach($gedungList as $g)
+                                <option value="{{ $g }}"></option>
+                            @endforeach
+                        </datalist>
+                    </div>
+                    <div>
+                        <x-input name="lokasi_detail" id="lokasi_detail" label="Lokasi Detail" list="daftar-lokasi-detail"
+                            autocomplete="off" placeholder="cth: Rak 3, Lt.2" value="{{ old('lokasi_detail', $peralatan->lokasi_detail) }}" />
+                        <datalist id="daftar-lokasi-detail"></datalist>
+                    </div>
                     <x-input name="keterangan" label="Keterangan"
                         value="{{ old('keterangan', $peralatan->keterangan) }}" />
                 </div>
@@ -113,5 +125,23 @@
             if (file) { img.src = URL.createObjectURL(file); prev.classList.remove('hidden'); }
             else { prev.classList.add('hidden'); }
         });
+
+        // Lokasi Detail bertingkat: saran datalist-nya mengikuti Gedung yang sedang
+        // diketik/dipilih, diambil dari lokasi yang sudah pernah dipakai di gedung itu.
+        var lokasiPerGedung = @json($lokasiPerGedung);
+        var gedungInput = document.getElementById('gedung');
+        var lokasiDatalist = document.getElementById('daftar-lokasi-detail');
+
+        function refreshLokasiDetailOptions() {
+            var daftar = lokasiPerGedung[gedungInput.value] || [];
+            lokasiDatalist.innerHTML = '';
+            daftar.forEach(function (lokasi) {
+                var opt = document.createElement('option');
+                opt.value = lokasi;
+                lokasiDatalist.appendChild(opt);
+            });
+        }
+        gedungInput.addEventListener('input', refreshLokasiDetailOptions);
+        refreshLokasiDetailOptions();
     </script>
 @endpush

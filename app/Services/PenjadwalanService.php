@@ -67,14 +67,14 @@ class PenjadwalanService
         // dibandingkan, supaya notifikasi "jadwal diubah" tidak salah terkirim.
         $fingerprintLama = $this->fingerprintDetail(
             $jadwal->judul_kegiatan, $jadwal->tanggal->format('Y-m-d'), $jadwal->waktu_mulai,
-            $jadwal->waktu_selesai, $jadwal->platform, $jadwal->keterangan
+            $jadwal->waktu_selesai, $jadwal->platform, $jadwal->keterangan, $jadwal->lokasi_fisik
         );
 
         return DB::transaction(function () use ($jadwal, $data, $operatorIds, $peralatanSync, $operatorLamaIds, $fingerprintLama) {
             $jadwal->update($data);
             $fingerprintBaru = $this->fingerprintDetail(
                 $data['judul_kegiatan'], $data['tanggal'], $data['waktu_mulai'],
-                $data['waktu_selesai'], $data['platform'], $data['keterangan'] ?? null
+                $data['waktu_selesai'], $data['platform'], $data['keterangan'] ?? null, $data['lokasi_fisik'] ?? null
             );
             $adaPerubahanDetail = $fingerprintLama !== $fingerprintBaru;
 
@@ -85,7 +85,7 @@ class PenjadwalanService
         });
     }
 
-    private function fingerprintDetail(string $judul, string $tanggal, string $waktuMulai, string $waktuSelesai, string $platform, ?string $keterangan): array
+    private function fingerprintDetail(string $judul, string $tanggal, string $waktuMulai, string $waktuSelesai, string $platform, ?string $keterangan, ?string $lokasiFisik = null): array
     {
         return [
             'judul_kegiatan' => $judul,
@@ -94,6 +94,7 @@ class PenjadwalanService
             'waktu_selesai'  => substr($waktuSelesai, 0, 5),
             'platform'       => $platform,
             'keterangan'     => $keterangan ?? '',
+            'lokasi_fisik'   => $lokasiFisik ?? '',
         ];
     }
 
@@ -326,7 +327,8 @@ class PenjadwalanService
                 $jadwal->platform,
                 $jadwal->keterangan ?? '-',
                 $daftarPeralatan,
-                $jadwal->link_otomatis ? $jadwal->zoom_password : null
+                $jadwal->link_otomatis ? $jadwal->zoom_password : null,
+                $jadwal->lokasi_fisik
             );
             $this->wa->kirim($operator->nomor_wa, $pesan);
         }
@@ -380,7 +382,8 @@ class PenjadwalanService
                 $jadwal->platform,
                 $jadwal->keterangan ?? '-',
                 $daftarPeralatan,
-                $jadwal->link_otomatis ? $jadwal->zoom_password : null
+                $jadwal->link_otomatis ? $jadwal->zoom_password : null,
+                $jadwal->lokasi_fisik
             );
             $this->wa->kirim($operator->nomor_wa, $pesan);
         }

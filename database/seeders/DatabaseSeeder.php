@@ -16,6 +16,12 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Wajib dipanggil sebelum apa pun lain - tanpa ini tabel roles/menus/role_menu_akses
+        // kosong abis migrate:fresh --seed, dan semua user kena 403 (RoleMiddleware/menu-akses
+        // middleware tidak menemukan izin apa pun). Aman dipanggil berkali-kali karena
+        // RoleAksesSeeder pakai updateOrCreate().
+        $this->call(RoleAksesSeeder::class);
+
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('users')->truncate();
         DB::table('peralatan')->truncate();
@@ -27,6 +33,19 @@ class DatabaseSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $today = Carbon::today();
+
+        $pilihBerbobot = function (array $bobot) {
+            $total = array_sum($bobot);
+            $acak  = random_int(1, $total);
+            $kumulatif = 0;
+            foreach ($bobot as $opsi => $nilai) {
+                $kumulatif += $nilai;
+                if ($acak <= $kumulatif) {
+                    return $opsi;
+                }
+            }
+            return array_key_first($bobot);
+        };
 
         // ==================================================================
         // 1. USERS
@@ -178,9 +197,14 @@ class DatabaseSeeder extends Seeder
             null,
         ];
         $alasanBatalJadwal = ['Kuorum tidak terpenuhi', 'Jadwal bentrok dengan pimpinan', 'Teknis jaringan bermasalah'];
+        $lokasiFisikList = [
+            'Ruang Rapat Utama, Kantor Diskominfotik KBB, Ngamprah',
+            'Aula Lantai 2, Kantor Diskominfotik KBB, Ngamprah',
+            'Ruang Rapat Bupati, Kompleks Perkantoran Pemda KBB, Ngamprah',
+        ];
 
-        $awalRentang  = $today->copy()->subMonths(2)->startOfWeek(Carbon::MONDAY);
-        $akhirRentang = $today->copy()->addMonth()->endOfWeek(Carbon::SUNDAY);
+        $awalRentang  = $today->copy()->subMonths(5)->startOfWeek(Carbon::MONDAY);
+        $akhirRentang = $today->copy()->addMonths(2)->endOfWeek(Carbon::SUNDAY);
 
         $jadwalPerOperator = [];
         $judulJadwalById   = [];
@@ -190,7 +214,7 @@ class DatabaseSeeder extends Seeder
         while ($cursorMinggu->lte($akhirRentang)) {
             $hariKerja = [0, 1, 2, 3, 4];
             shuffle($hariKerja);
-            $jumlahRapatMinggu = random_int(1, 2);
+            $jumlahRapatMinggu = random_int(2, 3);
             $hariTerpilih = array_slice($hariKerja, 0, $jumlahRapatMinggu);
 
             foreach ($hariTerpilih as $offsetHari) {
@@ -218,14 +242,17 @@ class DatabaseSeeder extends Seeder
                     $createdAt = $tanggal->copy()->subDays(random_int(2, 6));
                 }
 
+                $platform = $pilihBerbobot(['Offline' => 55, 'Online (Zoom)' => 30, 'Hybrid' => 15]);
+
                 DB::table('penjadwalan')->insert([
                     'id_penjadwalan' => $idJadwal,
                     'judul_kegiatan' => $judul,
                     'tanggal'        => $tanggal->format('Y-m-d'),
                     'waktu_mulai'    => $jamMulai,
                     'waktu_selesai'  => $jamSelesai,
-                    'platform'       => random_int(1, 100) <= 30 ? 'Zoom Cloud Meetings' : 'Offline',
+                    'platform'       => $platform,
                     'keterangan'     => $catatanJadwal[array_rand($catatanJadwal)],
+                    'lokasi_fisik'   => $platform === 'Hybrid' ? $lokasiFisikList[array_rand($lokasiFisikList)] : null,
                     'status'         => $status,
                     'alasan_batal'   => $alasanBatal,
                     'created_at'     => $createdAt,
@@ -284,27 +311,14 @@ class DatabaseSeeder extends Seeder
             'Jadwal peminjaman bentrok dengan kegiatan lain.',
         ];
 
-        $pilihBerbobot = function (array $bobot) {
-            $total = array_sum($bobot);
-            $acak  = random_int(1, $total);
-            $kumulatif = 0;
-            foreach ($bobot as $opsi => $nilai) {
-                $kumulatif += $nilai;
-                if ($acak <= $kumulatif) {
-                    return $opsi;
-                }
-            }
-            return array_key_first($bobot);
-        };
-
-        $totalPeminjaman = 90;
+        $totalPeminjaman = 260;
         for ($i = 1; $i <= $totalPeminjaman; $i++) {
             $idPeminjaman = 'PMJ-2026-' . str_pad($i, 4, '0', STR_PAD_LEFT);
             $idPeminjam   = $operatorIds[array_rand($operatorIds)];
 
             $offsetHari = random_int(
-                -1 * abs($today->diffInDays($today->copy()->subMonths(2))),
-                abs($today->diffInDays($today->copy()->addMonth()))
+                -1 * abs($today->diffInDays($today->copy()->subMonths(5))),
+                abs($today->diffInDays($today->copy()->addMonths(2)))
             );
             $tglPinjam = $today->copy()->addDays($offsetHari);
 

@@ -13,7 +13,10 @@ class PenjadwalanController extends Controller
 
     public function index(Request $request)
     {
-        $this->updateJadwalSelesai();
+        // Kolom "status" di database cuma menyimpan selesai/dibatalkan - label
+        // "Aktif" vs "Selesai" di tampilan sebenarnya diturunkan dari apakah waktu
+        // rapat sudah lewat atau belum (lihat isDibatalkan()/$sudahLewat di view),
+        // jadi filternya juga harus dihitung dari tanggal+waktu, bukan match string.
         $jadwal = Penjadwalan::with('operators')
             ->when($request->search, fn($q, $s) =>
                 $q->where('judul_kegiatan', 'like', "%{$s}%")
@@ -22,10 +25,17 @@ class PenjadwalanController extends Controller
             ->when($request->platform, fn($q, $p) =>
                 $q->where('platform', 'like', "%{$p}%")
             )
-            ->when($request->status, fn($q, $o) =>
-                $q->where('status', 'like', "%{$o}%")
-            )
-            ->orderByDesc('tanggal')
+            ->when($request->status, fn($q, $s) => match ($s) {
+                'aktif'      => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) >= NOW()'),
+                'selesai'    => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) < NOW()'),
+                'dibatalkan' => $q->where('status', 'dibatalkan'),
+                default      => $q,
+            })
+            // Urutan default: jadwal yang tanggalnya paling dekat dengan hari ini (baik
+            // yang akan datang maupun yang baru lewat) tampil paling atas, bukan sekadar
+            // diurutkan mundur dari tanggal terbaru.
+            ->orderByRaw('ABS(DATEDIFF(tanggal, CURDATE())) ASC')
+            ->orderBy('waktu_mulai')
             ->paginate(10)
             ->withQueryString();
         $bisaTambah = auth()->user()->punyaAkses('jadwal', 'tambah');
@@ -166,6 +176,7 @@ class PenjadwalanController extends Controller
             'waktu_selesai'    => 'required|date_format:H:i|after:waktu_mulai',
             'platform'         => 'required|string|max:100',
             'keterangan'       => 'nullable|string|max:255',
+            'lokasi_fisik'     => 'nullable|string|max:255',
             'link_otomatis'      => 'nullable|boolean',
             'zoom_akun_pilihan'  => 'nullable|in:akun_1,akun_2',
             'operator_ids'       => 'required|array|min:1',
@@ -183,6 +194,7 @@ class PenjadwalanController extends Controller
                 'waktu_selesai'  => $validated['waktu_selesai'],
                 'platform'       => $validated['platform'],
                 'keterangan'     => $validated['keterangan'] ?? null,
+                'lokasi_fisik'   => $validated['lokasi_fisik'] ?? null,
                 'link_otomatis'  => $validated['link_otomatis'] ?? false,
             ],
             'zoom_akun_pilihan' => $validated['zoom_akun_pilihan'] ?? null,
@@ -218,16 +230,5 @@ class PenjadwalanController extends Controller
         }
         return redirect()->route(auth()->user()->role . '.jadwal.index')
             ->with('success', 'Jadwal berhasil dibatalkan dan notifikasi WA telah dikirim ke operator.');
-    }
-
-    private function updateJadwalSelesai()
-    {
-        Penjadwalan::where('status', 'aktif')
-            ->whereRaw(
-                "TIMESTAMP(tanggal, waktu_selesai) <= NOW()"
-            )
-            ->update([
-                'status' => 'selesai'
-            ]);
     }
 }

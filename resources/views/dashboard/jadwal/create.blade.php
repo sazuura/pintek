@@ -49,6 +49,10 @@
                         <x-input name="keterangan" label="Keterangan" placeholder="Pilih platform terlebih dahulu"
                             hint="Pilih platform untuk petunjuk pengisian." hint-id="ket-hint" />
                     </div>
+                    <div class="md:col-span-2" id="lokasi-fisik-wrap" style="display:none;">
+                        <x-input name="lokasi_fisik" id="lokasi_fisik" label="Lokasi Fisik" placeholder="cth: Gedung A Lt.2 Ruang Rapat 1"
+                            hint="Lokasi untuk peserta yang hadir langsung (rapat Hybrid)." />
+                    </div>
                     <div class="md:col-span-2" id="link-otomatis-wrap" style="display:none;">
                         <div class="[&>label]:text-text [&>label]:dark:text-text-dark">
                             <x-checkbox name="link_otomatis" id="link_otomatis">Buat link Zoom otomatis</x-checkbox>
@@ -150,18 +154,22 @@
             var v = this.value;
             var hint = document.getElementById('ket-hint');
             var inp = document.getElementById('keterangan');
+            var lokasiWrap = document.getElementById('lokasi-fisik-wrap');
             if (v.includes('Offline')) {
                 hint.textContent = 'Masukkan lokasi rapat (Gedung, Ruangan, Lantai).';
                 inp.placeholder = 'cth: Gedung A Lt.2 Ruang Rapat 1';
                 inp.type = 'text';
+                lokasiWrap.style.display = 'none';
             } else if (v.includes('Online')) {
                 hint.textContent = 'Keterangan tambahan (opsional), misalnya link meeting.';
                 inp.placeholder = 'cth: https://zoom.us/j/xxxxxxx';
                 inp.type = 'text';
+                lokasiWrap.style.display = 'none';
             } else if (v === 'Hybrid') {
-                hint.textContent = 'Masukkan link meeting dan lokasi fisik.';
-                inp.placeholder = 'cth: zoom.us/j/xxx | Gedung A Lt.2';
+                hint.textContent = 'Isi link meeting di sini (bisa dibuat otomatis lewat opsi di bawah).';
+                inp.placeholder = 'cth: https://zoom.us/j/xxxxxxx';
                 inp.type = 'text';
+                lokasiWrap.style.display = '';
             }
 
             var zoomWrap = document.getElementById('link-otomatis-wrap');

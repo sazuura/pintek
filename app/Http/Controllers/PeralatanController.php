@@ -55,7 +55,8 @@ class PeralatanController extends Controller
     {
         abort_if(!auth()->user()->punyaAkses('peralatan', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah peralatan.');
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('dashboard.peralatan.create', compact('gedungList'));
+        $lokasiPerGedung = $this->lokasiPerGedung();
+        return view('dashboard.peralatan.create', compact('gedungList', 'lokasiPerGedung'));
     }
     public function store(Request $request)
     {
@@ -84,7 +85,24 @@ class PeralatanController extends Controller
         return view('dashboard.peralatan.edit', [
             'peralatan' => Peralatan::findOrFail($id),
             'gedungList' => $gedungList,
+            'lokasiPerGedung' => $this->lokasiPerGedung(),
         ]);
+    }
+
+    /**
+     * Peta gedung => daftar lokasi_detail yang sudah pernah dipakai di gedung itu -
+     * dipakai form Tambah/Edit supaya saran "Lokasi Detail" bertingkat mengikuti
+     * gedung yang dipilih (lihat datalist di create/edit.blade.php).
+     */
+    private function lokasiPerGedung(): array
+    {
+        return Peralatan::whereNotNull('lokasi_detail')->where('lokasi_detail', '!=', '')
+            ->select('gedung', 'lokasi_detail')
+            ->distinct()
+            ->get()
+            ->groupBy('gedung')
+            ->map(fn($rows) => $rows->pluck('lokasi_detail')->unique()->values())
+            ->toArray();
     }
     public function update(Request $request, string $id)
     {

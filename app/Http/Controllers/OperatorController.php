@@ -177,7 +177,8 @@ class OperatorController extends Controller
     {
         $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])
             ->whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
-            ->orderByDesc('tanggal')
+            ->orderByRaw('ABS(DATEDIFF(tanggal, CURDATE())) ASC')
+            ->orderBy('waktu_mulai')
             ->paginate(10);
         $bisaTambah = auth()->user()->punyaAkses('jadwal', 'tambah');
         $bisaUbah   = auth()->user()->punyaAkses('jadwal', 'ubah');

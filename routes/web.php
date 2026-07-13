@@ -38,6 +38,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::middleware('menu-akses:users')->group(function () {
         Route::resource('users', UserController::class)->names('users')->except(['show']);
     });
+    // Controller & view dashboard/peralatan/* sudah generik/role-agnostic (PeralatanController::index()
+    // bahkan sudah ada branch khusus role admin untuk search gedung) - rute ini sebelumnya belum
+    // pernah didaftarkan untuk admin, jadi menu Peralatan yang dicentang di Sistem Settings tidak
+    // pernah benar-benar bisa diakses (sidebar skip diam-diam karena Route::has() gagal).
+    Route::middleware('menu-akses:peralatan')->group(function () {
+        Route::resource('peralatan', PeralatanController::class)->names('peralatan')->except(['show']);
+    });
     Route::middleware('menu-akses:laporan')->group(function () {
         Route::prefix('laporan')->name('laporan.')->group(function () {
             Route::get('/',            [AdminController::class, 'laporanIndex'])->name('index');

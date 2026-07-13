@@ -47,6 +47,12 @@
                     </div>
                 @endif
             </div>
+            @if($jadwal->lokasi_fisik)
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[13px] font-medium text-text dark:text-text-dark">Lokasi Fisik</label>
+                    <p class="text-text dark:text-text-dark m-0">{{ $jadwal->lokasi_fisik }}</p>
+                </div>
+            @endif
         </div>
     </div>
 

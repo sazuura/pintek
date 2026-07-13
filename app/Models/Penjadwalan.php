@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
         'waktu_selesai',
         'platform',
         'keterangan',
+        'lokasi_fisik',
         'status',
         'alasan_batal',
         'zoom_meeting_id',

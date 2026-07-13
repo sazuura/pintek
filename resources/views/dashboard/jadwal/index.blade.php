@@ -68,7 +68,7 @@
                             <th class="w-8 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap"></th>
                             <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
                             <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Judul Rapat <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                            <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tanggal <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                            <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tanggal <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
                             <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Waktu</th>
                             <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Platform</th>
                             <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
@@ -96,7 +96,7 @@
                                         {{ $bisaUbah ? $j->operators->count() . ' operator' : $j->keterangan }}
                                     </div>
                                 </td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $j->tanggal->translatedFormat('D, d M Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $j->tanggal->translatedFormat('D, d M Y') }}</td>
                                 <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
                                     {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }}
                                 </td>
@@ -175,6 +175,15 @@
                                                 <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $j->keterangan ?? '-' }}</p>
                                             </div>
                                         </div>
+                                        @if($j->lokasi_fisik)
+                                            <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
+                                                <i class="bx bx-map text-lg text-primary mt-px shrink-0"></i>
+                                                <div>
+                                                    <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Lokasi Fisik</label>
+                                                    <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $j->lokasi_fisik }}</p>
+                                                </div>
+                                            </div>
+                                        @endif
                                         <div class="flex items-start gap-2.5 min-w-0 flex-[2_1_260px]">
                                             <i class="bx bx-group text-lg text-primary mt-px shrink-0"></i>
                                             <div>
@@ -232,6 +241,7 @@
                      data-waktu="{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }} WIB"
                      data-platform="{{ $j->platform }}"
                      data-keterangan="{{ $j->keterangan ?? '-' }}"
+                     data-lokasi-fisik="{{ $j->lokasi_fisik }}"
                      data-operator="{{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}"
                      @if($bisaUbah)
                          data-dibatalkan="{{ $dibatalkan ? '1' : '' }}"
@@ -380,6 +390,7 @@
                 '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-time-five"></i><div><label class="' + labelClass + '">Waktu</label><p class="' + pClass + '">' + escapeHtml(d.waktu) + '</p></div></div>' +
                 '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-desktop"></i><div><label class="' + labelClass + '">Platform</label><p class="' + pClass + '">' + escapeHtml(d.platform) + '</p></div></div>' +
                 '<div class="' + detailRowFullClass + '"><i class="' + iconClass + ' bx-note"></i><div><label class="' + labelClass + '">Keterangan</label><p class="' + pClass + '">' + escapeHtml(d.keterangan) + '</p></div></div>' +
+                (d.lokasiFisik ? '<div class="' + detailRowClass + '"><i class="' + iconClass + ' bx-map"></i><div><label class="' + labelClass + '">Lokasi Fisik</label><p class="' + pClass + '">' + escapeHtml(d.lokasiFisik) + '</p></div></div>' : '') +
                 '<div class="' + detailRowFullClass + '"><i class="' + iconClass + ' bx-group"></i><div><label class="' + labelClass + '">Operator</label><p class="' + pClass + '">' + escapeHtml(d.operator) + '</p></div></div>';
 
             @if($bisaUbah)

@@ -49,9 +49,9 @@
                             <th class="w-8 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap"></th>
                             <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
                             <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Keperluan <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                            <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tgl Pinjam <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rencana Kembali</th>
-                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Tgl Kembali</th>
+                            <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tgl Pinjam <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rencana Kembali</th>
+                            <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Tgl Kembali</th>
                             <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
                             <th class="w-[100px] py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Aksi</th>
                         </tr>
@@ -68,9 +68,9 @@
                                         {{ $p->items->count() }} item peralatan
                                     </div>
                                 </td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}</td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->tanggal_kembali_aktual?->translatedFormat('l, d F Y') ?? '-' }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_kembali_aktual?->translatedFormat('l, d F Y') ?? '-' }}</td>
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     <x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge>
                                 </td>
@@ -159,7 +159,7 @@
                                                                 <div class="text-xs text-text-muted">{{ $item->peralatan->gedung ?? '-' }}</div>
                                                             </td>
                                                             <td class="py-4 px-5 text-sm text-text dark:text-text-dark align-middle text-center font-semibold">{{ $item->jumlah }}</td>
-                                                            <td class="py-4 px-5 text-sm align-middle text-center"><x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge></td>
+                                                            <td class="py-4 px-5 text-sm align-middle text-center"><x-badge :variant="$item->badge['class']">{{ $item->badge['label'] }}</x-badge></td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>

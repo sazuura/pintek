@@ -52,6 +52,7 @@ class RoleAksesSeeder extends Seeder
                 'dashboard'  => [true, false, false, false],
                 'jadwal'     => [true, true,  true,  true],
                 'users'      => [true, true,  true,  true],
+                'peralatan'  => [true, true,  true,  true],
                 'laporan'    => [true, false, false, false],
                 'pengaturan' => [true, true,  true,  true],
             ],

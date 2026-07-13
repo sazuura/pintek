@@ -134,22 +134,62 @@ class RoleAksesControllerTest extends TestCase
     /** @test */
     public function admin_bisa_ubah_hak_akses_menu_untuk_sebuah_role(): void
     {
+        // Pakai menu "jadwal" (bukan "laporan") - laporan/dashboard/pengaturan sengaja
+        // dikunci dari modal Hak Akses (lihat RoleAksesController::MENU_TERKUNCI) karena
+        // terikat ke satu role spesifik, jadi updateAkses() tidak lagi memprosesnya.
         $roleOperator = Role::where('slug', 'operator')->first();
-        $menuLaporan  = Menu::where('slug', 'laporan')->first();
+        $menuJadwal   = Menu::where('slug', 'jadwal')->first();
 
         $this->actingAs($this->admin)
             ->put(route('admin.pengaturan.role-akses.updateAkses', $roleOperator), [
                 'akses' => [
-                    $menuLaporan->id => ['bisa_lihat' => '1', 'bisa_tambah' => '0', 'bisa_ubah' => '0', 'bisa_hapus' => '0'],
+                    $menuJadwal->id => ['bisa_lihat' => '1', 'bisa_tambah' => '1', 'bisa_ubah' => '0', 'bisa_hapus' => '0'],
                 ],
             ])
             ->assertRedirect(route('admin.pengaturan.role-akses.index'));
 
         $this->assertDatabaseHas('role_menu_akses', [
             'id_role'    => $roleOperator->id,
-            'id_menu'    => $menuLaporan->id,
+            'id_menu'    => $menuJadwal->id,
             'bisa_lihat' => true,
+            'bisa_tambah' => true,
         ]);
+    }
+
+    /** @test */
+    public function menu_terkunci_dashboard_laporan_pengaturan_tidak_ikut_berubah_saat_updateakses(): void
+    {
+        // Kalau checkbox-nya disembunyikan dari modal tapi loop updateAkses() masih
+        // memproses semua menu, akses dashboard/laporan/pengaturan role manapun akan
+        // ke-reset ke false setiap kali admin menyimpan perubahan role LAIN - karena
+        // menu terkunci memang tidak pernah dikirim dari form.
+        $roleOperator = Role::where('slug', 'operator')->first();
+        $menuDashboard = Menu::where('slug', 'dashboard')->first();
+
+        $sebelum = RoleMenuAkses::where('id_role', $roleOperator->id)->where('id_menu', $menuDashboard->id)->first();
+        $this->assertTrue((bool) $sebelum->bisa_lihat);
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.pengaturan.role-akses.updateAkses', $roleOperator), [
+                'akses' => [],
+            ])
+            ->assertRedirect(route('admin.pengaturan.role-akses.index'));
+
+        $sesudah = RoleMenuAkses::where('id_role', $roleOperator->id)->where('id_menu', $menuDashboard->id)->first();
+        $this->assertTrue((bool) $sesudah->bisa_lihat, 'Akses dashboard operator seharusnya tetap true, bukan ke-reset.');
+    }
+
+    /** @test */
+    public function menu_terkunci_tidak_muncul_di_modal_hak_akses(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.pengaturan.role-akses.index'));
+
+        $response->assertOk();
+        $menus = $response->viewData('menus')->pluck('slug');
+        $this->assertFalse($menus->contains('dashboard'));
+        $this->assertFalse($menus->contains('laporan'));
+        $this->assertFalse($menus->contains('pengaturan'));
+        $this->assertTrue($menus->contains('jadwal'));
     }
 
     /** @test */
