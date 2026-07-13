@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Helpers\IdGenerator;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -19,11 +20,16 @@ class UserController extends Controller
             ->orderBy('nama_user')
             ->paginate(10)
             ->withQueryString();
-        return view('dashboard.users.index', compact('users'));
+        // Semua role (termasuk yang nonaktif) supaya filter tetap bisa dipakai untuk
+        // mencari user yang role-nya sudah dinonaktifkan setelahnya.
+        $roles = Role::orderBy('nama_role')->get();
+        return view('dashboard.users.index', compact('users', 'roles'));
     }
     public function create()
     {
-        return view('dashboard.users.create');
+        abort_if(!auth()->user()->punyaAkses('users', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah user.');
+        $roles = Role::where('status', 'aktif')->orderBy('nama_role')->get();
+        return view('dashboard.users.create', compact('roles'));
     }
     public function store(Request $request)
     {
@@ -35,7 +41,7 @@ class UserController extends Controller
             'nohp'          => 'required|string|max:20|unique:users,nohp',
             'email'         => 'required|email|unique:users,email',
             'password'      => 'required|string|min:6',
-            'role'          => 'required|in:admin,operator,inventaris',
+            'role'          => 'required|exists:roles,slug',
         ]);
         User::create([
             'id_user'       => IdGenerator::next(User::class, 'id_user', 'USR-'),
@@ -48,12 +54,18 @@ class UserController extends Controller
             'role'          => $data['role'],
             'status'        => 'active',
         ]);
-        return redirect()->route('admin.users.index')
+        return redirect()->route(auth()->user()->role . '.users.index')
             ->with('success', 'User berhasil ditambahkan.');
     }
     public function edit(string $id)
     {
-        return view('dashboard.users.edit', ['user' => User::findOrFail($id)]);
+        abort_if(!auth()->user()->punyaAkses('users', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah user.');
+        $user = User::findOrFail($id);
+        // Role aktif + role user ini sendiri (kalau-kalau role-nya sudah dinonaktifkan
+        // setelah user ini di-assign) supaya pilihan yang sedang dipakai tidak hilang
+        // dari dropdown begitu saja.
+        $roles = Role::where('status', 'aktif')->orWhere('slug', $user->role)->orderBy('nama_role')->get();
+        return view('dashboard.users.edit', ['user' => $user, 'roles' => $roles]);
     }
     public function update(Request $request, string $id)
     {
@@ -66,7 +78,7 @@ class UserController extends Controller
             'nohp'          => 'required|string|max:20|unique:users,nohp,' . $id . ',id_user',
             'email'         => 'required|email|unique:users,email,' . $id . ',id_user',
             'password'      => 'nullable|string|min:6',
-            'role'          => 'required|in:admin,operator,inventaris',
+            'role'          => 'required|exists:roles,slug',
         ]);
         $update = [
             'nama_user'     => $data['nama_user'],
@@ -80,7 +92,7 @@ class UserController extends Controller
             $update['password'] = bcrypt($data['password']);
         }
         $user->update($update);
-        return redirect()->route('admin.users.index')
+        return redirect()->route(auth()->user()->role . '.users.index')
             ->with('success', 'User berhasil diperbarui.');
     }
     public function destroy(string $id)

@@ -53,6 +53,7 @@ class PeralatanController extends Controller
     }
     public function create()
     {
+        abort_if(!auth()->user()->punyaAkses('peralatan', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah peralatan.');
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
         return view('dashboard.peralatan.create', compact('gedungList'));
     }
@@ -73,11 +74,12 @@ class PeralatanController extends Controller
             ? $request->file('foto')->store('peralatan', 'public')
             : null;
         Peralatan::create($data);
-        return redirect()->route('inventaris.peralatan.index')
+        return redirect()->route(auth()->user()->role . '.peralatan.index')
             ->with('success', 'Peralatan berhasil ditambahkan.');
     }
     public function edit(string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peralatan', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah peralatan.');
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
         return view('dashboard.peralatan.edit', [
             'peralatan' => Peralatan::findOrFail($id),
@@ -105,7 +107,7 @@ class PeralatanController extends Controller
         }
         $data['foto'] = $this->prosesUploadFoto($request, $peralatan);
         $peralatan->update($data);
-        return redirect()->route('inventaris.peralatan.index')
+        return redirect()->route(auth()->user()->role . '.peralatan.index')
             ->with('success', 'Peralatan berhasil diperbarui.');
     }
     public function destroy(string $id)

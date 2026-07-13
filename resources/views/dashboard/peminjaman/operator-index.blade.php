@@ -3,15 +3,18 @@
 @section('sidebar-menu') <x-sidebar /> @endsection
 
 @section('content')
+    @php $bisaUbah = auth()->user()->punyaAkses('peminjaman', 'ubah'); @endphp
     <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
         <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
             <div>
                 <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Peminjaman Saya</h1>
             </div>
-            <a href="{{ route('operator.peminjaman.create') }}"
-                class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
-                <i class="bx bx-plus"></i><span class="text">Ajukan Peminjaman</span>
-            </a>
+            @if(auth()->user()->punyaAkses('peminjaman', 'tambah'))
+                <a href="{{ route('operator.peminjaman.create') }}"
+                    class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
+                    <i class="bx bx-plus"></i><span class="text">Ajukan Peminjaman</span>
+                </a>
+            @endif
         </div>
 
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
@@ -72,7 +75,7 @@
                                     <x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge>
                                 </td>
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
-                                    @if($p->isMenunggu())
+                                    @if($bisaUbah && $p->isMenunggu())
                                         <div class="flex gap-1.5 items-center justify-center">
                                             <a href="{{ route('operator.peminjaman.edit', $p->id_peminjaman) }}"
                                                 class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80 bg-warning dark:bg-warning-dark text-warning-text"
@@ -193,7 +196,7 @@
                      data-catatan="{{ $p->catatan_inventaris ?? '-' }}"
                      data-dibatalkan="{{ $p->isDibatalkan() ? '1' : '' }}"
                      data-alasan-batal="{{ $p->alasan_batal }}"
-                     @if($p->isMenunggu())
+                     @if($bisaUbah && $p->isMenunggu())
                          data-edit-url="{{ route('operator.peminjaman.edit', $p->id_peminjaman) }}"
                          data-batalkan-url="{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}"
                      @endif>

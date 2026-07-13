@@ -11,6 +11,7 @@ class PeminjamanItem extends Model
         'id_peminjaman',
         'id_peralatan',
         'jumlah',
+        'status',
     ];
 
     public function peminjaman()
@@ -21,5 +22,17 @@ class PeminjamanItem extends Model
     public function peralatan()
     {
         return $this->belongsTo(Peralatan::class, 'id_peralatan', 'id_peralatan');
+    }
+
+    public function isMenunggu(): bool { return $this->status === 'diajukan'; }
+
+    public function getBadgeAttribute(): array
+    {
+        return match ($this->status) {
+            'diajukan'  => ['class' => 'badge-warning', 'label' => 'Menunggu'],
+            'disetujui' => ['class' => 'badge-active',  'label' => 'Disetujui'],
+            'ditolak'   => ['class' => 'badge-danger',  'label' => 'Ditolak'],
+            default     => ['class' => '',              'label' => $this->status],
+        };
     }
 }

@@ -31,13 +31,13 @@ class RoleAksesSeeder extends Seeder
 
         $menuDefinisi = [
             ['slug' => 'dashboard',      'nama_menu' => 'Dashboard',              'icon' => 'bxs-dashboard', 'urutan' => 1],
-            ['slug' => 'jadwal',         'nama_menu' => 'Jadwal Rapat',           'icon' => 'bxs-calendar',  'urutan' => 2],
-            ['slug' => 'peminjaman',     'nama_menu' => 'Peminjaman Peralatan',   'icon' => 'bx-package',    'urutan' => 3],
-            ['slug' => 'peralatan',      'nama_menu' => 'Data Peralatan',         'icon' => 'bxs-wrench',    'urutan' => 4],
-            ['slug' => 'alat-terpasang', 'nama_menu' => 'Alat Terpasang',         'icon' => 'bx-tv',         'urutan' => 5],
-            ['slug' => 'users',          'nama_menu' => 'Manajemen User',         'icon' => 'bxs-group',     'urutan' => 6],
+            ['slug' => 'users',          'nama_menu' => 'Users',                  'icon' => 'bxs-group',     'urutan' => 2],
+            ['slug' => 'jadwal',         'nama_menu' => 'Jadwal Rapat',           'icon' => 'bxs-calendar',  'urutan' => 3],
+            ['slug' => 'peralatan',      'nama_menu' => 'Peralatan',              'icon' => 'bxs-wrench',    'urutan' => 4],
+            ['slug' => 'peminjaman',     'nama_menu' => 'Peminjaman Peralatan',   'icon' => 'bx-package',    'urutan' => 5],
+            ['slug' => 'alat-terpasang', 'nama_menu' => 'Alat Terpasang',         'icon' => 'bx-tv',         'urutan' => 6],
             ['slug' => 'laporan',        'nama_menu' => 'Laporan',                'icon' => 'bxs-file',      'urutan' => 7],
-            ['slug' => 'pengaturan',     'nama_menu' => 'Sistem Settings',        'icon' => 'bxs-cog',       'urutan' => 8],
+            ['slug' => 'pengaturan',     'nama_menu' => 'Pengaturan Sistem',      'icon' => 'bxs-cog',       'urutan' => 8],
         ];
 
         $menus = [];

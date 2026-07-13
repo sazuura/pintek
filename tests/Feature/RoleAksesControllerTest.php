@@ -48,7 +48,7 @@ class RoleAksesControllerTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('admin.pengaturan.role-akses.index'))
             ->assertOk()
-            ->assertSee('Sistem Settings')
+            ->assertSee('Pengaturan Sistem')
             ->assertSee('Admin')
             ->assertSee('Operator')
             ->assertSee('Inventaris');
@@ -85,6 +85,21 @@ class RoleAksesControllerTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseHas('roles', ['id' => $roleAdmin->id]);
+    }
+
+    /** @test */
+    public function role_bawaan_selain_admin_boleh_dihapus_kalau_tidak_dipakai_user(): void
+    {
+        // Cuma role admin yang benar-benar tidak boleh dihapus - operator & inventaris
+        // (walau sama-sama is_terkunci=true dari seeder) sekarang boleh dihapus asal
+        // tidak ada user yang masih memakainya (dicek terpisah, lihat test di bawah).
+        $roleOperator = Role::where('slug', 'operator')->first();
+
+        $this->actingAs($this->admin)
+            ->delete(route('admin.pengaturan.role-akses.destroy', $roleOperator))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('roles', ['id' => $roleOperator->id]);
     }
 
     /** @test */
@@ -134,6 +149,33 @@ class RoleAksesControllerTest extends TestCase
             'id_role'    => $roleOperator->id,
             'id_menu'    => $menuLaporan->id,
             'bisa_lihat' => true,
+        ]);
+    }
+
+    /** @test */
+    public function mencabut_semua_centang_pada_suatu_menu_benar_benar_menonaktifkan_akses_di_database(): void
+    {
+        // Operator default punya bisa_tambah=true & bisa_ubah=true untuk menu peminjaman
+        // (lihat RoleAksesSeeder). Submit form TANPA menyertakan menu ini di 'akses' sama
+        // sekali - persis seperti browser saat semua checkbox baris itu dikosongkan (checkbox
+        // yang tidak dicentang tidak pernah dikirim). Sebelumnya loop hanya mengikuti
+        // $data['akses'], jadi menu yang hilang total dari request ini tidak pernah ter-update.
+        $roleOperator     = Role::where('slug', 'operator')->first();
+        $menuPeminjaman   = Menu::where('slug', 'peminjaman')->first();
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.pengaturan.role-akses.updateAkses', $roleOperator), [
+                'akses' => [],
+            ])
+            ->assertRedirect(route('admin.pengaturan.role-akses.index'));
+
+        $this->assertDatabaseHas('role_menu_akses', [
+            'id_role'    => $roleOperator->id,
+            'id_menu'    => $menuPeminjaman->id,
+            'bisa_lihat' => false,
+            'bisa_tambah' => false,
+            'bisa_ubah'   => false,
+            'bisa_hapus'  => false,
         ]);
     }
 

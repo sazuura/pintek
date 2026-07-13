@@ -11,13 +11,14 @@
 @section('sidebar-menu') <x-sidebar /> @endsection
 
 @section('content')
+    @php $roleAktif = auth()->user()->role; @endphp
     <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
         <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
             <div>
                 <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">{{ $bisaUbah ? 'Data Jadwal Rapat' : 'Jadwal Saya' }}</h1>
             </div>
             @if($bisaTambah)
-                <a href="{{ route('admin.jadwal.create') }}"
+                <a href="{{ route($roleAktif . '.jadwal.create') }}"
                     class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
                     <i class="bx bx-plus"></i><span class="text">Tambah Jadwal</span>
                 </a>
@@ -26,7 +27,7 @@
 
         @if($bisaUbah)
             <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-                <form method="GET" action="{{ route('admin.jadwal.index') }}" class="contents">
+                <form method="GET" action="{{ route($roleAktif . '.jadwal.index') }}" class="contents">
                     <div class="relative flex-1 min-w-[180px] max-w-[300px]">
                         <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
                         <input type="text" name="search" data-live-search="#hasil-jadwal" autocomplete="off" placeholder="Cari judul, platform..." value="{{ request('search') }}"
@@ -46,7 +47,7 @@
                         <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                     </select>
                     @if(request()->hasAny(['search', 'platform', 'status']))
-                        <a href="{{ route('admin.jadwal.index') }}"
+                        <a href="{{ route($roleAktif . '.jadwal.index') }}"
                             class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                             <i class="bx bx-x"></i> Reset</a>
                     @endif
@@ -120,17 +121,17 @@
                                         <div class="flex gap-1.5 items-center justify-center">
                                             @if(!$dibatalkan)
                                                 @if($sudahLewat)
-                                                    <a href="{{ route('admin.jadwal.show', $j->id_penjadwalan) }}"
+                                                    <a href="{{ route($roleAktif . '.jadwal.show', $j->id_penjadwalan) }}"
                                                         class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80 bg-primary-50 dark:bg-[#0d2a40] text-primary"><i
                                                             class="bx bx-show"></i></a>
                                                 @else
-                                                    <a href="{{ route('admin.jadwal.edit', $j->id_penjadwalan) }}"
+                                                    <a href="{{ route($roleAktif . '.jadwal.edit', $j->id_penjadwalan) }}"
                                                         class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80 bg-warning dark:bg-warning-dark text-warning-text"><i
                                                             class="bx bx-edit"></i></a>
                                                     <button type="button"
                                                         class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
                                                         title="Batalkan Jadwal"
-                                                        onclick="bukaBatalkanJadwal('{{ route('admin.jadwal.batalkan', $j->id_penjadwalan) }}')">
+                                                        onclick="bukaBatalkanJadwal('{{ route($roleAktif . '.jadwal.batalkan', $j->id_penjadwalan) }}')">
                                                         <i class="bx bx-block"></i>
                                                     </button>
                                                 @endif
@@ -277,13 +278,13 @@
                     @if($bisaUbah && !$dibatalkan)
                         <div class="flex gap-2 pt-3 border-t border-page-bg dark:border-page-bg-dark [&>form]:contents">
                             @if($sudahLewat)
-                                <a href="{{ route('admin.jadwal.show', $j->id_penjadwalan) }}"
+                                <a href="{{ route($roleAktif . '.jadwal.show', $j->id_penjadwalan) }}"
                                     class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80 bg-primary-50 dark:bg-[#0d2a40] text-primary"><i class="bx bx-show"></i></a>
                             @else
-                                <a href="{{ route('admin.jadwal.edit', $j->id_penjadwalan) }}"
+                                <a href="{{ route($roleAktif . '.jadwal.edit', $j->id_penjadwalan) }}"
                                     class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80 bg-warning dark:bg-warning-dark text-warning-text"><i class="bx bx-edit"></i></a>
                                 <button type="button" title="Batalkan Jadwal"
-                                    onclick="bukaBatalkanJadwal('{{ route('admin.jadwal.batalkan', $j->id_penjadwalan) }}')"
+                                    onclick="bukaBatalkanJadwal('{{ route($roleAktif . '.jadwal.batalkan', $j->id_penjadwalan) }}')"
                                     class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text">
                                     <i class="bx bx-block"></i>
                                 </button>

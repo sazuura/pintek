@@ -1,17 +1,14 @@
 @extends('layouts.app')
-@section('title', 'Sistem Settings')
+@section('title', 'Pengaturan Sistem')
 @section('sidebar-menu') <x-sidebar /> @endsection
 
 @section('content')
     <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
         <div class="mb-5">
-            <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Sistem Settings</h1>
-            <p class="text-sm text-text-muted m-0 flex items-center gap-1.5">
-                <i class="bx bx-home-alt"></i> Home <i class="bx bx-chevron-right text-xs"></i> <span class="text-text dark:text-text-dark font-medium">Sistem Settings</span>
-            </p>
+            <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Pengaturan Sistem</h1>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 items-start">
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-4 items-start">
 
             {{-- Kolom kiri: tabel role --}}
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-5">
@@ -30,10 +27,10 @@
                         <thead>
                             <tr class="text-left text-text-muted border-b border-page-bg dark:border-page-bg-dark">
                                 <th class="py-2.5 pr-3 font-medium uppercase tracking-[0.5px] text-[11px]">Role</th>
-                                <th class="py-2.5 px-2 font-medium uppercase tracking-[0.5px] text-[11px] text-center" title="Lihat">L</th>
-                                <th class="py-2.5 px-2 font-medium uppercase tracking-[0.5px] text-[11px] text-center" title="Tambah">T</th>
-                                <th class="py-2.5 px-2 font-medium uppercase tracking-[0.5px] text-[11px] text-center" title="Ubah">U</th>
-                                <th class="py-2.5 px-2 font-medium uppercase tracking-[0.5px] text-[11px] text-center" title="Hapus">H</th>
+                                <th class="py-2.5 px-2 font-medium uppercase tracking-[0.5px] text-[11px] text-center" title="Create (Tambah)">C</th>
+                                <th class="py-2.5 px-2 font-medium uppercase tracking-[0.5px] text-[11px] text-center" title="Read (Lihat)">R</th>
+                                <th class="py-2.5 px-2 font-medium uppercase tracking-[0.5px] text-[11px] text-center" title="Update (Ubah)">U</th>
+                                <th class="py-2.5 px-2 font-medium uppercase tracking-[0.5px] text-[11px] text-center" title="Delete (Hapus)">D</th>
                                 <th class="py-2.5 px-3 font-medium uppercase tracking-[0.5px] text-[11px] text-center">Status</th>
                                 <th class="py-2.5 pl-3 font-medium uppercase tracking-[0.5px] text-[11px] text-right">Aksi</th>
                             </tr>
@@ -41,8 +38,8 @@
                         <tbody>
                             @php
                                 $dot = fn($on) => $on
-                                    ? '<span class="inline-flex w-5 h-5 rounded-full bg-success/15 text-success-text items-center justify-center"><i class="bx bx-check text-[13px]"></i></span>'
-                                    : '<span class="inline-flex w-5 h-5 rounded-full bg-page-bg dark:bg-page-bg-dark text-text-muted items-center justify-center"><i class="bx bx-minus text-[13px]"></i></span>';
+                                    ? '<span class="inline-flex w-8 h-8 rounded-full bg-success/15 text-success-text items-center justify-center"><i class="bx bx-check text-xl"></i></span>'
+                                    : '<span class="inline-flex w-8 h-8 rounded-full bg-page-bg dark:bg-page-bg-dark text-text-muted items-center justify-center"><i class="bx bx-minus text-xl"></i></span>';
                             @endphp
                             @foreach($roles as $role)
                                 <tr class="border-b border-page-bg dark:border-page-bg-dark last:border-0">
@@ -50,14 +47,14 @@
                                         <div class="flex items-center gap-2">
                                             <span class="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
                                             <span class="font-semibold text-text dark:text-text-dark">{{ $role->nama_role }}</span>
-                                            @if($role->is_terkunci)
-                                                <i class="bx bx-lock-alt text-text-muted text-sm" title="Role bawaan sistem, tidak bisa dihapus"></i>
+                                            @if($role->slug === 'admin')
+                                                <i class="bx bx-lock-alt text-text-muted text-sm" title="Role admin tidak bisa dihapus"></i>
                                             @endif
                                         </div>
                                         <div class="text-xs text-text-muted mt-0.5 pl-3.5">{{ $role->jumlah_menu_terlihat }} menu dapat diakses</div>
                                     </td>
-                                    <td class="py-3 px-2 text-center">{!! $dot($role->ringkasan['lihat']) !!}</td>
                                     <td class="py-3 px-2 text-center">{!! $dot($role->ringkasan['tambah']) !!}</td>
+                                    <td class="py-3 px-2 text-center">{!! $dot($role->ringkasan['lihat']) !!}</td>
                                     <td class="py-3 px-2 text-center">{!! $dot($role->ringkasan['ubah']) !!}</td>
                                     <td class="py-3 px-2 text-center">{!! $dot($role->ringkasan['hapus']) !!}</td>
                                     <td class="py-3 px-3 text-center">
@@ -72,15 +69,17 @@
                                                 title="Kelola hak akses menu">
                                                 <i class="bx bx-cog"></i>
                                             </button>
-                                            <form action="{{ route('admin.pengaturan.role-akses.destroy', $role) }}" method="POST"
-                                                onsubmit="return confirm('Hapus role {{ addslashes($role->nama_role) }}?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit"
-                                                    class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 {{ $role->is_terkunci ? 'opacity-30 cursor-not-allowed' : 'hover:opacity-80' }} bg-danger dark:bg-danger-dark text-danger-text"
-                                                    {{ $role->is_terkunci ? 'disabled title="Role bawaan sistem"' : 'title="Hapus role"' }}>
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
-                                            </form>
+                                            @unless($role->slug === 'admin')
+                                                <form action="{{ route('admin.pengaturan.role-akses.destroy', $role) }}" method="POST"
+                                                    onsubmit="return confirm('Hapus role {{ addslashes($role->nama_role) }}?')">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit"
+                                                        class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
+                                                        title="Hapus role">
+                                                        <i class="bx bx-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endunless
                                         </div>
                                     </td>
                                 </tr>
@@ -90,16 +89,8 @@
                 </div>
             </div>
 
-            {{-- Kolom kanan: info + tambah role --}}
+            {{-- Kolom kanan: tambah role --}}
             <div class="flex flex-col gap-4">
-                <div class="bg-primary/10 rounded-xl p-4 flex gap-3">
-                    <span class="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center shrink-0"><i class="bx bx-info-circle"></i></span>
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.5px] text-primary m-0 mb-1">Informasi</p>
-                        <p class="text-[13px] text-text dark:text-text-dark m-0">Gunakan tombol gear pada tabel Role untuk mengatur akses halaman/menu untuk setiap role.</p>
-                    </div>
-                </div>
-
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-5">
                     <h3 class="text-[15px] font-semibold text-text dark:text-text-dark flex items-center gap-2 m-0 mb-4">
                         <span class="w-8 h-8 rounded-lg bg-success/15 text-success-text flex items-center justify-center shrink-0"><i class="bx bx-plus"></i></span>
@@ -107,9 +98,9 @@
                     </h3>
                     <form action="{{ route('admin.pengaturan.role-akses.store') }}" method="POST" class="flex flex-col gap-4">
                         @csrf
-                        <x-input name="nama_role" label="Nama Role" placeholder="Misal: Resepsionis" required value="{{ old('nama_role') }}" />
+                        <x-input name="nama_role" label="Nama Role" required value="{{ old('nama_role') }}" />
                         <button type="submit"
-                            class="h-10 rounded-lg border-none bg-success dark:bg-success-dark text-success-text font-medium text-[13px] cursor-pointer transition-opacity duration-200 hover:opacity-90">
+                            class="h-10 rounded-lg border-none bg-primary hover:bg-primary-600 text-white font-medium text-[13px] cursor-pointer transition-colors duration-200">
                             Simpan Role
                         </button>
                     </form>
@@ -120,7 +111,7 @@
         {{-- Modal Hak Akses Halaman (Gambar 2) - satu instance dipakai bareng semua role,
              diisi lewat JS saat tombol gear diklik --}}
         <div id="modalHakAkses" class="modal-konfirmasi fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
-            <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[600px] max-h-[85vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
+            <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[85vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
                 <div class="flex items-center justify-between gap-3 py-[18px] px-5 border-b border-page-bg dark:border-page-bg-dark">
                     <div>
                         <h3 class="m-0 text-[15px] font-semibold text-text dark:text-text-dark flex items-center gap-2">
@@ -150,13 +141,12 @@
                                 <div class="flex items-center gap-3 py-2 px-2">
                                     <i class="bx {{ $menu->icon ?? 'bx-file' }} text-primary text-base shrink-0"></i>
                                     <span class="flex-1 text-[13px] font-medium text-text dark:text-text-dark">{{ $menu->nama_menu }}</span>
-                                    <div class="flex items-center gap-3 shrink-0">
-                                        @foreach(['bisa_lihat' => 'L', 'bisa_tambah' => 'T', 'bisa_ubah' => 'U', 'bisa_hapus' => 'H'] as $kolom => $label)
-                                            <label class="flex items-center gap-1 text-[11px] text-text-muted cursor-pointer select-none" title="{{ ['bisa_lihat'=>'Lihat','bisa_tambah'=>'Tambah','bisa_ubah'=>'Ubah','bisa_hapus'=>'Hapus'][$kolom] }}">
-                                                <input type="checkbox" class="akses-checkbox w-4 h-4 accent-primary cursor-pointer" data-kolom="{{ $kolom }}"
-                                                    name="akses[{{ $menu->id }}][{{ $kolom }}]" value="1">
+                                    <div class="flex items-center gap-2.5 shrink-0">
+                                        @foreach(['bisa_tambah' => 'C', 'bisa_lihat' => 'R', 'bisa_ubah' => 'U', 'bisa_hapus' => 'D'] as $kolom => $label)
+                                            <x-checkbox name="akses[{{ $menu->id }}][{{ $kolom }}]"
+                                                class="akses-checkbox" data-kolom="{{ $kolom }}">
                                                 {{ $label }}
-                                            </label>
+                                            </x-checkbox>
                                         @endforeach
                                     </div>
                                 </div>
@@ -164,13 +154,12 @@
                                     <div class="flex items-center gap-3 py-2 pl-9 pr-2">
                                         <span class="w-1 h-1 rounded-full bg-text-muted shrink-0"></span>
                                         <span class="flex-1 text-[13px] text-text dark:text-text-dark">{{ $anak->nama_menu }}</span>
-                                        <div class="flex items-center gap-3 shrink-0">
-                                            @foreach(['bisa_lihat' => 'L', 'bisa_tambah' => 'T', 'bisa_ubah' => 'U', 'bisa_hapus' => 'H'] as $kolom => $label)
-                                                <label class="flex items-center gap-1 text-[11px] text-text-muted cursor-pointer select-none">
-                                                    <input type="checkbox" class="akses-checkbox w-4 h-4 accent-primary cursor-pointer" data-kolom="{{ $kolom }}"
-                                                        name="akses[{{ $anak->id }}][{{ $kolom }}]" value="1">
+                                        <div class="flex items-center gap-2.5 shrink-0">
+                                            @foreach(['bisa_tambah' => 'C', 'bisa_lihat' => 'R', 'bisa_ubah' => 'U', 'bisa_hapus' => 'D'] as $kolom => $label)
+                                                <x-checkbox name="akses[{{ $anak->id }}][{{ $kolom }}]"
+                                                    class="akses-checkbox" data-kolom="{{ $kolom }}">
                                                     {{ $label }}
-                                                </label>
+                                                </x-checkbox>
                                             @endforeach
                                         </div>
                                     </div>

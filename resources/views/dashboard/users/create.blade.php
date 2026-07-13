@@ -8,13 +8,13 @@
             <div>
                 <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Tambah User</h1>
             </div>
-            <a href="{{ route('admin.users.index') }}"
+            <a href="{{ route(auth()->user()->role . '.users.index') }}"
                 class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                 <i class="bx bx-arrow-back"></i> Kembali
             </a>
         </div>
 
-        <form action="{{ route('admin.users.store') }}" method="POST" novalidate>
+        <form action="{{ route(auth()->user()->role . '.users.store') }}" method="POST" novalidate>
             @csrf
 
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
@@ -41,14 +41,14 @@
                         placeholder="Min. 6 karakter" />
 
                     <x-select name="role" label="Role" required placeholder="-- Pilih Role --">
-                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                        <option value="operator" {{ old('role') == 'operator' ? 'selected' : '' }}>Operator</option>
-                        <option value="inventaris" {{ old('role') == 'inventaris' ? 'selected' : '' }}>Inventaris</option>
+                        @foreach($roles as $r)
+                            <option value="{{ $r->slug }}" {{ old('role') == $r->slug ? 'selected' : '' }}>{{ $r->nama_role }}</option>
+                        @endforeach
                     </x-select>
                 </div>
             </div>
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
-                <a href="{{ route('admin.users.index') }}"
+                <a href="{{ route(auth()->user()->role . '.users.index') }}"
                     class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">

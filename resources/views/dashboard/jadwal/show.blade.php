@@ -6,7 +6,7 @@
 <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
     <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
         <div><h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Detail Jadwal</h1></div>
-        <a href="{{ route('admin.jadwal.index') }}"
+        <a href="{{ route(auth()->user()->role . '.jadwal.index') }}"
             class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
             <i class="bx bx-arrow-back"></i> Kembali
         </a>

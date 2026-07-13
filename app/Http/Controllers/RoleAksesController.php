@@ -75,8 +75,8 @@ class RoleAksesController extends Controller
     public function destroy(Role $role)
     {
         abort_if(!auth()->user()->punyaAkses('pengaturan', 'hapus'), 403, 'Anda tidak memiliki akses untuk menghapus role.');
-        if ($role->is_terkunci) {
-            return back()->with('error', "Role \"{$role->nama_role}\" adalah role bawaan sistem dan tidak dapat dihapus.");
+        if ($role->slug === 'admin') {
+            return back()->with('error', "Role \"{$role->nama_role}\" tidak dapat dihapus.");
         }
 
         if (\App\Models\User::where('role', $role->slug)->exists()) {
@@ -92,7 +92,7 @@ class RoleAksesController extends Controller
     public function updateAkses(Request $request, Role $role)
     {
         abort_if(!auth()->user()->punyaAkses('pengaturan', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah hak akses role.');
-        $data = $request->validate([
+        $request->validate([
             'akses'                => 'array',
             'akses.*.bisa_lihat'   => 'nullable|boolean',
             'akses.*.bisa_tambah'  => 'nullable|boolean',
@@ -100,7 +100,11 @@ class RoleAksesController extends Controller
             'akses.*.bisa_hapus'   => 'nullable|boolean',
         ]);
 
-        foreach ($data['akses'] ?? [] as $idMenu => $flags) {
+        // Loop ke SEMUA menu terdaftar (bukan cuma key yang ada di request) karena
+        // checkbox yang tidak dicentang tidak pernah dikirim browser - kalau loopnya
+        // cuma mengikuti $data['akses'], menu yang seluruh centangnya dikosongkan akan
+        // terlewat dan nilainya di database tetap tersangkut true selamanya.
+        foreach (Menu::pluck('id') as $idMenu) {
             RoleMenuAkses::updateOrCreate(
                 ['id_role' => $role->id, 'id_menu' => $idMenu],
                 [

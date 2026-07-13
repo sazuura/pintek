@@ -219,6 +219,6 @@ class OperatorController extends Controller
             ->paginate(10)
             ->withQueryString();
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('dashboard.peralatan.operator-index', compact('peralatan', 'gedungList'));
+        return view('dashboard.peralatan.index', compact('peralatan', 'gedungList'));
     }
 }

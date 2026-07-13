@@ -53,18 +53,50 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
             Route::put('/role-akses/{role}/akses',  [RoleAksesController::class, 'updateAkses'])->name('role-akses.updateAkses');
         });
     });
+    // "Alat Terpasang" kontennya generik (data inventaris, bukan spesifik-role) - sama seperti
+    // peralatan, jadi aman dipasangkan lewat controller yang sama supaya benar-benar dinamis
+    // kalau akses menu ini dinyalakan untuk role admin lewat Sistem Settings.
+    Route::middleware('menu-akses:alat-terpasang')->group(function () {
+        Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang')->except(['show']);
+    });
 });
 
 Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator'])->group(function () {
     Route::middleware('menu-akses:dashboard')->group(function () {
         Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
     });
+    // Sama seperti jadwal & peralatan di bawah - "users" tidak pernah dipakai operator secara
+    // default (seeder tidak memberi baris akses sama sekali), tapi begitu admin menyalakan akses
+    // menu ini untuk role operator lewat Sistem Settings, route tujuannya harus benar-benar ada.
+    Route::middleware('menu-akses:users')->group(function () {
+        Route::resource('users', UserController::class)->names('users')->except(['show']);
+    });
     Route::middleware('menu-akses:jadwal')->group(function () {
         Route::get('/jadwal', [OperatorController::class, 'jadwalIndex'])->name('jadwal.index');
+        // Index tetap baca-saja lewat OperatorController (cuma jadwal milik sendiri), tapi
+        // create/edit dsb dipasangkan ke PenjadwalanController yang sama dengan admin, supaya
+        // kalau hak akses tambah/ubah jadwal dinyalakan untuk role operator lewat Sistem
+        // Settings, rute tujuan tombolnya (yang dinamis lewat auth()->user()->role di view)
+        // benar-benar ada - bukan cuma dicentang tapi tidak berfungsi.
+        Route::get('/jadwal/create',    [PenjadwalanController::class, 'create'])->name('jadwal.create');
+        Route::post('/jadwal',          [PenjadwalanController::class, 'store'])->name('jadwal.store');
+        Route::get('/jadwal/{id}',      [PenjadwalanController::class, 'show'])->name('jadwal.show');
+        Route::get('/jadwal/{id}/edit', [PenjadwalanController::class, 'edit'])->name('jadwal.edit');
+        Route::put('/jadwal/{id}',      [PenjadwalanController::class, 'update'])->name('jadwal.update');
+        Route::post('/jadwal/{id}/batalkan', [PenjadwalanController::class, 'batalkan'])->name('jadwal.batalkan');
     });
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::prefix('peralatan')->name('peralatan.')->group(function () {
             Route::get('/', [OperatorController::class, 'peralatanIndex'])->name('index');
+            // Sama seperti jadwal di atas - index baca-saja tetap punya query khusus operator,
+            // tapi create/edit/delete dipasangkan ke PeralatanController yang sama dengan
+            // inventaris supaya hak akses tambah/ubah/hapus peralatan bisa benar-benar
+            // dipakai kalau dinyalakan untuk role operator.
+            Route::get('/create',    [PeralatanController::class, 'create'])->name('create');
+            Route::post('/',         [PeralatanController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [PeralatanController::class, 'edit'])->name('edit');
+            Route::put('/{id}',      [PeralatanController::class, 'update'])->name('update');
+            Route::delete('/{id}',   [PeralatanController::class, 'destroy'])->name('destroy');
         });
     });
     Route::middleware('menu-akses:peminjaman')->group(function () {
@@ -77,6 +109,9 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
             Route::put('/{id}',      [PeminjamanController::class, 'operatorUpdate'])->name('update');
         });
         Route::post('/peminjaman/{id}/batalkan', [PeminjamanController::class, 'operatorBatalkan'])->name('peminjaman.batalkan');
+    });
+    Route::middleware('menu-akses:alat-terpasang')->group(function () {
+        Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang')->except(['show']);
     });
 });
 
@@ -102,6 +137,8 @@ Route::prefix('inventaris')->name('inventaris.')->middleware(['auth', 'role:inve
             Route::get('/',              [PeminjamanController::class, 'inventarisIndex'])->name('index');
             Route::post('/{id}/approve', [PeminjamanController::class, 'inventarisApprove'])->name('approve');
             Route::post('/{id}/reject',  [PeminjamanController::class, 'inventarisReject'])->name('reject');
+            Route::post('/{id}/items/{idItem}/approve', [PeminjamanController::class, 'inventarisApproveItem'])->name('items.approve');
+            Route::post('/{id}/items/{idItem}/reject',  [PeminjamanController::class, 'inventarisRejectItem'])->name('items.reject');
             Route::post('/{id}/kembali', [PeminjamanController::class, 'inventarisKembali'])->name('kembali');
         });
     });

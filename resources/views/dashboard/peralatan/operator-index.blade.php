@@ -84,18 +84,20 @@
                             <x-badge :variant="$item->statusBadgeClass">{{ $item->statusLabel }}</x-badge>
                         </div>
                         {{-- Footer: tombol pinjam shortcut --}}
-                        <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
-                            @if($item->stok_tersedia > 0)
-                                <a href="{{ route('operator.peminjaman.create', ['id_peralatan' => $item->id_peralatan]) }}"
-                                    class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
-                                    <i class="bx bx-briefcase"></i> Pinjam
-                                </a>
-                            @else
-                                <span class="flex-1 justify-center h-9 px-3.5 rounded-lg text-[13px] font-sans inline-flex items-center gap-1.5 font-medium cursor-not-allowed opacity-50 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
-                                    Stok Habis
-                                </span>
-                            @endif
-                        </div>
+                        @if(auth()->user()->punyaAkses('peminjaman', 'tambah'))
+                            <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
+                                @if($item->stok_tersedia > 0)
+                                    <a href="{{ route('operator.peminjaman.create', ['id_peralatan' => $item->id_peralatan]) }}"
+                                        class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
+                                        <i class="bx bx-briefcase"></i> Pinjam
+                                    </a>
+                                @else
+                                    <span class="flex-1 justify-center h-9 px-3.5 rounded-lg text-[13px] font-sans inline-flex items-center gap-1.5 font-medium cursor-not-allowed opacity-50 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
+                                        Stok Habis
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>

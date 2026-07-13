@@ -3,19 +3,22 @@
 @section('sidebar-menu') <x-sidebar /> @endsection
 
 @section('content')
+    @php $roleAktif = auth()->user()->role; @endphp
     <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
         <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
             <div>
                 <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Data Users</h1>
             </div>
-            <a href="{{ route('admin.users.create') }}"
-                class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
-                <i class="bx bx-plus"></i><span class="text">Tambah User</span>
-            </a>
+            @if(auth()->user()->punyaAkses('users', 'tambah'))
+                <a href="{{ route($roleAktif . '.users.create') }}"
+                    class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
+                    <i class="bx bx-plus"></i><span class="text">Tambah User</span>
+                </a>
+            @endif
         </div>
 
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-            <form method="GET" action="{{ route('admin.users.index') }}" class="contents">
+            <form method="GET" action="{{ route($roleAktif . '.users.index') }}" class="contents">
                 <div class="relative flex-1 min-w-[180px] max-w-[300px]">
                     <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
                     <input type="text" name="search" data-live-search="#hasil-users" autocomplete="off" placeholder="Cari nama / email..." value="{{ request('search') }}"
@@ -24,9 +27,9 @@
                 <select name="role" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Role</option>
-                    <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="operator" {{ request('role') == 'operator' ? 'selected' : '' }}>Operator</option>
-                    <option value="inventaris" {{ request('role') == 'inventaris' ? 'selected' : '' }}>Inventaris</option>
+                    @foreach($roles as $r)
+                        <option value="{{ $r->slug }}" {{ request('role') == $r->slug ? 'selected' : '' }}>{{ $r->nama_role }}</option>
+                    @endforeach
                 </select>
                 <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
@@ -35,7 +38,7 @@
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
                 @if(request()->hasAny(['search', 'role', 'status']))
-                    <a href="{{ route('admin.users.index') }}"
+                    <a href="{{ route($roleAktif . '.users.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                         <i class="bx bx-x"></i> Reset</a>
                 @endif
@@ -44,6 +47,9 @@
 
         @php
             $actionClass = 'w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80';
+            $rolesBySlug = $roles->keyBy('slug');
+            $bisaUbah  = auth()->user()->punyaAkses('users', 'ubah');
+            $bisaHapus = auth()->user()->punyaAkses('users', 'hapus');
         @endphp
 
         <div id="hasil-users">
@@ -78,8 +84,8 @@
                                 </td>
                                 <td class="max-md:hidden py-3.5 px-4 text-[13px] text-text dark:text-text-dark align-middle">{{ $user->email }}</td>
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
-                                    @php $roleColor = ['admin' => 'badge-danger', 'operator' => 'badge-info', 'inventaris' => 'badge-purple'][$user->role] ?? ''; @endphp
-                                    <x-badge :variant="$roleColor">{{ ucfirst($user->role) }}</x-badge>
+                                    @php $roleColor = ['admin' => 'badge-danger', 'operator' => 'badge-info', 'inventaris' => 'badge-purple'][$user->role] ?? 'badge-info'; @endphp
+                                    <x-badge :variant="$roleColor">{{ $rolesBySlug[$user->role]->nama_role ?? ucfirst($user->role) }}</x-badge>
                                 </td>
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     @if($user->isActive())
@@ -90,15 +96,19 @@
                                 </td>
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     <div class="flex gap-1.5 items-center justify-center">
-                                        <a href="{{ route('admin.users.edit', $user->id_user) }}"
-                                            class="{{ $actionClass }} bg-warning dark:bg-warning-dark text-warning-text">
-                                            <i class="bx bx-edit"></i>
-                                        </a>
-                                        <button type="button"
-                                            onclick="bukaKonfirmasiStatusUser('{{ route('admin.users.destroy', $user->id_user) }}', {{ $user->isActive() ? 'true' : 'false' }}, '{{ addslashes($user->nama_user) }}')"
-                                            class="{{ $actionClass }} {{ $user->isActive() ? 'bg-danger dark:bg-danger-dark text-danger-text' : 'bg-success dark:bg-success-dark text-success-text' }}">
-                                            <i class="bx {{ $user->isActive() ? 'bx-user-x' : 'bx-user-check' }}"></i>
-                                        </button>
+                                        @if($bisaUbah)
+                                            <a href="{{ route($roleAktif . '.users.edit', $user->id_user) }}"
+                                                class="{{ $actionClass }} bg-warning dark:bg-warning-dark text-warning-text">
+                                                <i class="bx bx-edit"></i>
+                                            </a>
+                                        @endif
+                                        @if($bisaHapus)
+                                            <button type="button"
+                                                onclick="bukaKonfirmasiStatusUser('{{ route($roleAktif . '.users.destroy', $user->id_user) }}', {{ $user->isActive() ? 'true' : 'false' }}, '{{ addslashes($user->nama_user) }}')"
+                                                class="{{ $actionClass }} {{ $user->isActive() ? 'bg-danger dark:bg-danger-dark text-danger-text' : 'bg-success dark:bg-success-dark text-success-text' }}">
+                                                <i class="bx {{ $user->isActive() ? 'bx-user-x' : 'bx-user-check' }}"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -162,7 +172,7 @@
         <div class="hidden max-xs:flex flex-col gap-3 mb-4">
             @forelse($users as $user)
                 @php
-                    $roleColor = ['admin' => 'badge-danger', 'operator' => 'badge-info', 'inventaris' => 'badge-purple'][$user->role] ?? '';
+                    $roleColor = ['admin' => 'badge-danger', 'operator' => 'badge-info', 'inventaris' => 'badge-purple'][$user->role] ?? 'badge-info';
                     $waNumber  = $user->nomor_wa;
                 @endphp
                 <div class="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-3.5">
@@ -182,7 +192,7 @@
                     <div class="flex flex-col gap-2 pt-3 border-t border-page-bg dark:border-page-bg-dark">
                         <div class="flex items-center justify-between text-[13px] text-text-muted">
                             <span>Peran</span>
-                            <x-badge :variant="$roleColor">{{ ucfirst($user->role) }}</x-badge>
+                            <x-badge :variant="$roleColor">{{ $rolesBySlug[$user->role]->nama_role ?? ucfirst($user->role) }}</x-badge>
                         </div>
                         <div class="flex items-center justify-between text-[13px] text-text-muted">
                             <span>Status</span>
@@ -193,17 +203,23 @@
                             @endif
                         </div>
                     </div>
-                    <div class="flex gap-2 pt-3 border-t border-page-bg dark:border-page-bg-dark">
-                        <a href="{{ route('admin.users.edit', $user->id_user) }}"
-                            class="{{ $actionClass }} bg-warning dark:bg-warning-dark text-warning-text">
-                            <i class="bx bx-edit"></i>
-                        </a>
-                        <button type="button"
-                            onclick="bukaKonfirmasiStatusUser('{{ route('admin.users.destroy', $user->id_user) }}', {{ $user->isActive() ? 'true' : 'false' }}, '{{ addslashes($user->nama_user) }}')"
-                            class="{{ $actionClass }} {{ $user->isActive() ? 'bg-danger dark:bg-danger-dark text-danger-text' : 'bg-success dark:bg-success-dark text-success-text' }}">
-                            <i class="bx {{ $user->isActive() ? 'bx-user-x' : 'bx-user-check' }}"></i>
-                        </button>
-                    </div>
+                    @if($bisaUbah || $bisaHapus)
+                        <div class="flex gap-2 pt-3 border-t border-page-bg dark:border-page-bg-dark">
+                            @if($bisaUbah)
+                                <a href="{{ route($roleAktif . '.users.edit', $user->id_user) }}"
+                                    class="{{ $actionClass }} bg-warning dark:bg-warning-dark text-warning-text">
+                                    <i class="bx bx-edit"></i>
+                                </a>
+                            @endif
+                            @if($bisaHapus)
+                                <button type="button"
+                                    onclick="bukaKonfirmasiStatusUser('{{ route($roleAktif . '.users.destroy', $user->id_user) }}', {{ $user->isActive() ? 'true' : 'false' }}, '{{ addslashes($user->nama_user) }}')"
+                                    class="{{ $actionClass }} {{ $user->isActive() ? 'bg-danger dark:bg-danger-dark text-danger-text' : 'bg-success dark:bg-success-dark text-success-text' }}">
+                                    <i class="bx {{ $user->isActive() ? 'bx-user-x' : 'bx-user-check' }}"></i>
+                                </button>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             @empty
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-10 text-center text-text-muted">

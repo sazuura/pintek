@@ -6,10 +6,12 @@
 <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
     <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
         <div><h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Dashboard</h1></div>
-        <a href="{{ route('operator.peminjaman.create') }}"
-            class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
-            <i class="bx bx-send"></i><span class="text">Ajukan Peminjaman</span>
-        </a>
+        @if(auth()->user()->punyaAkses('peminjaman', 'tambah'))
+            <a href="{{ route('operator.peminjaman.create') }}"
+                class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
+                <i class="bx bx-send"></i><span class="text">Ajukan Peminjaman</span>
+            </a>
+        @endif
     </div>
 
     {{-- Statistik & chart di bawah ini mengikuti bulan yang lagi dipilih di kalender

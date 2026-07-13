@@ -67,6 +67,7 @@ class AlatTerpasangController extends Controller
 
     public function create()
     {
+        abort_if(!auth()->user()->punyaAkses('alat-terpasang', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah alat terpasang.');
         $daftarPeralatan = Peralatan::orderBy('gedung')->orderBy('nama_peralatan')->get()
             ->map(function ($p) {
                 $sudahTerpasang = AlatTerpasang::where('id_peralatan', $p->id_peralatan)->count();
@@ -135,7 +136,7 @@ class AlatTerpasangController extends Controller
             }
         });
 
-        return redirect()->route('inventaris.alat-terpasang.index')
+        return redirect()->route(auth()->user()->role . '.alat-terpasang.index')
             ->with('success', $totalDitambahkan > 1
                 ? "{$totalDitambahkan} alat berhasil ditambahkan."
                 : 'Alat terpasang berhasil ditambahkan.');
@@ -143,6 +144,7 @@ class AlatTerpasangController extends Controller
 
     public function edit(string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('alat-terpasang', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah alat terpasang.');
         $daftarPeralatan = Peralatan::orderBy('gedung')->orderBy('nama_peralatan')->get();
         $alat = AlatTerpasang::findOrFail($id);
         return view('dashboard.alat-terpasang.edit', [
@@ -174,7 +176,7 @@ class AlatTerpasangController extends Controller
         $kelompok = $this->kelompokQuery($alat)->pluck('id_alat_terpasang');
         AlatTerpasang::whereIn('id_alat_terpasang', $kelompok)->update($data);
 
-        return redirect()->route('inventaris.alat-terpasang.index')
+        return redirect()->route(auth()->user()->role . '.alat-terpasang.index')
             ->with('success', $kelompok->count() > 1
                 ? "{$kelompok->count()} alat berhasil diperbarui."
                 : 'Alat terpasang berhasil diperbarui.');

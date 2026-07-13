@@ -35,6 +35,7 @@ class PenjadwalanController extends Controller
 
     public function create()
     {
+        abort_if(!auth()->user()->punyaAkses('jadwal', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah jadwal.');
         return view('dashboard.jadwal.create', [
             'operators'      => $this->operatorsWithJadwalDates(),
             'daftarPeralatan' => $this->peralatanUntukReferensi(),
@@ -58,10 +59,10 @@ class PenjadwalanController extends Controller
         }
 
         if ($peringatan = $this->service->peringatanZoom()) {
-            return redirect()->route('admin.jadwal.index')
+            return redirect()->route(auth()->user()->role . '.jadwal.index')
                 ->with('warning', "Jadwal berhasil disimpan. {$peringatan}");
         }
-        return redirect()->route('admin.jadwal.index')
+        return redirect()->route(auth()->user()->role . '.jadwal.index')
             ->with('success', 'Jadwal berhasil ditambahkan dan notifikasi WA telah dikirim.');
     }
 
@@ -73,6 +74,7 @@ class PenjadwalanController extends Controller
 
     public function edit(string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('jadwal', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah jadwal.');
         $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])->findOrFail($id);
         return view('dashboard.jadwal.edit', [
             'jadwal'             => $jadwal,
@@ -102,10 +104,10 @@ class PenjadwalanController extends Controller
         }
 
         if ($peringatan = $this->service->peringatanZoom()) {
-            return redirect()->route('admin.jadwal.index')
+            return redirect()->route(auth()->user()->role . '.jadwal.index')
                 ->with('warning', "Jadwal berhasil diperbarui. {$peringatan}");
         }
-        return redirect()->route('admin.jadwal.index')
+        return redirect()->route(auth()->user()->role . '.jadwal.index')
             ->with('success', 'Jadwal berhasil diperbarui.');
     }
 
@@ -147,7 +149,7 @@ class PenjadwalanController extends Controller
     {
         abort_if(!auth()->user()->punyaAkses('jadwal', 'hapus'), 403, 'Anda tidak memiliki akses untuk menghapus jadwal.');
         $this->service->hapus(Penjadwalan::findOrFail($id));
-        return redirect()->route('admin.jadwal.index')
+        return redirect()->route(auth()->user()->role . '.jadwal.index')
             ->with('success', 'Jadwal berhasil dihapus.');
     }
 
@@ -214,7 +216,7 @@ class PenjadwalanController extends Controller
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
-        return redirect()->route('admin.jadwal.index')
+        return redirect()->route(auth()->user()->role . '.jadwal.index')
             ->with('success', 'Jadwal berhasil dibatalkan dan notifikasi WA telah dikirim ke operator.');
     }
 

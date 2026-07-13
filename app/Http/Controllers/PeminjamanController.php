@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Peminjaman;
+use App\Models\PeminjamanItem;
 use App\Models\Penjadwalan;
 use App\Models\Peralatan;
 use App\Services\PeminjamanService;
@@ -22,6 +23,7 @@ class PeminjamanController extends Controller
     }
     public function operatorCreate(Request $request)
     {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'tambah'), 403, 'Anda tidak memiliki akses untuk mengajukan peminjaman.');
         $peralatan = Peralatan::whereRaw('(stok - COALESCE(rusak,0)) > 0')
             ->orderBy('gedung')
             ->orderBy('nama_peralatan')
@@ -32,7 +34,7 @@ class PeminjamanController extends Controller
         $jadwalAktif          = $this->jadwalAktifOperator();
         return view('dashboard.peminjaman.create', compact('peralatan', 'selectedPeralatanId', 'jadwalAktif'));
     }
-    public function operatorStore(Request $request)
+    public function operatorStore(Request $request) 
     {
         abort_if(!auth()->user()->punyaAkses('peminjaman', 'tambah'), 403, 'Anda tidak memiliki akses untuk mengajukan peminjaman.');
         $idJadwalAktif = $this->jadwalAktifOperator()->pluck('id_penjadwalan');
@@ -121,6 +123,7 @@ class PeminjamanController extends Controller
 
     public function operatorEdit(string $id)
     {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah pengajuan peminjaman.');
         $peminjaman = Peminjaman::with('items.peralatan')->findOrFail($id);
         abort_if($peminjaman->id_user !== auth()->user()->id_user, 403);
         if (!$peminjaman->isMenunggu()) {
@@ -251,6 +254,33 @@ class PeminjamanController extends Controller
             return back()->with('error', $e->getMessage());
         }
         return back()->with('success', 'Pengajuan berhasil ditolak.');
+    }
+    public function inventarisApproveItem(string $id, string $idItem)
+    {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'ubah'), 403, 'Anda tidak memiliki akses untuk menyetujui pengajuan.');
+        $item = PeminjamanItem::where('id_peminjaman', $id)->findOrFail($idItem);
+        try {
+            $this->service->setujuiItem($item);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+        return back()->with('success', 'Alat berhasil disetujui.');
+    }
+    public function inventarisRejectItem(Request $request, string $id, string $idItem)
+    {
+        abort_if(!auth()->user()->punyaAkses('peminjaman', 'ubah'), 403, 'Anda tidak memiliki akses untuk menolak pengajuan.');
+        $request->validate([
+            'catatan_inventaris' => 'required|string|max:255',
+        ], [
+            'catatan_inventaris.required' => 'Alasan penolakan wajib diisi.',
+        ]);
+        $item = PeminjamanItem::where('id_peminjaman', $id)->findOrFail($idItem);
+        try {
+            $this->service->tolakItem($item, $request->catatan_inventaris);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+        return back()->with('success', 'Alat berhasil ditolak.');
     }
     public function inventarisKembali(Request $request, string $id)
     {

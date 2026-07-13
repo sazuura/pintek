@@ -43,6 +43,7 @@
 
         @php
             $actionClass = 'w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80';
+            $bisaUbah = auth()->user()->punyaAkses('peminjaman', 'ubah');
         @endphp
 
         <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
@@ -84,18 +85,7 @@
                                 </td>
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     <div class="flex gap-1.5 items-center justify-center">
-                                        @if($p->isMenunggu())
-                                            <button type="button" title="Setujui"
-                                                class="{{ $actionClass }} bg-success dark:bg-success-dark text-success-text"
-                                                onclick="bukaKonfirmasiSetujui('{{ route('inventaris.peminjaman.approve', $p->id_peminjaman) }}')">
-                                                <i class="bx bx-check"></i>
-                                            </button>
-                                            <button type="button" title="Tolak"
-                                                class="{{ $actionClass }} bg-danger dark:bg-danger-dark text-danger-text"
-                                                onclick="bukaKonfirmasiTolak('{{ route('inventaris.peminjaman.reject', $p->id_peminjaman) }}')">
-                                                <i class="bx bx-x"></i>
-                                            </button>
-                                        @elseif($p->isDisetujui())
+                                        @if($bisaUbah && $p->isDisetujui())
                                             <button type="button" title="Konfirmasi Kembali"
                                                 class="{{ $actionClass }} bg-primary-50 dark:bg-[#0d2a40] text-primary"
                                                 onclick="bukaKonfirmasiKembali('{{ route('inventaris.peminjaman.kembali', $p->id_peminjaman) }}')">
@@ -140,6 +130,7 @@
                                                         <th class="pl-5 py-3 px-5 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg/50 dark:bg-page-bg-dark/50 whitespace-nowrap">Nama Alat</th>
                                                         <th class="w-[90px] py-3 px-5 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg/50 dark:bg-page-bg-dark/50 whitespace-nowrap">Jumlah</th>
                                                         <th class="w-[130px] py-3 px-5 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg/50 dark:bg-page-bg-dark/50 whitespace-nowrap">Status</th>
+                                                        <th class="w-[100px] pr-5 py-3 px-5 text-[11px] uppercase tracking-[0.5px] text-text-muted text-right bg-page-bg/50 dark:bg-page-bg-dark/50 whitespace-nowrap">Aksi</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -155,7 +146,23 @@
                                                                 </div>
                                                             </td>
                                                             <td class="py-4 px-5 text-sm text-text dark:text-text-dark align-middle text-center font-semibold">{{ $item->jumlah }}</td>
-                                                            <td class="py-4 px-5 text-sm align-middle text-center"><x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge></td>
+                                                            <td class="py-4 px-5 text-sm align-middle text-center"><x-badge :variant="$item->badge['class']">{{ $item->badge['label'] }}</x-badge></td>
+                                                            <td class="pr-5 py-4 px-5 text-sm align-middle text-right">
+                                                                @if($bisaUbah && $item->isMenunggu())
+                                                                    <div class="flex gap-1.5 items-center justify-end">
+                                                                        <button type="button" title="Setujui"
+                                                                            class="{{ $actionClass }} bg-success dark:bg-success-dark text-success-text"
+                                                                            onclick="bukaKonfirmasiSetujui('{{ route('inventaris.peminjaman.items.approve', [$p->id_peminjaman, $item->id_item]) }}')">
+                                                                            <i class="bx bx-check"></i>
+                                                                        </button>
+                                                                        <button type="button" title="Tolak"
+                                                                            class="{{ $actionClass }} bg-danger dark:bg-danger-dark text-danger-text"
+                                                                            onclick="bukaKonfirmasiTolak('{{ route('inventaris.peminjaman.items.reject', [$p->id_peminjaman, $item->id_item]) }}')">
+                                                                            <i class="bx bx-x"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                @endif
+                                                            </td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
@@ -182,9 +189,22 @@
         {{-- Kartu pengajuan - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
         <div class="hidden max-xs:flex flex-col gap-3 mb-4">
             @forelse($peminjaman as $p)
+                @php
+                    $itemsUntukKartu = $p->items->map(fn($item) => [
+                        'id'           => $item->id_item,
+                        'nama'         => $item->peralatan->nama_peralatan ?? '-',
+                        'gedung'       => $item->peralatan->gedung ?? '-',
+                        'jumlah'       => $item->jumlah,
+                        'status'       => $item->status,
+                        'badgeVariant' => $item->badge['class'],
+                        'badgeLabel'   => $item->badge['label'],
+                    ]);
+                @endphp
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden">
                     <div class="p-4 flex flex-col gap-3 cursor-pointer"
                          data-open-pengajuan-modal
+                         data-id-peminjaman="{{ $p->id_peminjaman }}"
+                         data-bisa-ubah="{{ $bisaUbah ? '1' : '0' }}"
                          data-pemohon="{{ $p->user->nama_user }}"
                          data-nohp="{{ $p->user->nohp ?? '-' }}"
                          data-keperluan="{{ $p->keperluan }}"
@@ -192,7 +212,7 @@
                          data-jadwal="{{ $p->penjadwalan ? $p->penjadwalan->judul_kegiatan . ' (' . $p->penjadwalan->tanggal->format('d/m/Y') . ')' : '' }}"
                          data-badge-variant="{{ $p->badge['class'] }}"
                          data-badge-label="{{ $p->badge['label'] }}"
-                         data-items='@json($p->items->map(fn($item) => ["nama" => $item->peralatan->nama_peralatan ?? "-", "gedung" => $item->peralatan->gedung ?? "-", "jumlah" => $item->jumlah]))'>
+                         data-items='@json($itemsUntukKartu)'>
                         <div class="flex items-center gap-3">
                             <div class="flex-1 min-w-0">
                                 <div class="font-semibold text-sm text-text dark:text-text-dark">{{ $p->user->nama_user }}</div>
@@ -225,26 +245,17 @@
                             </div>
                         </div>
                     </div>
-                    @if($p->isMenunggu() || $p->isDisetujui())
+                    @if($bisaUbah && $p->isMenunggu())
+                        <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark text-center text-xs text-text-muted">
+                            <i class="bx bx-info-circle"></i> Buka detail untuk memutuskan tiap alat
+                        </div>
+                    @elseif($bisaUbah && $p->isDisetujui())
                         <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
-                            @if($p->isMenunggu())
-                                <button type="button"
-                                    class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-success dark:bg-success-dark text-success-text"
-                                    onclick="bukaKonfirmasiSetujui('{{ route('inventaris.peminjaman.approve', $p->id_peminjaman) }}')">
-                                    <i class="bx bx-check"></i> Setujui
-                                </button>
-                                <button type="button"
-                                    class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger dark:bg-danger-dark text-danger-text"
-                                    onclick="bukaKonfirmasiTolak('{{ route('inventaris.peminjaman.reject', $p->id_peminjaman) }}')">
-                                    <i class="bx bx-x"></i> Tolak
-                                </button>
-                            @elseif($p->isDisetujui())
-                                <button type="button"
-                                    class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary-50 dark:bg-[#0d2a40] text-primary"
-                                    onclick="bukaKonfirmasiKembali('{{ route('inventaris.peminjaman.kembali', $p->id_peminjaman) }}')">
-                                    <i class="bx bx-revision"></i> Konfirmasi Kembali
-                                </button>
-                            @endif
+                            <button type="button"
+                                class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary-50 dark:bg-[#0d2a40] text-primary"
+                                onclick="bukaKonfirmasiKembali('{{ route('inventaris.peminjaman.kembali', $p->id_peminjaman) }}')">
+                                <i class="bx bx-revision"></i> Konfirmasi Kembali
+                            </button>
                         </div>
                     @endif
                 </div>
@@ -382,6 +393,8 @@
         var labelClass = 'text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5';
         var pClass = 'text-text dark:text-text-dark m-0 font-medium text-[13px] break-words';
 
+        var peminjamanBaseUrl = '{{ url("inventaris/peminjaman") }}';
+
         function bukaModalPengajuan(card) {
             var d = card.dataset;
             document.getElementById('modalPengajuanDetailLabel').textContent = d.pemohon;
@@ -389,10 +402,24 @@
             var items = [];
             try { items = JSON.parse(d.items || '[]'); } catch (e) {}
 
+            var bisaUbah = d.bisaUbah === '1';
+
             var itemsHtml = items.map(function (item) {
-                return '<div class="flex items-center justify-between py-2.5 border-b border-page-bg dark:border-page-bg-dark last:border-b-0">' +
-                    '<div class="flex items-center gap-2"><i class="bx bx-package text-primary text-base"></i><div><div class="font-medium text-[13px] text-text dark:text-text-dark">' + escapeHtml(item.nama) + '</div><div class="text-xs text-text-muted">' + escapeHtml(item.gedung) + '</div></div></div>' +
-                    '<span class="text-sm font-semibold text-text dark:text-text-dark">x' + escapeHtml(item.jumlah) + '</span>' +
+                var aksiHtml;
+                if (bisaUbah && item.status === 'diajukan') {
+                    var urlSetujui = peminjamanBaseUrl + '/' + d.idPeminjaman + '/items/' + item.id + '/approve';
+                    var urlTolak   = peminjamanBaseUrl + '/' + d.idPeminjaman + '/items/' + item.id + '/reject';
+                    aksiHtml = '<div class="flex gap-1.5 items-center shrink-0">' +
+                        '<button type="button" title="Setujui" class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 hover:opacity-80 bg-success dark:bg-success-dark text-success-text" onclick="bukaKonfirmasiSetujui(\'' + urlSetujui + '\')"><i class="bx bx-check"></i></button>' +
+                        '<button type="button" title="Tolak" class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text" onclick="bukaKonfirmasiTolak(\'' + urlTolak + '\')"><i class="bx bx-x"></i></button>' +
+                        '</div>';
+                } else {
+                    aksiHtml = badgeHtml(item.badgeVariant, item.badgeLabel);
+                }
+
+                return '<div class="flex items-center justify-between gap-2 py-2.5 border-b border-page-bg dark:border-page-bg-dark last:border-b-0">' +
+                    '<div class="flex items-center gap-2 min-w-0"><i class="bx bx-package text-primary text-base shrink-0"></i><div class="min-w-0"><div class="font-medium text-[13px] text-text dark:text-text-dark">' + escapeHtml(item.nama) + '</div><div class="text-xs text-text-muted">' + escapeHtml(item.gedung) + ' &middot; x' + escapeHtml(item.jumlah) + '</div></div></div>' +
+                    aksiHtml +
                     '</div>';
             }).join('');
 

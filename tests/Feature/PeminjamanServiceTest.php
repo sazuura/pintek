@@ -225,6 +225,138 @@ class PeminjamanServiceTest extends TestCase
         $this->assertSame(5, $this->alat->fresh()->stok);
     }
 
+    /** @test */
+    public function setujui_item_hanya_mengubah_status_item_itu_alat_lain_tetap_menunggu(): void
+    {
+        $alatKedua = Peralatan::create([
+            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan, $alatKedua->id_peralatan]);
+        $items = $peminjaman->items()->orderBy('id_peralatan')->get();
+
+        $this->service->setujuiItem($items[0]);
+
+        $this->assertSame('disetujui', $items[0]->fresh()->status);
+        $this->assertSame('diajukan', $items[1]->fresh()->status);
+        // Masih ada 1 alat yang menunggu keputusan - status induk harus tetap "diajukan".
+        $this->assertSame('diajukan', $peminjaman->fresh()->status);
+    }
+
+    /** @test */
+    public function tolak_item_mengembalikan_stok_hanya_untuk_alat_itu(): void
+    {
+        $alatKedua = Peralatan::create([
+            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan, $alatKedua->id_peralatan]); // stok masing2 -1
+
+        $itemLaptop = $peminjaman->items()->where('id_peralatan', $this->alat->id_peralatan)->first();
+        $this->service->tolakItem($itemLaptop, 'Sedang dipakai unit lain.');
+
+        $this->assertSame('ditolak', $itemLaptop->fresh()->status);
+        $this->assertSame(5, $this->alat->fresh()->stok); // dikembalikan
+        $this->assertSame(2, $alatKedua->fresh()->stok);  // alat kedua tetap tereservasi
+        $this->assertSame('diajukan', $peminjaman->fresh()->status); // alat kedua masih menunggu
+    }
+
+    /** @test */
+    public function status_induk_jadi_disetujui_begitu_semua_item_diputuskan_dan_ada_yang_disetujui(): void
+    {
+        $alatKedua = Peralatan::create([
+            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan, $alatKedua->id_peralatan]);
+        $items = $peminjaman->items()->orderBy('id_peralatan')->get();
+
+        $this->service->setujuiItem($items[0]);
+        $this->service->tolakItem($items[1], 'Stok dipakai kegiatan lain.');
+
+        $this->assertSame('disetujui', $peminjaman->fresh()->status);
+    }
+
+    /** @test */
+    public function status_induk_jadi_ditolak_kalau_semua_item_ditolak(): void
+    {
+        $alatKedua = Peralatan::create([
+            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan, $alatKedua->id_peralatan]);
+        $items = $peminjaman->items()->orderBy('id_peralatan')->get();
+
+        $this->service->tolakItem($items[0], 'Ditolak.');
+        $this->service->tolakItem($items[1], 'Ditolak juga.');
+
+        $this->assertSame('ditolak', $peminjaman->fresh()->status);
+    }
+
+    /** @test */
+    public function setujui_item_gagal_kalau_item_sudah_diputuskan_sebelumnya(): void
+    {
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan]);
+        $item = $peminjaman->items()->first();
+        $this->service->setujuiItem($item);
+
+        $this->expectException(\RuntimeException::class);
+        $this->service->setujuiItem($item->fresh());
+    }
+
+    /** @test */
+    public function ubah_gagal_kalau_sudah_ada_item_yang_diputuskan_inventaris(): void
+    {
+        $alatKedua = Peralatan::create([
+            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan, $alatKedua->id_peralatan]);
+        $item = $peminjaman->items()->where('id_peralatan', $this->alat->id_peralatan)->first();
+        $this->service->setujuiItem($item);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/diproses inventaris/i');
+
+        $this->service->ubah(
+            peminjaman:   $peminjaman->fresh(),
+            header:       $this->dataHeader(),
+            peralatanIds: [$alatKedua->id_peralatan],
+            jumlahArr:    [1],
+        );
+    }
+
+    /** @test */
+    public function batalkan_gagal_kalau_sudah_ada_item_yang_diputuskan_inventaris(): void
+    {
+        $alatKedua = Peralatan::create([
+            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan, $alatKedua->id_peralatan]);
+        $item = $peminjaman->items()->where('id_peralatan', $this->alat->id_peralatan)->first();
+        $this->service->setujuiItem($item);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/diproses inventaris/i');
+
+        $this->service->batalkan($peminjaman->fresh(), 'Rapat dibatalkan.');
+    }
+
+    /** @test */
+    public function konfirmasi_kembali_tidak_mengembalikan_stok_dua_kali_untuk_item_yang_sudah_ditolak(): void
+    {
+        $alatKedua = Peralatan::create([
+            'id_peralatan' => 'PR-002', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan, $alatKedua->id_peralatan]);
+        $items = $peminjaman->items()->orderBy('id_peralatan')->get();
+
+        $this->service->setujuiItem($items[0]);           // laptop disetujui, stok tetap tereservasi (4)
+        $this->service->tolakItem($items[1], 'Ditolak.');  // proyektor ditolak, stok kembali ke 3
+
+        $this->assertSame('disetujui', $peminjaman->fresh()->status);
+
+        $this->service->konfirmasiKembali($peminjaman->fresh(), $this->inventaris);
+
+        $this->assertSame(5, $this->alat->fresh()->stok);   // laptop baru dikembalikan di sini
+        $this->assertSame(3, $alatKedua->fresh()->stok);    // proyektor TIDAK dobel dikembalikan
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function buatUser(string $id, string $role, string $nohp = '080000000000'): User

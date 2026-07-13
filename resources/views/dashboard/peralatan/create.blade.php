@@ -8,13 +8,13 @@
             <div>
                 <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Tambah Peralatan</h1>
             </div>
-            <a href="{{ route('inventaris.peralatan.index') }}"
+            <a href="{{ route(auth()->user()->role . '.peralatan.index') }}"
                 class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                 <i class="bx bx-arrow-back"></i> Kembali
             </a>
         </div>
 
-        <form action="{{ route('inventaris.peralatan.store') }}" method="POST" enctype="multipart/form-data" novalidate>
+        <form action="{{ route(auth()->user()->role . '.peralatan.store') }}" method="POST" enctype="multipart/form-data" novalidate>
             @csrf
 
             @php
@@ -55,7 +55,7 @@
                 </div>
             </div>
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
-                <a href="{{ route('inventaris.peralatan.index') }}"
+                <a href="{{ route(auth()->user()->role . '.peralatan.index') }}"
                     class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">

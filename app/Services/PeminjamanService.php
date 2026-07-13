@@ -39,6 +39,7 @@ class PeminjamanService
         if (!$peminjaman->isMenunggu()) {
             throw new \RuntimeException('Hanya pengajuan berstatus "Menunggu" yang bisa diubah.');
         }
+        $this->pastikanBelumAdaItemDiputuskan($peminjaman);
 
         $peminjaman = DB::transaction(function () use ($peminjaman, $header, $peralatanIds, $jumlahArr) {
             // Kembalikan dulu reservasi stok dari item LAMA, baru validasi & reservasi
@@ -59,26 +60,112 @@ class PeminjamanService
         return $peminjaman;
     }
 
-    public function setujui(Peminjaman $peminjaman, User $inventaris, ?string $catatan = null): void
+    /**
+     * Setujui SATU item alat saja - alat lain dalam pengajuan yang sama tidak ikut
+     * berubah statusnya. Stok tidak disentuh (sudah direservasi sejak diajukan()).
+     */
+    public function setujuiItem(PeminjamanItem $item): void
     {
-        // Stok sudah direservasi sejak status "diajukan" (lihat ajukan()), jadi menyetujui
-        // di sini cukup ubah status - tidak ada lagi pengurangan stok kedua kalinya.
-        $peminjaman->update([
-            'status' => 'disetujui',
-            'catatan_inventaris' => $catatan,
-        ]);
+        if ($item->status !== 'diajukan') {
+            throw new \RuntimeException('Alat ini sudah diputuskan sebelumnya.');
+        }
+        DB::transaction(function () use ($item) {
+            $item->update(['status' => 'disetujui']);
+            $this->rekomputeStatusPeminjaman($item->peminjaman);
+        });
     }
 
+    /**
+     * Tolak SATU item alat saja - stok reservasi khusus item ini dilepas kembali,
+     * alat lain dalam pengajuan yang sama tidak ikut terdampak.
+     */
+    public function tolakItem(PeminjamanItem $item, string $alasan): void
+    {
+        if ($item->status !== 'diajukan') {
+            throw new \RuntimeException('Alat ini sudah diputuskan sebelumnya.');
+        }
+        DB::transaction(function () use ($item, $alasan) {
+            Peralatan::whereKey($item->id_peralatan)->increment('stok', $item->jumlah);
+            $item->update(['status' => 'ditolak']);
+            $item->peminjaman->update(['catatan_inventaris' => $alasan]);
+            $this->rekomputeStatusPeminjaman($item->peminjaman);
+        });
+    }
+
+    /**
+     * Setujui semua item yang masih "diajukan" sekaligus - dipakai tombol cepat di
+     * dashboard/kartu mobile yang tidak butuh kontrol per-alat.
+     */
+    public function setujui(Peminjaman $peminjaman, User $inventaris, ?string $catatan = null): void
+    {
+        DB::transaction(function () use ($peminjaman, $catatan) {
+            $peminjaman->loadMissing('items');
+            foreach ($peminjaman->items->where('status', 'diajukan') as $item) {
+                $item->update(['status' => 'disetujui']);
+            }
+            if ($catatan !== null) {
+                $peminjaman->update(['catatan_inventaris' => $catatan]);
+            }
+            $this->rekomputeStatusPeminjaman($peminjaman);
+        });
+    }
+
+    /** Tolak semua item yang masih "diajukan" sekaligus (tombol cepat, lihat setujui()). */
     public function tolak(Peminjaman $peminjaman, User $inventaris, string $alasan): void
     {
         DB::transaction(function () use ($peminjaman, $alasan) {
             $peminjaman->loadMissing('items');
-            $this->tambahStokKembali($peminjaman->items);
-            $peminjaman->update([
-                'status' => 'ditolak',
-                'catatan_inventaris' => $alasan,
-            ]);
+            foreach ($peminjaman->items->where('status', 'diajukan') as $item) {
+                Peralatan::whereKey($item->id_peralatan)->increment('stok', $item->jumlah);
+                $item->update(['status' => 'ditolak']);
+            }
+            $peminjaman->update(['catatan_inventaris' => $alasan]);
+            $this->rekomputeStatusPeminjaman($peminjaman);
         });
+    }
+
+    /**
+     * Turunkan status peminjaman induk dari status per-item alatnya: masih ada yang
+     * "diajukan" -> induk tetap "diajukan" (menunggu); semua sudah diputuskan & ada
+     * yang disetujui -> "disetujui"; semua ditolak -> "ditolak".
+     */
+    private function rekomputeStatusPeminjaman(Peminjaman $peminjaman): void
+    {
+        $peminjaman->loadMissing('items');
+        $items = $peminjaman->items;
+
+        if ($items->contains(fn($i) => $i->status === 'diajukan')) {
+            $status = 'diajukan';
+        } elseif ($items->contains(fn($i) => $i->status === 'disetujui')) {
+            $status = 'disetujui';
+        } else {
+            $status = 'ditolak';
+        }
+
+        if ($peminjaman->status !== $status) {
+            $peminjaman->update(['status' => $status]);
+        }
+    }
+
+    /**
+     * Item yang statusnya sudah "ditolak" sebelumnya stoknya SUDAH dikembalikan saat
+     * ditolak - kalau ikut dikembalikan lagi di sini stoknya akan double count.
+     */
+    private function tambahStokKembaliUntukItemBelumDikembalikan($items): void
+    {
+        foreach ($items as $item) {
+            if ($item->status === 'ditolak') continue;
+            Peralatan::whereKey($item->id_peralatan)->increment('stok', $item->jumlah);
+        }
+    }
+
+    /** Operator tidak boleh ubah/batalkan pengajuan begitu ada alat yang sudah diputuskan inventaris. */
+    private function pastikanBelumAdaItemDiputuskan(Peminjaman $peminjaman): void
+    {
+        $peminjaman->loadMissing('items');
+        if ($peminjaman->items->contains(fn($i) => $i->status !== 'diajukan')) {
+            throw new \RuntimeException('Sudah ada alat yang diproses inventaris, pengajuan ini tidak bisa diubah/dibatalkan lagi.');
+        }
     }
 
     public function konfirmasiKembali(Peminjaman $peminjaman, User $inventaris): void
@@ -89,7 +176,7 @@ class PeminjamanService
         // begitu reservasinya dilepas, karena alatnya memang tidak jadi dipakai sama sekali).
         DB::transaction(function () use ($peminjaman) {
             $peminjaman->loadMissing('items');
-            $this->tambahStokKembali($peminjaman->items);
+            $this->tambahStokKembaliUntukItemBelumDikembalikan($peminjaman->items);
             $peminjaman->update([
                 'status' => 'dikembalikan',
                 'tanggal_kembali_aktual' => now()->toDateString(),
@@ -102,6 +189,7 @@ class PeminjamanService
         if (!$peminjaman->isMenunggu()) {
             throw new \RuntimeException('Hanya pengajuan berstatus "Menunggu" yang bisa dibatalkan.');
         }
+        $this->pastikanBelumAdaItemDiputuskan($peminjaman);
 
         DB::transaction(function () use ($peminjaman, $alasan) {
             $peminjaman->loadMissing('items');

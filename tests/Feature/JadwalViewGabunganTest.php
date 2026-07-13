@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Menu;
 use App\Models\Penjadwalan;
+use App\Models\Role;
+use App\Models\RoleMenuAkses;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -77,5 +80,37 @@ class JadwalViewGabunganTest extends TestCase
             ->get(route('operator.jadwal.index'))
             ->assertSee('Rapat Koordinasi Test')
             ->assertDontSee('Rapat Operator Lain');
+    }
+
+    /**
+     * Sebelum ini operator tidak pernah punya route jadwal.create/store sendiri - hanya
+     * admin. Kalau hak akses tambah jadwal dinyalakan untuk role operator lewat Sistem
+     * Settings, tombol "Tambah Jadwal" harus benar-benar mengarah ke route yang ada
+     * (bukan ke prefix admin yang akan ditolak middleware role:admin).
+     */
+    /** @test */
+    public function operator_yang_diberi_akses_tambah_jadwal_bisa_pakai_route_miliknya_sendiri(): void
+    {
+        $roleOperator = Role::where('slug', 'operator')->first();
+        $menuJadwal   = Menu::where('slug', 'jadwal')->first();
+        RoleMenuAkses::where('id_role', $roleOperator->id)->where('id_menu', $menuJadwal->id)
+            ->update(['bisa_tambah' => true]);
+
+        $this->actingAs($this->operator)
+            ->get(route('operator.jadwal.index'))
+            ->assertSee(route('operator.jadwal.create'), false);
+
+        $this->actingAs($this->operator)
+            ->post(route('operator.jadwal.store'), [
+                'judul_kegiatan'  => 'Rapat Baru Operator',
+                'tanggal'         => now()->addDay()->toDateString(),
+                'waktu_mulai'     => '09:00',
+                'waktu_selesai'   => '10:00',
+                'platform'        => 'Offline',
+                'operator_ids'    => [$this->operator->id_user],
+            ])
+            ->assertRedirect(route('operator.jadwal.index'));
+
+        $this->assertDatabaseHas('penjadwalan', ['judul_kegiatan' => 'Rapat Baru Operator']);
     }
 }

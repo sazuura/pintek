@@ -3,19 +3,29 @@
 @section('sidebar-menu') <x-sidebar /> @endsection
 
 @section('content')
+    @php
+        $roleAktif   = auth()->user()->role;
+        $isOperator  = $roleAktif === 'operator';
+        $bisaTambah  = auth()->user()->punyaAkses('peralatan', 'tambah');
+        $bisaUbah    = auth()->user()->punyaAkses('peralatan', 'ubah');
+        $bisaHapus   = auth()->user()->punyaAkses('peralatan', 'hapus');
+        $bisaPinjam  = $isOperator && auth()->user()->punyaAkses('peminjaman', 'tambah');
+    @endphp
     <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
         <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
             <div>
                 <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Data Peralatan</h1>
             </div>
-            <a href="{{ route('inventaris.peralatan.create') }}"
-                class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
-                <i class="bx bx-plus"></i><span class="text">Tambah Peralatan</span>
-            </a>
+            @if($bisaTambah)
+                <a href="{{ route($roleAktif . '.peralatan.create') }}"
+                    class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
+                    <i class="bx bx-plus"></i><span class="text">Tambah Peralatan</span>
+                </a>
+            @endif
         </div>
 
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-md:flex-col max-md:items-stretch">
-            <form method="GET" action="{{ route('inventaris.peralatan.index') }}" class="contents">
+            <form method="GET" action="{{ route($roleAktif . '.peralatan.index') }}" class="contents">
                 <div class="relative flex-1 min-w-[180px] max-w-[300px] max-md:max-w-full">
                     <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
                     <input type="text" name="search" data-live-search="#hasil-peralatan-inv" autocomplete="off" placeholder="Cari nama / kode barang..." value="{{ request('search') }}"
@@ -51,7 +61,7 @@
                     <option value="stok_asc" {{ request('urutkan') == 'stok_asc' ? 'selected' : '' }}>Stok Tersedikit</option>
                 </select>
                 @if(request()->hasAny(['search', 'gedung', 'status', 'kondisi', 'urutkan']))
-                    <a href="{{ route('inventaris.peralatan.index') }}"
+                    <a href="{{ route($roleAktif . '.peralatan.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                         <i class="bx bx-x"></i> Reset</a>
                 @endif
@@ -108,20 +118,41 @@
                             <x-badge :variant="$item->statusBadgeClass">{{ $item->statusLabel }}</x-badge>
                         </div>
 
-                        <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
-                            <a href="{{ route('inventaris.peralatan.edit', $item->id_peralatan) }}"
-                                class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
-                                <i class="bx bx-edit"></i> Edit
-                            </a>
-                            <form action="{{ route('inventaris.peralatan.destroy', $item->id_peralatan) }}" method="POST">
-                                @csrf @method('DELETE')
-                                <button type="submit"
-                                    class="w-9 h-9 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
-                                    onclick="return confirm('Hapus {{ $item->nama_peralatan }}?')" title="Hapus">
-                                    <i class="bx bx-trash"></i>
-                                </button>
-                            </form>
-                        </div>
+                        @if($isOperator)
+                            @if($bisaPinjam)
+                                <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
+                                    @if($item->stok_tersedia > 0)
+                                        <a href="{{ route('operator.peminjaman.create', ['id_peralatan' => $item->id_peralatan]) }}"
+                                            class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
+                                            <i class="bx bx-package"></i> Pinjam
+                                        </a>
+                                    @else
+                                        <span class="flex-1 justify-center h-9 px-3.5 rounded-lg text-[13px] font-sans inline-flex items-center gap-1.5 font-medium cursor-not-allowed opacity-50 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
+                                            Stok Habis
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
+                        @elseif($bisaUbah || $bisaHapus)
+                            <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
+                                @if($bisaUbah)
+                                    <a href="{{ route($roleAktif . '.peralatan.edit', $item->id_peralatan) }}"
+                                        class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
+                                        <i class="bx bx-edit"></i> Edit
+                                    </a>
+                                @endif
+                                @if($bisaHapus)
+                                    <form action="{{ route($roleAktif . '.peralatan.destroy', $item->id_peralatan) }}" method="POST">
+                                        @csrf @method('DELETE')
+                                        <button type="submit"
+                                            class="w-9 h-9 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
+                                            onclick="return confirm('Hapus {{ $item->nama_peralatan }}?')" title="Hapus">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -135,10 +166,12 @@
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-[60px] text-center text-text-muted">
                 <i class="bx bx-package text-5xl block mb-3"></i>
                 <p>Belum ada peralatan</p>
-                <a href="{{ route('inventaris.peralatan.create') }}"
-                    class="mt-3 inline-flex h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
-                    <i class="bx bx-plus"></i> Tambah Sekarang
-                </a>
+                @if($bisaTambah)
+                    <a href="{{ route($roleAktif . '.peralatan.create') }}"
+                        class="mt-3 inline-flex h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-primary text-white">
+                        <i class="bx bx-plus"></i> Tambah Sekarang
+                    </a>
+                @endif
             </div>
         @endif
         </div>

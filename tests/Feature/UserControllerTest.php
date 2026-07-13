@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -53,6 +54,37 @@ class UserControllerTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'opbaru@test.com',
             'role'  => 'operator',
+        ]);
+    }
+
+    /** @test */
+    public function role_baru_yang_dibuat_lewat_settings_muncul_di_dropdown_dan_bisa_dipakai(): void
+    {
+        // Sebelumnya dropdown Role di form Tambah/Edit User (dan filter di index) hardcode
+        // admin/operator/inventaris - role baru dari Sistem Settings tidak pernah muncul dan
+        // validasi 'in:admin,operator,inventaris' menolaknya walau dipaksa dikirim manual.
+        Role::create(['nama_role' => 'Resepsionis', 'slug' => 'resepsionis', 'status' => 'aktif', 'is_terkunci' => false]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertSee('Resepsionis');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.users.store'), [
+                'nama_user'     => 'Resepsionis Baru',
+                'jenis_kelamin' => 'P',
+                'alamat'        => 'Jl. Contoh No. 2',
+                'nohp'          => '089999999998',
+                'email'         => 'resepsionisbaru@test.com',
+                'password'      => 'password',
+                'role'          => 'resepsionis',
+            ])
+            ->assertRedirect(route('admin.users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'resepsionisbaru@test.com',
+            'role'  => 'resepsionis',
         ]);
     }
 
