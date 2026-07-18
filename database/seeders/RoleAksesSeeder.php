@@ -53,6 +53,11 @@ class RoleAksesSeeder extends Seeder
                 'jadwal'     => [true, true,  true,  true],
                 'users'      => [true, true,  true,  true],
                 'peralatan'  => [true, true,  true,  true],
+                // Admin cuma bisa ajukan/ubah/batalkan (bukan approve/reject - itu tetap
+                // wewenang Inventaris), sama seperti operator. "Kaitkan ke Jadwal" otomatis
+                // selalu kosong untuk admin (lihat catatan di routes/web.php), jadi
+                // peminjamannya pasti di luar rapat.
+                'peminjaman' => [true, true,  true,  false],
                 'laporan'    => [true, false, false, false],
                 'pengaturan' => [true, true,  true,  true],
             ],

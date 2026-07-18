@@ -177,7 +177,13 @@ class OperatorController extends Controller
     {
         $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])
             ->whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
-            ->orderByRaw('ABS(DATEDIFF(tanggal, CURDATE())) ASC')
+            // Sama seperti PenjadwalanController::index() - rapat Aktif tampil dulu
+            // (terdekat ke terjauh), baru rapat Selesai+Dibatalkan digabung sebagai
+            // satu riwayat di bawah, diurutkan dari yang paling baru terjadi supaya
+            // tidak ada lompatan tanggal yang jauh antar status.
+            ->orderByRaw("(status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()) ASC")
+            ->orderByRaw("CASE WHEN status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()
+                          THEN -DATEDIFF(tanggal, CURDATE()) ELSE DATEDIFF(tanggal, CURDATE()) END ASC")
             ->orderBy('waktu_mulai')
             ->paginate(10);
         $bisaTambah = auth()->user()->punyaAkses('jadwal', 'tambah');

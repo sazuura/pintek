@@ -3,18 +3,19 @@
 @section('sidebar-menu') <x-sidebar /> @endsection
 
 @section('content')
+    @php $roleAktif = auth()->user()->role; @endphp
     <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
         <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
             <div>
                 <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Edit Pengajuan Peminjaman</h1>
             </div>
-            <a href="{{ route('operator.peminjaman.index') }}"
+            <a href="{{ route($roleAktif . '.peminjaman.index') }}"
                 class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                 <i class="bx bx-arrow-back"></i> Kembali
             </a>
         </div>
 
-        <form action="{{ route('operator.peminjaman.update', $peminjaman->id_peminjaman) }}" method="POST" id="form-peminjaman" novalidate>
+        <form action="{{ route($roleAktif . '.peminjaman.update', $peminjaman->id_peminjaman) }}" method="POST" id="form-peminjaman" novalidate>
             @csrf @method('PUT')
             <input type="hidden" name="kecuali_id_peminjaman" value="{{ $peminjaman->id_peminjaman }}">
 
@@ -106,7 +107,7 @@
             </div>
 
             <div class="flex justify-end gap-2.5 mt-6 pt-5 border-t border-page-bg dark:border-page-bg-dark">
-                <a href="{{ route('operator.peminjaman.index') }}"
+                <a href="{{ route($roleAktif . '.peminjaman.index') }}"
                     class="h-10 px-5 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark rounded-lg text-sm font-sans cursor-pointer no-underline inline-flex items-center gap-2 transition-colors duration-200">Batal</a>
                 <button type="submit"
                     class="h-10 px-5 bg-primary hover:bg-primary-600 text-white border-none rounded-lg text-sm font-semibold font-sans cursor-pointer inline-flex items-center gap-2 transition-colors duration-200">
@@ -359,7 +360,7 @@
             var form = document.getElementById('form-peminjaman');
             var formData = new FormData(form);
 
-            fetch('{{ route('operator.peminjaman.cekSpam') }}', {
+            fetch('{{ route($roleAktif . '.peminjaman.cekSpam') }}', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

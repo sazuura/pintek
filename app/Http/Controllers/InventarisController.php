@@ -20,14 +20,18 @@ class InventarisController extends Controller
         $peralatanKritis = Peralatan::whereRaw('(stok - COALESCE(rusak,0)) BETWEEN 1 AND 2')
             ->orderBy('gedung') // Tetap diurutkan berdasarkan gedung asal peralatan
             ->orderByRaw('(stok - COALESCE(rusak,0)) ASC')
-            ->take(5)
+            ->take(4)
             ->get();
 
+        // Dashboard cuma jadi shortcut, bukan daftar lengkap - diambil yang tanggal
+        // pinjamnya PALING DEKAT (paling mendesak diputuskan), dibatasi maksimal 6
+        // biar tidak kepanjangan. Daftar lengkapnya tetap ada di halaman Peminjaman
+        // Peralatan (link "Kelola Semua").
         $peminjamanMenunggu = Peminjaman::with(['user', 'items.peralatan'])
             ->where('status', 'diajukan')
             ->whereDate('tanggal_pinjam', '>=', $today)
-            ->orderBy('created_at')
-            ->take(5)
+            ->orderBy('tanggal_pinjam')
+            ->take(6)
             ->get();
 
         $totalMenunggu = Peminjaman::where('status', 'diajukan')->count();

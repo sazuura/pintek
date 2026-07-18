@@ -45,6 +45,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::resource('peralatan', PeralatanController::class)->names('peralatan')->except(['show']);
     });
+    // Admin cuma bisa mengajukan peminjaman DI LUAR rapat - dropdown "Kaitkan ke Jadwal"
+    // di operatorCreate() bersumber dari jadwalAktifOperator() (jadwal tempat user login
+    // ditugaskan sebagai operator), dan admin tidak pernah tercatat di situ, jadi otomatis
+    // selalu kosong tanpa perlu validasi pembatasan tambahan. Admin TIDAK dapat approve/reject
+    // (itu tetap wewenang Inventaris) - rute yang dipasangkan sengaja cuma yang operator*.
+    Route::middleware('menu-akses:peminjaman')->group(function () {
+        Route::prefix('peminjaman')->name('peminjaman.')->group(function () {
+            Route::get('/',          [PeminjamanController::class, 'operatorIndex'])->name('index');
+            Route::get('/create',    [PeminjamanController::class, 'operatorCreate'])->name('create');
+            Route::post('/',         [PeminjamanController::class, 'operatorStore'])->name('store');
+            Route::post('/cek-spam', [PeminjamanController::class, 'operatorCekSpam'])->name('cekSpam');
+            Route::get('/{id}/edit', [PeminjamanController::class, 'operatorEdit'])->name('edit');
+            Route::put('/{id}',      [PeminjamanController::class, 'operatorUpdate'])->name('update');
+        });
+        Route::post('/peminjaman/{id}/batalkan', [PeminjamanController::class, 'operatorBatalkan'])->name('peminjaman.batalkan');
+    });
     Route::middleware('menu-akses:laporan')->group(function () {
         Route::prefix('laporan')->name('laporan.')->group(function () {
             Route::get('/',            [AdminController::class, 'laporanIndex'])->name('index');

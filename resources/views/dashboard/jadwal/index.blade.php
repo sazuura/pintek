@@ -145,29 +145,6 @@
                             <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row" id="{{ $uid }}">
                                 <td colspan="{{ $kolomTotal }}" class="!p-0">
                                     <div class="flex flex-wrap items-start gap-x-8 gap-y-2.5 py-[18px] px-4">
-                                        <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
-                                            <i class="bx bx-calendar text-lg text-primary mt-px shrink-0"></i>
-                                            <div>
-                                                <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Tanggal</label>
-                                                <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $j->tanggal->translatedFormat('l, d F Y') }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
-                                            <i class="bx bx-time-five text-lg text-primary mt-px shrink-0"></i>
-                                            <div>
-                                                <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Waktu</label>
-                                                <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
-                                                    {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }} WIB
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-start gap-2.5 min-w-0 flex-1 basis-[160px]">
-                                            <i class="bx bx-desktop text-lg text-primary mt-px shrink-0"></i>
-                                            <div>
-                                                <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Platform</label>
-                                                <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $j->platform }}</p>
-                                            </div>
-                                        </div>
                                         <div class="flex items-start gap-2.5 min-w-0 flex-[2_1_260px]">
                                             <i class="bx bx-note text-lg text-primary mt-px shrink-0"></i>
                                             <div>
@@ -191,15 +168,13 @@
                                                 <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}</p>
                                             </div>
                                         </div>
-                                        @unless($bisaUbah)
-                                            <div class="flex items-start gap-2.5 min-w-0 flex-[2_1_260px]">
-                                                <i class="bx bxs-wrench text-lg text-primary mt-px shrink-0"></i>
-                                                <div>
-                                                    <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Alat yang Perlu Disiapkan</label>
-                                                    <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $j->peralatanReferensi->pluck('nama_peralatan')->join(', ') ?: 'Tidak ada catatan alat' }}</p>
-                                                </div>
+                                        <div class="flex items-start gap-2.5 min-w-0 flex-[2_1_260px]">
+                                            <i class="bx bxs-wrench text-lg text-primary mt-px shrink-0"></i>
+                                            <div>
+                                                <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">{{ $bisaUbah ? 'Peralatan yang Diberikan' : 'Alat yang Perlu Disiapkan' }}</label>
+                                                <p class="text-text dark:text-text-dark m-0 font-medium text-[13px] break-words">{{ $j->peralatanReferensi->pluck('nama_peralatan')->join(', ') ?: 'Tidak ada catatan alat' }}</p>
                                             </div>
-                                        @endunless
+                                        </div>
                                         @if($dibatalkan)
                                             <div class="flex items-start gap-2.5 min-w-0 flex-[2_1_260px]">
                                                 <i class="bx bx-error-circle text-lg text-danger-text mt-px shrink-0"></i>

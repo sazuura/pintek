@@ -56,7 +56,7 @@ class PeminjamanController extends Controller
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
-        return redirect()->route('operator.peminjaman.index')
+        return redirect()->route(auth()->user()->role . '.peminjaman.index')
             ->with('success', 'Pengajuan berhasil dikirim. Notifikasi telah dikirim ke petugas inventaris.');
     }
 
@@ -127,7 +127,7 @@ class PeminjamanController extends Controller
         $peminjaman = Peminjaman::with('items.peralatan')->findOrFail($id);
         abort_if($peminjaman->id_user !== auth()->user()->id_user, 403);
         if (!$peminjaman->isMenunggu()) {
-            return redirect()->route('operator.peminjaman.index')
+            return redirect()->route(auth()->user()->role . '.peminjaman.index')
                 ->with('error', 'Pengajuan yang sudah diproses tidak dapat diubah.');
         }
 
@@ -165,7 +165,7 @@ class PeminjamanController extends Controller
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
-        return redirect()->route('operator.peminjaman.index')
+        return redirect()->route(auth()->user()->role . '.peminjaman.index')
             ->with('success', 'Pengajuan berhasil diperbarui. Notifikasi telah dikirim ke petugas inventaris.');
     }
 
@@ -311,7 +311,7 @@ class PeminjamanController extends Controller
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
-        return redirect()->route('operator.peminjaman.index')
+        return redirect()->route(auth()->user()->role . '.peminjaman.index')
             ->with('success', 'Pengajuan berhasil dibatalkan dan notifikasi WA telah dikirim ke inventaris.');
     }
 }

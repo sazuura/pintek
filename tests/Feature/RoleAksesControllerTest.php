@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Menu;
+use App\Models\Peralatan;
 use App\Models\Role;
 use App\Models\RoleMenuAkses;
 use App\Models\User;
@@ -286,5 +287,43 @@ class RoleAksesControllerTest extends TestCase
         $this->actingAs($operator)->get('/admin/dashboard')->assertForbidden();
         $this->actingAs($operator)->get('/inventaris/dashboard')->assertForbidden();
         $this->actingAs($operator)->get('/operator/dashboard')->assertOk();
+    }
+
+    /** @test */
+    public function admin_bisa_ajukan_peminjaman_tapi_selalu_di_luar_rapat(): void
+    {
+        // Dropdown "Kaitkan ke Jadwal" bersumber dari jadwal tempat user login ditugaskan
+        // sebagai operator (lihat PeminjamanController::jadwalAktifOperator()) - admin
+        // tidak pernah tercatat di situ, jadi harus selalu kosong tanpa validasi tambahan.
+        $alat = Peralatan::create([
+            'id_peralatan' => 'PR-ADM', 'nama_peralatan' => 'Proyektor Admin Test',
+            'gedung' => 'Gedung A', 'stok' => 3,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.peminjaman.create'))
+            ->assertOk()
+            ->assertDontSee('data-judul');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.peminjaman.store'), [
+                'tanggal_pinjam'          => now()->addDay()->toDateString(),
+                'tanggal_kembali_rencana' => now()->addDays(2)->toDateString(),
+                'keperluan'               => 'Dipinjam admin di luar rapat',
+                'peralatan_ids'           => [$alat->id_peralatan],
+                'peralatan_jumlah'        => [1],
+            ])
+            ->assertRedirect(route('admin.peminjaman.index'));
+
+        $this->assertDatabaseHas('peminjaman', [
+            'id_user'        => $this->admin->id_user,
+            'keperluan'      => 'Dipinjam admin di luar rapat',
+            'id_penjadwalan' => null,
+        ]);
+
+        // Admin cuma bisa ajukan/ubah/batalkan - approve/reject tetap wewenang Inventaris,
+        // rute inventarisApprove/inventarisApproveItem tidak pernah didaftarkan untuk admin.
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('admin.peminjaman.approve'));
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('admin.peminjaman.items.approve'));
     }
 }

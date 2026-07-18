@@ -3,14 +3,17 @@
 @section('sidebar-menu') <x-sidebar /> @endsection
 
 @section('content')
-    @php $bisaUbah = auth()->user()->punyaAkses('peminjaman', 'ubah'); @endphp
+    @php
+        $roleAktif = auth()->user()->role;
+        $bisaUbah  = auth()->user()->punyaAkses('peminjaman', 'ubah');
+    @endphp
     <main class="w-full pt-9 px-6 pb-9 font-sans max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden">
         <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
             <div>
                 <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Peminjaman Saya</h1>
             </div>
             @if(auth()->user()->punyaAkses('peminjaman', 'tambah'))
-                <a href="{{ route('operator.peminjaman.create') }}"
+                <a href="{{ route($roleAktif . '.peminjaman.create') }}"
                     class="h-9 px-4 rounded-full bg-primary text-surface dark:text-surface-dark flex justify-center items-center gap-2.5 font-medium">
                     <i class="bx bx-plus"></i><span class="text">Ajukan Peminjaman</span>
                 </a>
@@ -18,7 +21,7 @@
         </div>
 
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-            <form method="GET" action="{{ route('operator.peminjaman.index') }}" class="contents">
+            <form method="GET" action="{{ route($roleAktif . '.peminjaman.index') }}" class="contents">
                 <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
@@ -30,7 +33,7 @@
                     <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                 </select>
                 @if(request('status'))
-                    <a href="{{ route('operator.peminjaman.index') }}"
+                    <a href="{{ route($roleAktif . '.peminjaman.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                         <i class="bx bx-x"></i> Reset</a>
                 @endif
@@ -77,13 +80,13 @@
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     @if($bisaUbah && $p->isMenunggu())
                                         <div class="flex gap-1.5 items-center justify-center">
-                                            <a href="{{ route('operator.peminjaman.edit', $p->id_peminjaman) }}"
+                                            <a href="{{ route($roleAktif . '.peminjaman.edit', $p->id_peminjaman) }}"
                                                 class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 no-underline shrink-0 hover:opacity-80 bg-warning dark:bg-warning-dark text-warning-text"
                                                 title="Edit Pengajuan"><i class="bx bx-edit"></i></a>
                                             <button type="button"
                                                 class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
                                                 title="Batalkan Pengajuan"
-                                                onclick="bukaBatalkanPengajuan('{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}')">
+                                                onclick="bukaBatalkanPengajuan('{{ route($roleAktif . '.peminjaman.batalkan', $p->id_peminjaman) }}')">
                                                 <i class="bx bx-block"></i>
                                             </button>
                                         </div>
@@ -197,8 +200,8 @@
                      data-dibatalkan="{{ $p->isDibatalkan() ? '1' : '' }}"
                      data-alasan-batal="{{ $p->alasan_batal }}"
                      @if($bisaUbah && $p->isMenunggu())
-                         data-edit-url="{{ route('operator.peminjaman.edit', $p->id_peminjaman) }}"
-                         data-batalkan-url="{{ route('operator.peminjaman.batalkan', $p->id_peminjaman) }}"
+                         data-edit-url="{{ route($roleAktif . '.peminjaman.edit', $p->id_peminjaman) }}"
+                         data-batalkan-url="{{ route($roleAktif . '.peminjaman.batalkan', $p->id_peminjaman) }}"
                      @endif>
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-[#0d2a40] text-primary flex items-center justify-center text-lg shrink-0">

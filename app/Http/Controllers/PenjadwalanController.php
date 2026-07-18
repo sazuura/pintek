@@ -17,7 +17,7 @@ class PenjadwalanController extends Controller
         // "Aktif" vs "Selesai" di tampilan sebenarnya diturunkan dari apakah waktu
         // rapat sudah lewat atau belum (lihat isDibatalkan()/$sudahLewat di view),
         // jadi filternya juga harus dihitung dari tanggal+waktu, bukan match string.
-        $jadwal = Penjadwalan::with('operators')
+        $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])
             ->when($request->search, fn($q, $s) =>
                 $q->where('judul_kegiatan', 'like', "%{$s}%")
                   ->orWhere('platform', 'like', "%{$s}%")
@@ -31,10 +31,18 @@ class PenjadwalanController extends Controller
                 'dibatalkan' => $q->where('status', 'dibatalkan'),
                 default      => $q,
             })
-            // Urutan default: jadwal yang tanggalnya paling dekat dengan hari ini (baik
-            // yang akan datang maupun yang baru lewat) tampil paling atas, bukan sekadar
-            // diurutkan mundur dari tanggal terbaru.
-            ->orderByRaw('ABS(DATEDIFF(tanggal, CURDATE())) ASC')
+            // Urutan default: rapat yang masih Aktif selalu tampil paling atas,
+            // diurutkan dari tanggal yang paling dekat dengan hari ini (fokus utama
+            // pengguna). Rapat yang sudah Selesai ATAU Dibatalkan digabung jadi satu
+            // kelompok "riwayat" di bagian bawah dan diurutkan murni dari yang paling
+            // BARU terjadi ke yang paling lama - bukan dipisah per status - supaya
+            // tidak ada lompatan tanggal yang jauh (mis. rapat dibatalkan bulan
+            // Februari nyempil duluan sebelum rapat selesai bulan Juli yang jauh
+            // lebih baru). Definisi "sudah berakhir" sama persis dengan filter status
+            // di atas supaya konsisten dengan badge yang ditampilkan.
+            ->orderByRaw("(status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()) ASC")
+            ->orderByRaw("CASE WHEN status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()
+                          THEN -DATEDIFF(tanggal, CURDATE()) ELSE DATEDIFF(tanggal, CURDATE()) END ASC")
             ->orderBy('waktu_mulai')
             ->paginate(10)
             ->withQueryString();

@@ -7,6 +7,7 @@ use App\Models\Penjadwalan;
 use App\Models\Role;
 use App\Models\RoleMenuAkses;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -54,6 +55,90 @@ class JadwalViewGabunganTest extends TestCase
             ->assertSee('Tambah Jadwal')
             ->assertSee('Rapat Koordinasi Test')
             ->assertSee(route('admin.jadwal.create'), false);
+    }
+
+    /** @test */
+    public function jadwal_belum_selesai_tampil_di_atas_jadwal_yang_sudah_selesai_meski_lebih_dekat_tanggalnya(): void
+    {
+        // Rapat kemarin (sudah lewat waktu_selesai-nya) - tanggalnya PALING dekat
+        // dengan hari ini, tapi statusnya sudah Selesai.
+        Penjadwalan::create([
+            'id_penjadwalan' => 'JDW010', 'judul_kegiatan' => 'Rapat Kemarin Sudah Selesai',
+            'tanggal' => Carbon::yesterday()->toDateString(), 'waktu_mulai' => '09:00', 'waktu_selesai' => '10:00',
+            'platform' => 'Offline', 'status' => 'selesai',
+        ]);
+        // Rapat minggu depan - tanggalnya lebih jauh dari hari ini dibanding yang
+        // kemarin, tapi belum selesai (masih Aktif) sehingga harus tampil lebih dulu.
+        Penjadwalan::create([
+            'id_penjadwalan' => 'JDW011', 'judul_kegiatan' => 'Rapat Minggu Depan Masih Aktif',
+            'tanggal' => Carbon::now()->addDays(5)->toDateString(), 'waktu_mulai' => '09:00', 'waktu_selesai' => '10:00',
+            'platform' => 'Offline', 'status' => 'selesai',
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.jadwal.index'));
+
+        $response->assertOk()->assertSeeInOrder([
+            'Rapat Minggu Depan Masih Aktif',
+            'Rapat Kemarin Sudah Selesai',
+        ]);
+    }
+
+    /** @test */
+    public function jadwal_dibatalkan_lama_tidak_menyempil_di_antara_jadwal_aktif(): void
+    {
+        // Dua rapat Aktif akan datang - harus tampil berurutan dari yang paling dekat.
+        Penjadwalan::create([
+            'id_penjadwalan' => 'JDW020', 'judul_kegiatan' => 'Rapat Aktif Lebih Dekat',
+            'tanggal' => Carbon::now()->addDays(20)->toDateString(), 'waktu_mulai' => '09:00', 'waktu_selesai' => '10:00',
+            'platform' => 'Offline', 'status' => 'selesai',
+        ]);
+        Penjadwalan::create([
+            'id_penjadwalan' => 'JDW021', 'judul_kegiatan' => 'Rapat Aktif Lebih Jauh',
+            'tanggal' => Carbon::now()->addDays(26)->toDateString(), 'waktu_mulai' => '09:00', 'waktu_selesai' => '10:00',
+            'platform' => 'Offline', 'status' => 'selesai',
+        ]);
+        // Rapat yang dibatalkan 23 hari lalu - jaraknya di ANTARA dua rapat aktif di
+        // atas kalau dihitung murni dari jarak tanggal absolut, tapi karena sudah
+        // Dibatalkan, seharusnya tidak boleh menyempil di antara keduanya.
+        Penjadwalan::create([
+            'id_penjadwalan' => 'JDW022', 'judul_kegiatan' => 'Rapat Dibatalkan Lama',
+            'tanggal' => Carbon::now()->subDays(23)->toDateString(), 'waktu_mulai' => '09:00', 'waktu_selesai' => '10:00',
+            'platform' => 'Offline', 'status' => 'dibatalkan',
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.jadwal.index'));
+
+        $response->assertOk()->assertSeeInOrder([
+            'Rapat Aktif Lebih Dekat',
+            'Rapat Aktif Lebih Jauh',
+            'Rapat Dibatalkan Lama',
+        ]);
+    }
+
+    /** @test */
+    public function jadwal_selesai_dan_dibatalkan_digabung_satu_riwayat_urut_dari_yang_paling_baru(): void
+    {
+        // Dibatalkan jauh lebih lama daripada rapat yang sudah Selesai - meski
+        // beda status, keduanya tetap satu kelompok "riwayat" dan yang lebih baru
+        // (Selesai, 2 hari lalu) harus tampil duluan daripada yang lebih lama
+        // (Dibatalkan, 150 hari lalu) supaya tidak ada lompatan tanggal.
+        Penjadwalan::create([
+            'id_penjadwalan' => 'JDW030', 'judul_kegiatan' => 'Rapat Dibatalkan Sangat Lama',
+            'tanggal' => Carbon::now()->subDays(150)->toDateString(), 'waktu_mulai' => '09:00', 'waktu_selesai' => '10:00',
+            'platform' => 'Offline', 'status' => 'dibatalkan',
+        ]);
+        Penjadwalan::create([
+            'id_penjadwalan' => 'JDW031', 'judul_kegiatan' => 'Rapat Baru Saja Selesai',
+            'tanggal' => Carbon::now()->subDays(2)->toDateString(), 'waktu_mulai' => '09:00', 'waktu_selesai' => '10:00',
+            'platform' => 'Offline', 'status' => 'selesai',
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.jadwal.index'));
+
+        $response->assertOk()->assertSeeInOrder([
+            'Rapat Baru Saja Selesai',
+            'Rapat Dibatalkan Sangat Lama',
+        ]);
     }
 
     /** @test */
