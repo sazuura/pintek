@@ -301,6 +301,56 @@ class PeminjamanServiceTest extends TestCase
     }
 
     /** @test */
+    public function setujui_item_gagal_kalau_pengajuan_sudah_dibatalkan(): void
+    {
+        // batalkan() tidak menyentuh status item (tetap "diajukan"), cuma status
+        // induknya yang jadi "dibatalkan" - jadi item TETAP kelihatan "menunggu"
+        // kalau cuma dicek dari statusnya sendiri, tanpa cek status induk juga.
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan], 'dibatalkan');
+        $item = $peminjaman->items()->first();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/sudah dibatalkan/');
+
+        $this->service->setujuiItem($item);
+    }
+
+    /** @test */
+    public function tolak_item_gagal_kalau_pengajuan_sudah_dibatalkan(): void
+    {
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan], 'dibatalkan');
+        $item = $peminjaman->items()->first();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/sudah dibatalkan/');
+
+        $this->service->tolakItem($item, 'Coba tolak setelah dibatalkan.');
+    }
+
+    /** @test */
+    public function setujui_dan_tolak_bulk_gagal_kalau_pengajuan_sudah_dibatalkan(): void
+    {
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan], 'dibatalkan');
+
+        try {
+            $this->service->setujui($peminjaman, $this->inventaris);
+            $this->fail('Seharusnya melempar RuntimeException.');
+        } catch (\RuntimeException $e) {
+            $this->assertMatchesRegularExpression('/sudah dibatalkan/', $e->getMessage());
+        }
+
+        try {
+            $this->service->tolak($peminjaman, $this->inventaris, 'Coba tolak.');
+            $this->fail('Seharusnya melempar RuntimeException.');
+        } catch (\RuntimeException $e) {
+            $this->assertMatchesRegularExpression('/sudah dibatalkan/', $e->getMessage());
+        }
+
+        // Status induk tidak boleh berubah dari "dibatalkan".
+        $this->assertSame('dibatalkan', $peminjaman->fresh()->status);
+    }
+
+    /** @test */
     public function ubah_gagal_kalau_sudah_ada_item_yang_diputuskan_inventaris(): void
     {
         $alatKedua = Peralatan::create([

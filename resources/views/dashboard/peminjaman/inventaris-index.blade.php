@@ -117,7 +117,6 @@
                                             </div>
                                         @endif
                                     </div>
-
                                     <div class="px-4 pb-4">
                                         <div class="flex items-center justify-between mb-2.5 px-0.5">
                                             <span class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-text dark:text-text-dark"><i class="bx bx-wrench text-primary text-[15px]"></i> Daftar Peralatan</span>
@@ -148,7 +147,7 @@
                                                             <td class="py-4 px-5 text-sm text-text dark:text-text-dark align-middle text-center font-semibold">{{ $item->jumlah }}</td>
                                                             <td class="py-4 px-5 text-sm align-middle text-center"><x-badge :variant="$item->badge['class']">{{ $item->badge['label'] }}</x-badge></td>
                                                             <td class="pr-5 py-4 px-5 text-sm align-middle text-right">
-                                                                @if($bisaUbah && $item->isMenunggu())
+                                                                @if($bisaUbah && $p->isMenunggu() && $item->isMenunggu())
                                                                     <div class="flex gap-1.5 items-center justify-end">
                                                                         <button type="button" title="Setujui"
                                                                             class="{{ $actionClass }} bg-success dark:bg-success-dark text-success-text"
@@ -205,6 +204,7 @@
                          data-open-pengajuan-modal
                          data-id-peminjaman="{{ $p->id_peminjaman }}"
                          data-bisa-ubah="{{ $bisaUbah ? '1' : '0' }}"
+                         data-pengajuan-menunggu="{{ $p->isMenunggu() ? '1' : '0' }}"
                          data-pemohon="{{ $p->user->nama_user }}"
                          data-nohp="{{ $p->user->nohp ?? '-' }}"
                          data-keperluan="{{ $p->keperluan }}"
@@ -403,10 +403,11 @@
             try { items = JSON.parse(d.items || '[]'); } catch (e) {}
 
             var bisaUbah = d.bisaUbah === '1';
+            var pengajuanMenunggu = d.pengajuanMenunggu === '1';
 
             var itemsHtml = items.map(function (item) {
                 var aksiHtml;
-                if (bisaUbah && item.status === 'diajukan') {
+                if (bisaUbah && pengajuanMenunggu && item.status === 'diajukan') {
                     var urlSetujui = peminjamanBaseUrl + '/' + d.idPeminjaman + '/items/' + item.id + '/approve';
                     var urlTolak   = peminjamanBaseUrl + '/' + d.idPeminjaman + '/items/' + item.id + '/reject';
                     aksiHtml = '<div class="flex gap-1.5 items-center shrink-0">' +

@@ -66,6 +66,10 @@ class PeminjamanService
      */
     public function setujuiItem(PeminjamanItem $item): void
     {
+        $item->loadMissing('peminjaman');
+        if (!$item->peminjaman->isMenunggu()) {
+            throw new \RuntimeException('Pengajuan ini sudah dibatalkan, tidak bisa diproses.');
+        }
         if ($item->status !== 'diajukan') {
             throw new \RuntimeException('Alat ini sudah diputuskan sebelumnya.');
         }
@@ -81,6 +85,10 @@ class PeminjamanService
      */
     public function tolakItem(PeminjamanItem $item, string $alasan): void
     {
+        $item->loadMissing('peminjaman');
+        if (!$item->peminjaman->isMenunggu()) {
+            throw new \RuntimeException('Pengajuan ini sudah dibatalkan, tidak bisa diproses.');
+        }
         if ($item->status !== 'diajukan') {
             throw new \RuntimeException('Alat ini sudah diputuskan sebelumnya.');
         }
@@ -98,6 +106,9 @@ class PeminjamanService
      */
     public function setujui(Peminjaman $peminjaman, User $inventaris, ?string $catatan = null): void
     {
+        if (!$peminjaman->isMenunggu()) {
+            throw new \RuntimeException('Pengajuan ini sudah dibatalkan, tidak bisa diproses.');
+        }
         DB::transaction(function () use ($peminjaman, $catatan) {
             $peminjaman->loadMissing('items');
             foreach ($peminjaman->items->where('status', 'diajukan') as $item) {
@@ -113,6 +124,9 @@ class PeminjamanService
     /** Tolak semua item yang masih "diajukan" sekaligus (tombol cepat, lihat setujui()). */
     public function tolak(Peminjaman $peminjaman, User $inventaris, string $alasan): void
     {
+        if (!$peminjaman->isMenunggu()) {
+            throw new \RuntimeException('Pengajuan ini sudah dibatalkan, tidak bisa diproses.');
+        }
         DB::transaction(function () use ($peminjaman, $alasan) {
             $peminjaman->loadMissing('items');
             foreach ($peminjaman->items->where('status', 'diajukan') as $item) {
@@ -184,6 +198,7 @@ class PeminjamanService
         });
     }
 
+    //operator
     public function batalkan(Peminjaman $peminjaman, string $alasan): void
     {
         if (!$peminjaman->isMenunggu()) {
