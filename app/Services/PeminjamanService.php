@@ -145,7 +145,10 @@ class PeminjamanService
      */
     private function rekomputeStatusPeminjaman(Peminjaman $peminjaman): void
     {
-        $peminjaman->loadMissing('items');
+        // load() (bukan loadMissing) supaya selalu membaca status item terkini dari
+        // database - instance induk bisa dipakai bersama antar item (chaperone) dan
+        // koleksi items yang sudah ter-cache bisa basi setelah update per-item.
+        $peminjaman->load('items');
         $items = $peminjaman->items;
 
         if ($items->contains(fn($i) => $i->status === 'diajukan')) {
@@ -184,6 +187,14 @@ class PeminjamanService
 
     public function konfirmasiKembali(Peminjaman $peminjaman, User $inventaris): void
     {
+        // Barang yang masa pinjamnya belum dimulai belum mungkin dikembalikan -
+        // tanpa cek ini, peminjaman berstatus Disetujui untuk tanggal yang masih
+        // jauh di depan bisa "dikembalikan" hari ini juga.
+        if ($peminjaman->tanggal_pinjam->isFuture()) {
+            throw new \RuntimeException(
+                'Peminjaman ini baru dimulai ' . $peminjaman->tanggal_pinjam->translatedFormat('d F Y') . ' - belum bisa dikonfirmasi kembali.'
+            );
+        }
         // PERBAIKAN: Validasi pembatasan gedung user dihapus.
         // Stok dikembalikan di sini karena alatnya baru sungguhan bebas dipakai lagi
         // setelah fisiknya dikembalikan (beda dari tolak/batalkan yang mengembalikan stok

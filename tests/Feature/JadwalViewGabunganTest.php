@@ -153,6 +153,39 @@ class JadwalViewGabunganTest extends TestCase
     }
 
     /** @test */
+    public function operator_bisa_search_dan_filter_status_di_jadwal_saya(): void
+    {
+        // Jadwal kedua milik operator yang sama, statusnya dibatalkan - untuk
+        // memastikan filter status benar-benar menyaring, bukan sekadar lolos.
+        $batal = Penjadwalan::create([
+            'id_penjadwalan' => 'JDW050', 'judul_kegiatan' => 'Rapat Batal Operator',
+            'tanggal' => '2026-08-05', 'waktu_mulai' => '09:00', 'waktu_selesai' => '10:00',
+            'platform' => 'Offline', 'status' => 'dibatalkan',
+        ]);
+        $batal->operators()->sync([$this->operator->id_user]);
+
+        // Search: cuma jadwal yang judulnya cocok yang tampil.
+        $this->actingAs($this->operator)
+            ->get(route('operator.jadwal.index', ['search' => 'Koordinasi']))
+            ->assertOk()
+            ->assertSee('Rapat Koordinasi Test')
+            ->assertDontSee('Rapat Batal Operator');
+
+        // Filter status dibatalkan: kebalikannya.
+        $this->actingAs($this->operator)
+            ->get(route('operator.jadwal.index', ['status' => 'dibatalkan']))
+            ->assertOk()
+            ->assertSee('Rapat Batal Operator')
+            ->assertDontSee('Rapat Koordinasi Test');
+
+        // Toolbar filternya sendiri harus tampil di halaman operator.
+        $this->actingAs($this->operator)
+            ->get(route('operator.jadwal.index'))
+            ->assertSee('Semua Platform')
+            ->assertSee('Semua Status');
+    }
+
+    /** @test */
     public function operator_hanya_lihat_jadwal_yang_ditugaskan_ke_dirinya(): void
     {
         Penjadwalan::create([

@@ -44,7 +44,7 @@
                             @endforeach
                         </x-select>
                         <div id="referensi-hint" class="hidden bg-primary-50 dark:bg-[#0d2a40] rounded-lg py-2.5 px-3.5 mt-1">
-                            <p class="text-[13px] text-primary font-medium m-0"><i class="bx bx-info-circle"></i> Alat yang direkomendasikan admin untuk jadwal ini sudah otomatis ditambahkan di bawah (tetap bisa diubah/dihapus):</p>
+                            <p class="text-[13px] text-primary font-medium m-0"><i class="bx bx-info-circle"></i> Alat yang direkomendasikan admin untuk jadwal ini sudah otomatis ditambahkan di bawah tanpa mengubah alat yang sudah Anda pilih (tetap bisa diubah/dihapus):</p>
                             <p id="referensi-hint-list" class="text-[13px] text-primary m-0 mt-1"></p>
                         </div>
                     </div>
@@ -169,32 +169,71 @@
             refreshPeralatanOptions();
         }
 
-        // Isi ulang daftar peralatan pakai rekomendasi admin utk jadwal ini (alat yang
-        // sudah diajukan operator lain dilewati - tetap disebut di keterangan). Kalau
-        // jadwal tidak punya rekomendasi sama sekali, baris yang sudah ada tidak diubah.
+        // Tambahkan rekomendasi admin utk jadwal ini ke daftar peralatan TANPA
+        // menghilangkan baris yang sudah dipilih operator sendiri (mis. alat yang
+        // dibawa dari tombol "Pinjam" di halaman Peralatan) - rekomendasi masuk
+        // sebagai baris baru, yang sudah terlanjur dipilih tidak didobel. Baris
+        // hasil auto-isi ditandai data-auto-ref supaya kalau operator ganti pilihan
+        // jadwal, cuma baris rekomendasi jadwal lama yang dibuang - pilihan manual
+        // tidak pernah disentuh. Alat yang sudah diajukan operator lain dilewati
+        // (tetap disebut di keterangan).
+        var autoFillSedangJalan = false;
+
         function autoIsiDariReferensi() {
-            if (jadwalReferensi.length === 0) return;
+            var list = document.getElementById('peralatan-list');
+            autoFillSedangJalan = true;
+
+            // Bersihkan baris auto-isi dari jadwal SEBELUMNYA yang belum diubah user.
+            Array.from(list.querySelectorAll('.dynamic-item[data-auto-ref]')).forEach(function (row) {
+                if (list.children.length > 1) {
+                    row.remove();
+                } else {
+                    // Baris terakhir tidak boleh dihapus - kosongkan saja.
+                    row.querySelector('select').value = '';
+                    row.querySelector('input[type=number]').value = '';
+                    delete row.dataset.autoRef;
+                }
+            });
 
             var bisaDiisi = jadwalReferensi.filter(function (r) { return jadwalSudahDiajukan.indexOf(r.nama) === -1; });
-            if (bisaDiisi.length === 0) return;
+            var terpilih  = getSelectedPeralatan();
 
-            var list = document.getElementById('peralatan-list');
-            // Sisakan baris pertama sebagai "template" buat baris berikutnya, buang sisanya.
-            while (list.children.length > 1) list.removeChild(list.lastElementChild);
+            bisaDiisi.forEach(function (r) {
+                if (terpilih.indexOf(String(r.id)) !== -1) return; // sudah dipilih manual, jangan dobel
 
-            var firstRow  = list.querySelector('.dynamic-item');
-            var firstItem = bisaDiisi[0];
-            var select    = firstRow.querySelector('select');
-            select.value  = firstItem.id;
-            select.dispatchEvent(new Event('change', { bubbles: true }));
-            firstRow.querySelector('input[type=number]').value = firstItem.jumlah;
-
-            bisaDiisi.slice(1).forEach(function (r) {
-                addPeralatanRow(r.id, r.jumlah);
+                // Pakai baris kosong yang ada dulu (mis. baris pertama yang belum diisi),
+                // baru bikin baris baru kalau semua baris sudah terisi.
+                var kosong = Array.from(list.querySelectorAll('.dynamic-item')).find(function (row) {
+                    return row.querySelector('select').value === '';
+                });
+                var row;
+                if (kosong) {
+                    row = kosong;
+                    var sel = row.querySelector('select');
+                    sel.value = r.id;
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                    row.querySelector('input[type=number]').value = r.jumlah;
+                } else {
+                    row = addPeralatanRow(r.id, r.jumlah);
+                }
+                row.dataset.autoRef = '1';
+                terpilih.push(String(r.id));
             });
+
+            autoFillSedangJalan = false;
             updateRemoveButtons();
+            refreshPeralatanOptions();
             window.SearchableSelect && window.SearchableSelect.refreshAll();
         }
+
+        // Begitu user mengubah sendiri isi sebuah baris (bukan perubahan dari auto-isi),
+        // baris itu dianggap pilihan manual - lepas tanda auto-ref supaya tidak ikut
+        // terbuang saat pilihan jadwal diganti.
+        document.getElementById('peralatan-list').addEventListener('change', function (e) {
+            if (autoFillSedangJalan) return;
+            var row = e.target.closest('.dynamic-item');
+            if (row) delete row.dataset.autoRef;
+        });
 
         function updateReferensiHint() {
             var box  = document.getElementById('referensi-hint');

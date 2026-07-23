@@ -15,7 +15,15 @@ class PeminjamanController extends Controller
     {
         $peminjaman = Peminjaman::with(['items.peralatan', 'penjadwalan'])
             ->where('id_user', auth()->user()->id_user)
+            // Search mencakup keperluan DAN nama alat di dalam pengajuan - dibungkus
+            // where() supaya orWhereHas tidak bocor keluar dari filter kepemilikan.
+            ->when($request->search, fn($q, $s) =>
+                $q->where(fn($qq) => $qq->where('keperluan', 'like', "%{$s}%")
+                    ->orWhereHas('items.peralatan', fn($qa) => $qa->where('nama_peralatan', 'like', "%{$s}%")))
+            )
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
+            ->when($request->start, fn($q, $v) => $q->whereDate('tanggal_pinjam', '>=', $v))
+            ->when($request->end,   fn($q, $v) => $q->whereDate('tanggal_pinjam', '<=', $v))
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();

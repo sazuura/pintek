@@ -38,7 +38,10 @@ class Peminjaman extends Model
 
     public function items()
     {
-        return $this->hasMany(PeminjamanItem::class, 'id_peminjaman', 'id_peminjaman');
+        // chaperone() menautkan balik relasi peminjaman pada tiap item yang di-load
+        // lewat induknya - dipakai PeminjamanItem::getBadgeAttribute() untuk membaca
+        // status induk tanpa query tambahan (N+1).
+        return $this->hasMany(PeminjamanItem::class, 'id_peminjaman', 'id_peminjaman')->chaperone();
     }
 
     public function isMenunggu(): bool   { return $this->status === 'diajukan'; }

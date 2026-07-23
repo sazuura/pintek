@@ -235,14 +235,23 @@ class DatabaseSeeder extends Seeder
 
                 // Aktivitas "baru dibuat" hanya masuk akal untuk rapat yang dekat dengan hari
                 // ini (akan datang/baru lewat) - rapat lama dianggap dibuat beberapa hari
-                // sebelum tanggal rapatnya sendiri (bukan di masa depan).
-                if ($tanggal->gte($today->copy()->subDays(14))) {
+                // sebelum tanggal rapatnya sendiri (bukan di masa depan). Rapat yang
+                // dibatalkan selalu pakai pola "dibuat sebelum hari-H" supaya created_at
+                // tidak pernah jatuh setelah momen pembatalannya (1-2 hari sebelum hari-H).
+                if ($tanggal->gte($today->copy()->subDays(14)) && !$bisaDibatalkan) {
                     $createdAt = now()->subDays(random_int(0, 13))->subMinutes(random_int(0, 500));
                 } else {
-                    $createdAt = $tanggal->copy()->subDays(random_int(2, 6));
+                    $createdAt = $tanggal->copy()->subDays(random_int(3, 6));
                 }
 
                 $platform = $pilihBerbobot(['Offline' => 55, 'Online (Zoom)' => 30, 'Hybrid' => 15]);
+
+                // Rapat yang dibatalkan logisnya dibatalkan SEBELUM tanggal rapatnya
+                // (1-2 hari sebelum hari-H), bukan setelah rapat lewat - konsisten
+                // dengan PenjadwalanService::batalkan() yang mencatat dibatalkan_at.
+                $dibatalkanAt = $bisaDibatalkan
+                    ? $tanggal->copy()->subDays(random_int(1, 2))->addHours(random_int(8, 16))
+                    : null;
 
                 DB::table('penjadwalan')->insert([
                     'id_penjadwalan' => $idJadwal,
@@ -255,8 +264,9 @@ class DatabaseSeeder extends Seeder
                     'lokasi_fisik'   => $platform === 'Hybrid' ? $lokasiFisikList[array_rand($lokasiFisikList)] : null,
                     'status'         => $status,
                     'alasan_batal'   => $alasanBatal,
+                    'dibatalkan_at'  => $dibatalkanAt,
                     'created_at'     => $createdAt,
-                    'updated_at'     => $createdAt,
+                    'updated_at'     => $dibatalkanAt ?? $createdAt,
                 ]);
 
                 $judulJadwalById[$idJadwal] = $judul;
@@ -331,7 +341,11 @@ class DatabaseSeeder extends Seeder
             }
 
             $tglKembaliRcn = $tglPinjam->copy()->addDays(random_int(1, 5));
-            $tglKembaliAkt = $status === 'dikembalikan' ? $tglKembaliRcn->copy() : null;
+            // Tanggal kembali aktual tidak boleh mendahului mulainya masa pinjam dan
+            // tidak boleh jatuh di masa depan - kalau rencana kembalinya masih di depan
+            // (peminjaman baru berjalan beberapa hari), anggap dikembalikan lebih awal
+            // yaitu maksimal hari ini.
+            $tglKembaliAkt = $status === 'dikembalikan' ? $tglKembaliRcn->copy()->min($today) : null;
             $alasanBatal   = in_array($status, ['ditolak', 'dibatalkan'], true) ? $alasanTolakBatal[array_rand($alasanTolakBatal)] : null;
             $catatanInv    = $status === 'dikembalikan' ? $catatanKembaliBaik[array_rand($catatanKembaliBaik)] : null;
 
@@ -343,14 +357,23 @@ class DatabaseSeeder extends Seeder
                 $keperluan = 'Kebutuhan peralatan untuk ' . $judulJadwalById[$idPenjadwalanTerkait];
             }
 
-            if ($tglPinjam->gte($today->copy()->subDays(14))) {
+            // Pengajuan selalu dibuat SEBELUM tanggal pinjam, dan tidak mungkin dibuat
+            // di masa depan: untuk tanggal pinjam yang masih akan datang, pengajuannya
+            // dibuat dalam dua minggu terakhir; untuk yang sudah lewat, dibuat 1-3 hari
+            // sebelum tanggal pinjamnya.
+            if ($tglPinjam->gt($today)) {
                 $createdAt = now()->subDays(random_int(0, 13))->subMinutes(random_int(0, 500));
             } else {
-                $createdAt = $tglPinjam->copy()->subDays(random_int(1, 3));
+                $createdAt = $tglPinjam->copy()->subDays(random_int(1, 3))->addHours(random_int(8, 16));
             }
-            $updatedAt = in_array($status, ['diajukan'], true)
-                ? $createdAt
-                : $createdAt->copy()->addDays(random_int(0, 2))->addHours(random_int(1, 8));
+            // updated_at mengikuti kejadian terakhir yang masuk akal per status:
+            // diajukan belum pernah disentuh lagi, dikembalikan terakhir diubah saat
+            // barangnya dikonfirmasi kembali, sisanya saat diputuskan inventaris.
+            $updatedAt = match (true) {
+                $status === 'diajukan'     => $createdAt,
+                $status === 'dikembalikan' => $tglKembaliAkt->copy()->addHours(random_int(8, 17)),
+                default                    => $createdAt->copy()->addDays(random_int(0, 2))->addHours(random_int(1, 8))->min(now()),
+            };
 
             DB::table('peminjaman')->insert([
                 'id_peminjaman'           => $idPeminjaman,
@@ -363,15 +386,22 @@ class DatabaseSeeder extends Seeder
                 'status'                  => $status,
                 'catatan_inventaris'      => $catatanInv,
                 'alasan_batal'            => $alasanBatal,
+                // Konsisten dengan PeminjamanService::batalkan() yang selalu mencatat
+                // kapan pembatalan terjadi - pakai updated_at karena itu momen
+                // perubahan terakhirnya.
+                'dibatalkan_at'           => $status === 'dibatalkan' ? $updatedAt : null,
                 'created_at'              => $createdAt,
                 'updated_at'              => $updatedAt,
             ]);
 
             // Status per-item mengikuti status induk supaya konsisten dengan approve/reject
-            // per-alat (lihat migration add_status_to_peminjaman_item_table).
+            // per-alat. Pengajuan yang dibatalkan itemnya tetap 'diajukan' - sama seperti
+            // PeminjamanService::batalkan() sungguhan - karena 'ditolak' adalah keputusan
+            // inventaris, bukan efek pembatalan oleh peminjamnya sendiri; label
+            // "Dibatalkan" pada item diturunkan dari status induk saat ditampilkan.
             $statusItem = match ($status) {
                 'disetujui', 'dikembalikan' => 'disetujui',
-                'ditolak', 'dibatalkan'     => 'ditolak',
+                'ditolak'                   => 'ditolak',
                 default                     => 'diajukan',
             };
 

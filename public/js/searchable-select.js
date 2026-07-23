@@ -24,7 +24,9 @@
 
     var TRIGGER_CLASSES = 'searchable-select-trigger w-full h-10 px-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-surface dark:bg-surface-dark text-sm font-sans flex items-center justify-between gap-2 cursor-pointer transition-[border-color,box-shadow] duration-200 [&.open]:border-primary [&.open]:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
     var TRIGGER_ERROR_CLASSES = 'searchable-select-trigger w-full h-10 px-3 border border-danger-text rounded-lg bg-surface dark:bg-surface-dark text-sm font-sans flex items-center justify-between gap-2 cursor-pointer transition-[border-color,box-shadow] duration-200 [&.open]:shadow-[0_0_0_3px_rgba(231,76,60,0.15)]';
-    var DROPDOWN_CLASSES = 'searchable-select-dropdown hidden absolute top-[calc(100%+4px)] left-0 right-0 z-30 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 rounded-lg p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] [&.open]:block';
+    // Class 'drop-up' ditambahkan openDropdown() saat ruang viewport di bawah trigger
+    // tidak cukup - dropdown pindah membuka ke atas supaya tidak terpotong layar.
+    var DROPDOWN_CLASSES = 'searchable-select-dropdown hidden absolute top-[calc(100%+4px)] left-0 right-0 z-30 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 rounded-lg p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] [&.open]:block [&.drop-up]:top-auto [&.drop-up]:bottom-[calc(100%+4px)] [&.drop-up]:shadow-[0_-8px_24px_rgba(0,0,0,0.12)]';
     var SEARCH_INPUT_CLASSES = 'searchable-select-input w-full h-9 pl-8 pr-8 border border-gray-300 dark:border-gray-700 rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-sm font-sans focus:outline-none focus:border-primary';
 
     function closeAllDropdowns(except) {
@@ -164,6 +166,18 @@
             wrapper.querySelector('.searchable-select-clear').classList.add('hidden');
         }
         renderOptions(select, listEl, '');
+
+        // Setelah isinya dirender (tinggi dropdown sudah final), cek sisa ruang
+        // viewport: kalau di bawah trigger tidak muat dan ruang di atas lebih lega,
+        // buka ke atas supaya daftarnya tidak terpotong tepi bawah layar.
+        dropdown.classList.remove('drop-up');
+        var trigRect = trigger.getBoundingClientRect();
+        var ruangBawah = window.innerHeight - trigRect.bottom;
+        var ruangAtas = trigRect.top;
+        if (ruangBawah < dropdown.offsetHeight + 12 && ruangAtas > ruangBawah) {
+            dropdown.classList.add('drop-up');
+        }
+
         if (input) input.focus();
     }
 

@@ -102,10 +102,13 @@
         </section>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="{{ asset('js/adminhub.js') }}"></script>
-        <script src="{{ asset('js/content.js') }}"></script>
-        <script src="{{ asset('js/searchable-select.js') }}"></script>
-        <script src="{{ asset('js/live-search.js') }}"></script>
+        {{-- ?v=filemtime = cache busting: tanpa ini browser bisa terus memakai versi
+             lama dari cache walau file JS-nya sudah berubah di server. --}}
+        <script src="{{ asset('js/adminhub.js') }}?v={{ filemtime(public_path('js/adminhub.js')) }}"></script>
+        <script src="{{ asset('js/content.js') }}?v={{ filemtime(public_path('js/content.js')) }}"></script>
+        <script src="{{ asset('js/searchable-select.js') }}?v={{ filemtime(public_path('js/searchable-select.js')) }}"></script>
+        <script src="{{ asset('js/datetime-picker.js') }}?v={{ filemtime(public_path('js/datetime-picker.js')) }}"></script>
+        <script src="{{ asset('js/live-search.js') }}?v={{ filemtime(public_path('js/live-search.js')) }}"></script>
         @stack('scripts')
     </body>
 

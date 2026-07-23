@@ -173,10 +173,26 @@ class OperatorController extends Controller
         ];
     }
 
-    public function jadwalIndex()
+    public function jadwalIndex(Request $request)
     {
+        // Filter search/platform/status sama persis dengan PenjadwalanController::index()
+        // milik admin - status "Aktif"/"Selesai" diturunkan dari tanggal+waktu, bukan
+        // string literal di kolom status (lihat komentar di sana).
         $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])
             ->whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
+            ->when($request->search, fn($q, $s) =>
+                $q->where(fn($qq) => $qq->where('judul_kegiatan', 'like', "%{$s}%")
+                                        ->orWhere('platform', 'like', "%{$s}%"))
+            )
+            ->when($request->platform, fn($q, $p) =>
+                $q->where('platform', 'like', "%{$p}%")
+            )
+            ->when($request->status, fn($q, $s) => match ($s) {
+                'aktif'      => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) >= NOW()'),
+                'selesai'    => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) < NOW()'),
+                'dibatalkan' => $q->where('status', 'dibatalkan'),
+                default      => $q,
+            })
             // Sama seperti PenjadwalanController::index() - rapat Aktif tampil dulu
             // (terdekat ke terjauh), baru rapat Selesai+Dibatalkan digabung sebagai
             // satu riwayat di bawah, diurutkan dari yang paling baru terjadi supaya
@@ -185,7 +201,8 @@ class OperatorController extends Controller
             ->orderByRaw("CASE WHEN status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()
                           THEN -DATEDIFF(tanggal, CURDATE()) ELSE DATEDIFF(tanggal, CURDATE()) END ASC")
             ->orderBy('waktu_mulai')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
         $bisaTambah = auth()->user()->punyaAkses('jadwal', 'tambah');
         $bisaUbah   = auth()->user()->punyaAkses('jadwal', 'ubah');
         return view('dashboard.jadwal.index', compact('jadwal', 'bisaTambah', 'bisaUbah'));

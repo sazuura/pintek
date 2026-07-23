@@ -226,6 +226,50 @@ class PeminjamanServiceTest extends TestCase
     }
 
     /** @test */
+    public function konfirmasi_kembali_gagal_kalau_tanggal_pinjam_masih_di_masa_depan(): void
+    {
+        $peminjaman = Peminjaman::create(array_merge($this->dataHeader(), [
+            'id_peminjaman'           => IdGenerator::next(Peminjaman::class, 'id_peminjaman', 'PMJ-'),
+            'status'                  => 'disetujui',
+            'tanggal_pinjam'          => now()->addMonth()->format('Y-m-d'),
+            'tanggal_kembali_rencana' => now()->addMonth()->addDays(3)->format('Y-m-d'),
+        ]));
+        PeminjamanItem::create([
+            'id_peminjaman' => $peminjaman->id_peminjaman,
+            'id_peralatan'  => $this->alat->id_peralatan,
+            'jumlah'        => 1,
+            'status'        => 'disetujui',
+        ]);
+        Peralatan::whereKey($this->alat->id_peralatan)->decrement('stok', 1);
+
+        try {
+            $this->service->konfirmasiKembali($peminjaman, $this->inventaris);
+            $this->fail('Seharusnya melempar RuntimeException.');
+        } catch (\RuntimeException $e) {
+            $this->assertMatchesRegularExpression('/belum bisa dikonfirmasi kembali/', $e->getMessage());
+        }
+
+        // Status dan stok tidak boleh berubah - pengembalian batal total.
+        $this->assertSame('disetujui', $peminjaman->fresh()->status);
+        $this->assertNull($peminjaman->fresh()->tanggal_kembali_aktual);
+        $this->assertSame(4, $this->alat->fresh()->stok);
+    }
+
+    /** @test */
+    public function badge_item_menampilkan_dibatalkan_saat_pengajuan_induknya_dibatalkan(): void
+    {
+        // batalkan() membiarkan status item 'diajukan' (bukan keputusan inventaris) -
+        // label badge-nya harus ikut status induk, bukan tampil "Menunggu"/"Ditolak".
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan], 'dibatalkan');
+
+        $item = Peminjaman::with('items')->find($peminjaman->id_peminjaman)->items->first();
+
+        $this->assertSame('diajukan', $item->status);
+        $this->assertSame('Dibatalkan', $item->badge['label']);
+        $this->assertSame('badge-danger', $item->badge['class']);
+    }
+
+    /** @test */
     public function setujui_item_hanya_mengubah_status_item_itu_alat_lain_tetap_menunggu(): void
     {
         $alatKedua = Peralatan::create([
@@ -407,6 +451,36 @@ class PeminjamanServiceTest extends TestCase
         $this->assertSame(3, $alatKedua->fresh()->stok);    // proyektor TIDAK dobel dikembalikan
     }
 
+    /** @test */
+    public function operator_bisa_search_dan_filter_tanggal_di_riwayat_pengajuan(): void
+    {
+        $a = $this->buatPeminjaman([$this->alat->id_peralatan]);
+        $a->update(['keperluan' => 'Dokumentasi kegiatan lapangan', 'tanggal_pinjam' => '2026-07-01']);
+        $b = $this->buatPeminjaman([$this->alat->id_peralatan]);
+        $b->update(['keperluan' => 'Backup jaringan Puskesmas', 'tanggal_pinjam' => '2026-07-20']);
+
+        // Search keperluan.
+        $this->actingAs($this->operator)
+            ->get(route('operator.peminjaman.index', ['search' => 'Dokumentasi']))
+            ->assertOk()
+            ->assertSee('Dokumentasi kegiatan lapangan')
+            ->assertDontSee('Backup jaringan Puskesmas');
+
+        // Search nama alat ikut menemukan pengajuan yang memuat alat itu.
+        $this->actingAs($this->operator)
+            ->get(route('operator.peminjaman.index', ['search' => 'Laptop']))
+            ->assertOk()
+            ->assertSee('Dokumentasi kegiatan lapangan')
+            ->assertSee('Backup jaringan Puskesmas');
+
+        // Rentang tanggal pinjam.
+        $this->actingAs($this->operator)
+            ->get(route('operator.peminjaman.index', ['start' => '2026-07-10', 'end' => '2026-07-31']))
+            ->assertOk()
+            ->assertSee('Backup jaringan Puskesmas')
+            ->assertDontSee('Dokumentasi kegiatan lapangan');
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function buatUser(string $id, string $role, string $nohp = '080000000000'): User
@@ -426,7 +500,10 @@ class PeminjamanServiceTest extends TestCase
     {
         return [
             'id_user'                 => $this->operator->id_user,
-            'tanggal_pinjam'          => now()->addDay()->format('Y-m-d'),
+            // Hari ini (bukan besok) supaya konfirmasiKembali() valid dijalankan pada
+            // peminjaman buatan helper ini - masa pinjam yang belum dimulai memang
+            // ditolak oleh guard di konfirmasiKembali().
+            'tanggal_pinjam'          => now()->format('Y-m-d'),
             'tanggal_kembali_rencana' => now()->addDays(3)->format('Y-m-d'),
             'keperluan'               => 'Rapat dinas',
             'status'                  => 'diajukan',

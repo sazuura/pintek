@@ -85,7 +85,7 @@
                                 </td>
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     <div class="flex gap-1.5 items-center justify-center">
-                                        @if($bisaUbah && $p->isDisetujui())
+                                        @if($bisaUbah && $p->isDisetujui() && !$p->tanggal_pinjam->isFuture())
                                             <button type="button" title="Konfirmasi Kembali"
                                                 class="{{ $actionClass }} bg-primary-50 dark:bg-[#0d2a40] text-primary"
                                                 onclick="bukaKonfirmasiKembali('{{ route('inventaris.peminjaman.kembali', $p->id_peminjaman) }}')">
@@ -249,7 +249,7 @@
                         <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark text-center text-xs text-text-muted">
                             <i class="bx bx-info-circle"></i> Buka detail untuk memutuskan tiap alat
                         </div>
-                    @elseif($bisaUbah && $p->isDisetujui())
+                    @elseif($bisaUbah && $p->isDisetujui() && !$p->tanggal_pinjam->isFuture())
                         <div class="py-2.5 px-3.5 border-t border-page-bg dark:border-page-bg-dark flex gap-1.5">
                             <button type="button"
                                 class="flex-1 justify-center h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-primary-50 dark:bg-[#0d2a40] text-primary"

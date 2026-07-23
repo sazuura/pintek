@@ -28,6 +28,13 @@ class PeminjamanItem extends Model
 
     public function getBadgeAttribute(): array
     {
+        // Pembatalan dicatat di pengajuan induk saja - status item sengaja dibiarkan
+        // 'diajukan' oleh PeminjamanService::batalkan() karena inventaris tidak pernah
+        // memutuskan apa-apa. Tanpa cek ini, item pengajuan yang sudah dibatalkan
+        // tampil "Menunggu" seolah masih menunggu keputusan.
+        if ($this->peminjaman?->isDibatalkan()) {
+            return ['class' => 'badge-danger', 'label' => 'Dibatalkan'];
+        }
         return match ($this->status) {
             'diajukan'  => ['class' => 'badge-warning', 'label' => 'Menunggu'],
             'disetujui' => ['class' => 'badge-active',  'label' => 'Disetujui'],

@@ -109,6 +109,37 @@ class AuthRoutingTest extends TestCase
              ->assertForbidden();
     }
 
+    /** @test */
+    public function user_yang_dinonaktifkan_di_tengah_sesi_langsung_dipaksa_logout(): void
+    {
+        $operator = $this->buatUser('US002', 'operator');
+
+        // Sesi berjalan normal dulu.
+        $this->actingAs($operator)
+             ->get(route('operator.dashboard'))
+             ->assertOk();
+
+        // Admin menonaktifkan akun ini SAAT sesinya masih hidup.
+        $operator->update(['status' => 'inactive']);
+
+        // Request berikutnya harus langsung diputus - bukan menunggu login ulang.
+        $this->get(route('operator.dashboard'))
+             ->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
+
+    /** @test */
+    public function user_nonaktif_yang_dipaksa_logout_mendapat_pesan_akun_dinonaktifkan(): void
+    {
+        $operator = $this->buatUser('US002', 'operator');
+        $operator->update(['status' => 'inactive']);
+
+        $this->actingAs($operator)
+             ->get(route('operator.dashboard'))
+             ->assertRedirect(route('login'))
+             ->assertSessionHasErrors('email');
+    }
+
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private function buatUser(string $id, string $role): User

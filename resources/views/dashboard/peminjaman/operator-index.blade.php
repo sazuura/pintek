@@ -22,6 +22,12 @@
 
         <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
             <form method="GET" action="{{ route($roleAktif . '.peminjaman.index') }}" class="contents">
+                <div class="relative flex-1 min-w-[180px] max-w-[300px]">
+                    <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
+                    <input type="text" name="search" data-live-search="#hasil-peminjaman" autocomplete="off"
+                        placeholder="Cari keperluan, nama alat..." value="{{ request('search') }}"
+                        class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
+                </div>
                 <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
@@ -32,7 +38,13 @@
                     </option>
                     <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                 </select>
-                @if(request('status'))
+                <label class="text-[13px] text-text-muted whitespace-nowrap">Tgl Pinjam</label>
+                <input type="date" name="start" value="{{ request('start') }}" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                <label class="text-[13px] text-text-muted whitespace-nowrap">s/d</label>
+                <input type="date" name="end" value="{{ request('end') }}" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                @if(request()->hasAny(['search', 'status', 'start', 'end']))
                     <a href="{{ route($roleAktif . '.peminjaman.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                         <i class="bx bx-x"></i> Reset</a>
@@ -40,6 +52,7 @@
             </form>
         </div>
 
+        <div id="hasil-peminjaman">
         <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
             <div class="py-4 px-5 flex items-center justify-between border-b border-page-bg dark:border-page-bg-dark">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark">Riwayat Pengajuan</h3>
@@ -238,6 +251,7 @@
         <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
             <x-pagination :paginator="$peminjaman">{{ $peminjaman->total() }} total pengajuan</x-pagination>
         </div>
+        </div>{{-- /#hasil-peminjaman (region yang di-refresh live-search) --}}
 
         {{-- Modal detail pengajuan, dipakai kartu mobile --}}
         <div id="modalPeminjamanDetail"

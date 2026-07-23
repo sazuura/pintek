@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\MenuAkses;
+use App\Http\Middleware\PastikanUserAktif;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'role'       => RoleMiddleware::class,
             'menu-akses' => MenuAkses::class,
         ]);
+
+        // Dicek di setiap request web (setelah session aktif): user yang statusnya
+        // dinonaktifkan admin langsung dipaksa logout saat itu juga, tidak menunggu
+        // dia logout/login ulang.
+        $middleware->web(append: PastikanUserAktif::class);
 
         // Guest yang belum login diarahkan ke halaman login, user yang sudah
         // login tapi buka halaman guest (mis. login) diarahkan ke /dashboard -
