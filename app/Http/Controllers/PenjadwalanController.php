@@ -5,6 +5,7 @@ use App\Models\Peralatan;
 use App\Models\User;
 use App\Services\PenjadwalanService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
 class PenjadwalanController extends Controller
@@ -194,6 +195,18 @@ class PenjadwalanController extends Controller
             'peralatan_jumlah'   => 'nullable|array',
             'peralatan_jumlah.*' => 'nullable|integer|min:1',
         ]);
+
+        // Rule per-field di atas cuma menjamin tanggal >= hari ini dan selesai > mulai -
+        // untuk rapat di HARI INI, jamnya masih bisa diisi jam yang sudah terlewati
+        // sehingga jadwal baru langsung lahir berstatus "Selesai". Gabungan
+        // tanggal+waktu_selesai harus masih di masa depan.
+        $selesaiPada = Carbon::parse($validated['tanggal'] . ' ' . $validated['waktu_selesai']);
+        if ($selesaiPada->isPast()) {
+            throw ValidationException::withMessages([
+                'waktu_selesai' => 'Waktu rapat sudah terlewati - jadwal tidak bisa dibuat/diubah ke jam yang sudah berlalu.',
+            ]);
+        }
+
         return [
             'jadwal' => [
                 'judul_kegiatan' => $validated['judul_kegiatan'],

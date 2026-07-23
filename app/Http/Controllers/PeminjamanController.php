@@ -215,8 +215,18 @@ class PeminjamanController extends Controller
     }
     public function inventarisIndex(Request $request){
         $peminjaman = Peminjaman::with(['user', 'items.peralatan', 'penjadwalan'])
+            // Search mencakup nama pemohon, keperluan, dan nama alat di dalam
+            // pengajuan - dibungkus where() supaya orWhere tidak bocor keluar
+            // dari filter status/operator yang sedang aktif.
+            ->when($request->search, fn($q, $s) =>
+                $q->where(fn($qq) => $qq->where('keperluan', 'like', "%{$s}%")
+                    ->orWhereHas('user', fn($qu) => $qu->where('nama_user', 'like', "%{$s}%"))
+                    ->orWhereHas('items.peralatan', fn($qa) => $qa->where('nama_peralatan', 'like', "%{$s}%")))
+            )
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
             ->when($request->id_user, fn($q, $v) => $q->where('id_user', $v))
+            ->when($request->start, fn($q, $v) => $q->whereDate('tanggal_pinjam', '>=', $v))
+            ->when($request->end,   fn($q, $v) => $q->whereDate('tanggal_pinjam', '<=', $v))
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();

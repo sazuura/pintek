@@ -414,7 +414,7 @@ function navigasiKalender() {
 pilihBulan.addEventListener('change', navigasiKalender);
 pilihTahun.addEventListener('change', navigasiKalender);
 
-// Tooltip kustom (position:fixed) untuk sel kalender — tidak pernah terpotong oleh overflow:hidden.
+// Tooltip kustom (position:fixed) untuk sel kalender - tidak pernah terpotong oleh overflow:hidden.
 var calendarTooltip = document.getElementById('calendarTooltip');
 
 document.querySelectorAll('[data-tooltip]').forEach(function (cell) {

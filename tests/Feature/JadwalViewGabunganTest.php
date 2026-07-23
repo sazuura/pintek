@@ -153,6 +153,27 @@ class JadwalViewGabunganTest extends TestCase
     }
 
     /** @test */
+    public function tidak_bisa_membuat_jadwal_pada_jam_yang_sudah_terlewati_hari_ini(): void
+    {
+        // Bekukan waktu supaya tidak flaky di jam berapapun test dijalankan.
+        $this->travelTo(Carbon::parse('2026-07-23 14:00:00'));
+
+        $response = $this->actingAs($this->admin)->post(route('admin.jadwal.store'), [
+            'judul_kegiatan' => 'Rapat Jam Lewat',
+            'tanggal'        => '2026-07-23',   // hari ini (lolos after_or_equal:today)
+            'waktu_mulai'    => '08:00',        // tapi jamnya sudah berlalu
+            'waktu_selesai'  => '10:00',
+            'platform'       => 'Offline',
+            'operator_ids'   => [$this->operator->id_user],
+        ]);
+
+        $response->assertSessionHasErrors('waktu_selesai');
+        $this->assertDatabaseMissing('penjadwalan', ['judul_kegiatan' => 'Rapat Jam Lewat']);
+
+        $this->travelBack();
+    }
+
+    /** @test */
     public function operator_bisa_search_dan_filter_status_di_jadwal_saya(): void
     {
         // Jadwal kedua milik operator yang sama, statusnya dibatalkan - untuk

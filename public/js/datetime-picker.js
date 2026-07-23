@@ -62,6 +62,10 @@
         if (ruangBawah < panel.offsetHeight + 12 && rect.top > ruangBawah) {
             panel.classList.add('drop-up');
         }
+        // Kalau dua arah sama-sama sempit (mis. trigger di toolbar paling atas halaman
+        // yang kontennya pendek), gulir container scroll seminimal mungkin supaya
+        // panel yang terlanjur terpotong tepi layar jadi terlihat utuh.
+        panel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
 
     function buatWrapper(input, ikon) {

@@ -117,7 +117,7 @@
                         <h3 class="m-0 text-[15px] font-semibold text-text dark:text-text-dark flex items-center gap-2">
                             <i class="bx bx-list-ul"></i> Hak Akses Halaman
                         </h3>
-                        <p class="text-xs text-text-muted m-0 mt-1">Daftar Menu Dashboard — <span id="modalHakAksesRole" class="font-semibold text-primary"></span></p>
+                        <p class="text-xs text-text-muted m-0 mt-1">Daftar Menu Dashboard - <span id="modalHakAksesRole" class="font-semibold text-primary"></span></p>
                     </div>
                     <button type="button" data-modal-close
                         class="w-[30px] h-[30px] rounded-full flex items-center justify-center text-text-muted text-lg shrink-0 transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark hover:text-text dark:hover:text-text-dark">

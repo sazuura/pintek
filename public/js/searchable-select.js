@@ -177,6 +177,9 @@
         if (ruangBawah < dropdown.offsetHeight + 12 && ruangAtas > ruangBawah) {
             dropdown.classList.add('drop-up');
         }
+        // Dua arah sama-sama sempit (mis. trigger di toolbar atas halaman pendek):
+        // gulir container scroll seminimal mungkin supaya dropdown terlihat utuh.
+        dropdown.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 
         if (input) input.focus();
     }

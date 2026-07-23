@@ -481,6 +481,53 @@ class PeminjamanServiceTest extends TestCase
             ->assertDontSee('Dokumentasi kegiatan lapangan');
     }
 
+    /** @test */
+    public function inventaris_bisa_search_pemohon_keperluan_dan_nama_alat(): void
+    {
+        $a = $this->buatPeminjaman([$this->alat->id_peralatan]);
+        $a->update(['keperluan' => 'Dokumentasi kegiatan lapangan']);
+
+        $operatorLain = $this->buatUser('US003', 'operator');
+        $b = $this->buatPeminjaman([$this->alat->id_peralatan]);
+        $b->update(['keperluan' => 'Backup jaringan Puskesmas', 'id_user' => $operatorLain->id_user]);
+
+        // Search nama pemohon.
+        $this->actingAs($this->inventaris)
+            ->get(route('inventaris.peminjaman.index', ['search' => 'User US003']))
+            ->assertOk()
+            ->assertSee('Backup jaringan Puskesmas')
+            ->assertDontSee('Dokumentasi kegiatan lapangan');
+
+        // Search keperluan.
+        $this->actingAs($this->inventaris)
+            ->get(route('inventaris.peminjaman.index', ['search' => 'Dokumentasi']))
+            ->assertOk()
+            ->assertSee('Dokumentasi kegiatan lapangan')
+            ->assertDontSee('Backup jaringan Puskesmas');
+
+        // Search nama alat menemukan kedua pengajuan yang memuat alat itu.
+        $this->actingAs($this->inventaris)
+            ->get(route('inventaris.peminjaman.index', ['search' => 'Laptop']))
+            ->assertOk()
+            ->assertSee('Dokumentasi kegiatan lapangan')
+            ->assertSee('Backup jaringan Puskesmas');
+    }
+
+    /** @test */
+    public function inventaris_bisa_filter_rentang_tanggal_pinjam(): void
+    {
+        $a = $this->buatPeminjaman([$this->alat->id_peralatan]);
+        $a->update(['keperluan' => 'Dokumentasi kegiatan lapangan', 'tanggal_pinjam' => '2026-07-01']);
+        $b = $this->buatPeminjaman([$this->alat->id_peralatan]);
+        $b->update(['keperluan' => 'Backup jaringan Puskesmas', 'tanggal_pinjam' => '2026-07-20']);
+
+        $this->actingAs($this->inventaris)
+            ->get(route('inventaris.peminjaman.index', ['start' => '2026-07-10', 'end' => '2026-07-31']))
+            ->assertOk()
+            ->assertSee('Backup jaringan Puskesmas')
+            ->assertDontSee('Dokumentasi kegiatan lapangan');
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function buatUser(string $id, string $role, string $nohp = '080000000000'): User
