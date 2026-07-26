@@ -8,9 +8,9 @@
             <h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Pengaturan Sistem</h1>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-4 items-start">
+        <div class="grid grid-cols-1 gap-4 items-start">
 
-            {{-- Kolom kiri: tabel role --}}
+            {{-- Tabel role - jumlah role sudah fix (admin/operator/inventaris), tidak ada tambah role lagi --}}
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-5">
                 <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
                     <h3 class="text-[15px] font-semibold text-text dark:text-text-dark flex items-center gap-2 m-0">
@@ -22,7 +22,7 @@
                     </span>
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto max-xs:hidden">
                     <table class="w-full border-collapse text-[13px]">
                         <thead>
                             <tr class="text-left text-text-muted border-b border-page-bg dark:border-page-bg-dark">
@@ -47,9 +47,6 @@
                                         <div class="flex items-center gap-2">
                                             <span class="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
                                             <span class="font-semibold text-text dark:text-text-dark">{{ $role->nama_role }}</span>
-                                            @if($role->slug === 'admin')
-                                                <i class="bx bx-lock-alt text-text-muted text-sm" title="Role admin tidak bisa dihapus"></i>
-                                            @endif
                                         </div>
                                         <div class="text-xs text-text-muted mt-0.5 pl-3.5">{{ $role->jumlah_menu_terlihat }} menu dapat diakses</div>
                                     </td>
@@ -61,7 +58,7 @@
                                         <x-badge :variant="$role->isAktif() ? 'badge-active' : 'badge-inactive'">{{ ucfirst($role->status) }}</x-badge>
                                     </td>
                                     <td class="py-3 pl-3">
-                                        <div class="flex gap-1.5 items-center justify-end">
+                                        <div class="flex items-center justify-end">
                                             <button type="button"
                                                 onclick="bukaModalHakAkses({{ $role->id }}, '{{ addslashes($role->nama_role) }}', this)"
                                                 data-akses='@json($role->aksesMenu->keyBy("id_menu"))'
@@ -69,17 +66,6 @@
                                                 title="Kelola hak akses menu">
                                                 <i class="bx bx-cog"></i>
                                             </button>
-                                            @unless($role->slug === 'admin')
-                                                <form action="{{ route('admin.pengaturan.role-akses.destroy', $role) }}" method="POST"
-                                                    onsubmit="return confirm('Hapus role {{ addslashes($role->nama_role) }}?')">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit"
-                                                        class="w-8 h-8 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
-                                                        title="Hapus role">
-                                                        <i class="bx bx-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @endunless
                                         </div>
                                     </td>
                                 </tr>
@@ -87,23 +73,37 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
 
-            {{-- Kolom kanan: tambah role --}}
-            <div class="flex flex-col gap-4">
-                <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-5">
-                    <h3 class="text-[15px] font-semibold text-text dark:text-text-dark flex items-center gap-2 m-0 mb-4">
-                        <span class="w-8 h-8 rounded-lg bg-success/15 text-success-text flex items-center justify-center shrink-0"><i class="bx bx-plus"></i></span>
-                        Tambah Role Akses
-                    </h3>
-                    <form action="{{ route('admin.pengaturan.role-akses.store') }}" method="POST" class="flex flex-col gap-4">
-                        @csrf
-                        <x-input name="nama_role" label="Nama Role" required value="{{ old('nama_role') }}" />
-                        <button type="submit"
-                            class="h-10 rounded-lg border-none bg-primary hover:bg-primary-600 text-white font-medium text-[13px] cursor-pointer transition-colors duration-200">
-                            Simpan Role
-                        </button>
-                    </form>
+                {{-- Kartu role - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
+                <div class="hidden max-xs:flex flex-col gap-3">
+                    @foreach($roles as $role)
+                        <div class="bg-page-bg dark:bg-page-bg-dark rounded-xl p-4 flex flex-col gap-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
+                                    <span class="font-semibold text-sm text-text dark:text-text-dark truncate">{{ $role->nama_role }}</span>
+                                </div>
+                                <x-badge :variant="$role->isAktif() ? 'badge-active' : 'badge-inactive'">{{ ucfirst($role->status) }}</x-badge>
+                            </div>
+                            <div class="text-xs text-text-muted -mt-2 pl-3.5">{{ $role->jumlah_menu_terlihat }} menu dapat diakses</div>
+
+                            <div class="flex items-center justify-around pt-3 border-t border-surface dark:border-surface-dark">
+                                @foreach(['tambah' => 'C', 'lihat' => 'R', 'ubah' => 'U', 'hapus' => 'D'] as $kolom => $label)
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="text-[10px] font-semibold uppercase text-text-muted">{{ $label }}</span>
+                                        {!! $dot($role->ringkasan[$kolom]) !!}
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <button type="button"
+                                onclick="bukaModalHakAkses({{ $role->id }}, '{{ addslashes($role->nama_role) }}', this)"
+                                data-akses='@json($role->aksesMenu->keyBy("id_menu"))'
+                                class="h-10 rounded-lg border-none cursor-pointer inline-flex items-center justify-center gap-1.5 text-[13px] font-medium font-sans transition-opacity duration-200 hover:opacity-85 bg-surface dark:bg-surface-dark text-text dark:text-text-dark">
+                                <i class="bx bx-cog text-base"></i> Kelola Akses
+                            </button>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>

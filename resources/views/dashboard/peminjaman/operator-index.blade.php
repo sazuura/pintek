@@ -271,7 +271,7 @@
         <x-modal-konfirmasi id="modalBatalkanPengajuan" title="Batalkan Pengajuan" icon="bx-error" icon-class="text-danger-text">
             <div class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
                 <div class="text-[13px] font-semibold text-[#c0392b]">
-                    <i class="bx bx-error"></i> Batalkan pengajuan - notif WA akan dikirim ke inventaris
+                    <i class="bx bx-error"></i> Batalkan pengajuan? notif WA akan dikirim ke inventaris
                 </div>
             </div>
             <form id="formBatalkanPengajuan" method="POST">

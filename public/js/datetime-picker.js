@@ -108,10 +108,12 @@
 
         var viewDate = parseTanggal(input.value) || new Date();
 
+        // Abu-abu cuma dipakai untuk field wajib yang belum diisi (mis. Tanggal jadwal) -
+        // filter tanggal opsional (mis. Laporan) tampil warna teks biasa, sama seperti select.
         function syncLabel() {
             var teks = formatTanggal(input.value);
             ui.label.textContent = teks || 'Pilih tanggal';
-            ui.label.classList.toggle('text-text-muted', !teks);
+            ui.label.classList.toggle('text-text-muted', !teks && input.required);
         }
 
         function render() {
@@ -217,7 +219,7 @@
         function syncLabel() {
             var v = nilai();
             ui.label.textContent = v ? pad(v.jam) + ':' + pad(v.menit) : 'Pilih jam';
-            ui.label.classList.toggle('text-text-muted', !v);
+            ui.label.classList.toggle('text-text-muted', !v && input.required);
         }
 
         function render() {

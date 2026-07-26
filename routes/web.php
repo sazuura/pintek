@@ -71,8 +71,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::middleware('menu-akses:pengaturan')->group(function () {
         Route::prefix('pengaturan')->name('pengaturan.')->group(function () {
             Route::get('/role-akses',              [RoleAksesController::class, 'index'])->name('role-akses.index');
-            Route::post('/role-akses',              [RoleAksesController::class, 'store'])->name('role-akses.store');
-            Route::delete('/role-akses/{role}',     [RoleAksesController::class, 'destroy'])->name('role-akses.destroy');
             Route::put('/role-akses/{role}/akses',  [RoleAksesController::class, 'updateAkses'])->name('role-akses.updateAkses');
         });
     });

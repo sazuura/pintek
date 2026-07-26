@@ -71,8 +71,8 @@
                         <div class="dynamic-list flex flex-col gap-2.5" id="peralatan-list">
                             <div class="dynamic-item flex gap-2.5 items-center">
                                 <select name="peralatan_ids[]" class="peralatan-select searchable flex-1"
-                                    data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()">
-                                    <option value="" selected>-- Pilih Alat --</option>
+                                    data-placeholder="-- Pilih Alat --"  onchange="refreshPeralatanOptions()">
+                                    <option value="" disabled selected>-- Pilih Alat --</option>
                                     @foreach($daftarPeralatan as $alat)
                                         <option value="{{ $alat->id_peralatan }}"
                                             data-subtitle="{{ $alat->gedung }} &middot; Stok: {{ $alat->stok_tersedia }}"
@@ -101,8 +101,7 @@
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
                     <i class="bx bxs-group"></i> Operator Bertugas <span class="text-[#e74c3c] ml-0.5">*</span></h3>
                 <p class="text-xs text-text-muted mb-1.5">
-                    Operator yang sudah dipilih di baris lain otomatis tersembunyi.
-                    Operator yang sudah punya jadwal di tanggal ini akan di-disable.
+                    Operator yang sudah punya jadwal di tanggal ini akan di-disable
                 </p>
                 <div class="dynamic-list flex flex-col gap-2.5" id="operator-list">
                     <div class="dynamic-item flex gap-2.5 items-center">
@@ -123,7 +122,7 @@
                     </div>
                 </div>
                 <button type="button" id="add-operator"
-                    class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-1 w-fit hover:bg-primary-50">
+                    class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-4 w-fit hover:bg-primary-50">
                     <i class="bx bx-plus"></i> Tambah Operator
                 </button>
                 @error('operator_ids')

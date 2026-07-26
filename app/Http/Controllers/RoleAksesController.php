@@ -4,7 +4,6 @@ use App\Models\Menu;
 use App\Models\Role;
 use App\Models\RoleMenuAkses;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 /**
  * "Sistem Settings" - kelola role & hak akses menu secara dinamis (Gambar 1 & 2 di
@@ -50,55 +49,6 @@ class RoleAksesController extends Controller
             ->get();
 
         return view('dashboard.pengaturan.role-akses', compact('roles', 'menus'));
-    }
-
-    public function store(Request $request)
-    {
-        abort_if(!auth()->user()->punyaAkses('pengaturan', 'tambah'), 403, 'Anda tidak memiliki akses untuk menambah role.');
-        $data = $request->validate([
-            'nama_role' => 'required|string|max:100|unique:roles,nama_role',
-        ]);
-
-        $slug = Str::slug($data['nama_role'], '_');
-        if (Role::where('slug', $slug)->exists()) {
-            return back()->withInput()->withErrors(['nama_role' => 'Role dengan nama serupa sudah ada.']);
-        }
-
-        $role = Role::create([
-            'nama_role'   => $data['nama_role'],
-            'slug'        => $slug,
-            'status'      => 'aktif',
-            'is_terkunci' => false,
-        ]);
-
-        // Siapkan baris akses kosong (semua false) untuk tiap menu yang sudah terdaftar,
-        // supaya modal "Hak Akses Halaman" langsung punya baris untuk dicentang.
-        foreach (Menu::pluck('id') as $idMenu) {
-            RoleMenuAkses::create([
-                'id_role' => $role->id,
-                'id_menu' => $idMenu,
-            ]);
-        }
-
-        return redirect()->route('admin.pengaturan.role-akses.index')
-            ->with('success', "Role \"{$role->nama_role}\" berhasil ditambahkan.");
-    }
-
-    public function destroy(Role $role)
-    {
-        abort_if(!auth()->user()->punyaAkses('pengaturan', 'hapus'), 403, 'Anda tidak memiliki akses untuk menghapus role.');
-        if ($role->slug === 'admin') {
-            return back()->with('error', "Role \"{$role->nama_role}\" tidak dapat dihapus.");
-        }
-
-        if (\App\Models\User::where('role', $role->slug)->exists()) {
-            return back()->with('error', "Role \"{$role->nama_role}\" masih dipakai oleh satu atau lebih user, tidak dapat dihapus.");
-        }
-
-        $nama = $role->nama_role;
-        $role->delete();
-
-        return back()->with('success', "Role \"{$nama}\" berhasil dihapus.");
     }
 
     public function updateAkses(Request $request, Role $role)
