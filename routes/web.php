@@ -32,7 +32,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     });
     Route::middleware('menu-akses:jadwal')->group(function () {
-        Route::resource('jadwal', PenjadwalanController::class)->names('jadwal');
+        Route::resource('jadwal', PenjadwalanController::class)->names('jadwal')->except(['destroy']);
         Route::post('/jadwal/{id}/batalkan', [PenjadwalanController::class, 'batalkan'])->name('jadwal.batalkan');
     });
     Route::middleware('menu-akses:users')->group(function () {
@@ -95,12 +95,8 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
         Route::resource('users', UserController::class)->names('users')->except(['show']);
     });
     Route::middleware('menu-akses:jadwal')->group(function () {
-        Route::get('/jadwal', [OperatorController::class, 'jadwalIndex'])->name('jadwal.index');
-        // Index tetap baca-saja lewat OperatorController (cuma jadwal milik sendiri), tapi
-        // create/edit dsb dipasangkan ke PenjadwalanController yang sama dengan admin, supaya
-        // kalau hak akses tambah/ubah jadwal dinyalakan untuk role operator lewat Sistem
-        // Settings, rute tujuan tombolnya (yang dinamis lewat auth()->user()->role di view)
-        // benar-benar ada - bukan cuma dicentang tapi tidak berfungsi.
+        // index() dipasangkan ke PenjadwalanController yang sama dengan admin (bedanya cuma cakupan data, ditangani di dalam method).
+        Route::get('/jadwal',           [PenjadwalanController::class, 'index'])->name('jadwal.index');
         Route::get('/jadwal/create',    [PenjadwalanController::class, 'create'])->name('jadwal.create');
         Route::post('/jadwal',          [PenjadwalanController::class, 'store'])->name('jadwal.store');
         Route::get('/jadwal/{id}',      [PenjadwalanController::class, 'show'])->name('jadwal.show');
@@ -110,11 +106,8 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
     });
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::prefix('peralatan')->name('peralatan.')->group(function () {
-            Route::get('/', [OperatorController::class, 'peralatanIndex'])->name('index');
-            // Sama seperti jadwal di atas - index baca-saja tetap punya query khusus operator,
-            // tapi create/edit/delete dipasangkan ke PeralatanController yang sama dengan
-            // inventaris supaya hak akses tambah/ubah/hapus peralatan bisa benar-benar
-            // dipakai kalau dinyalakan untuk role operator.
+            // index() dipasangkan ke PeralatanController yang sama dengan admin/inventaris - peralatan tidak dibatasi kepemilikan per role.
+            Route::get('/',          [PeralatanController::class, 'index'])->name('index');
             Route::get('/create',    [PeralatanController::class, 'create'])->name('create');
             Route::post('/',         [PeralatanController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [PeralatanController::class, 'edit'])->name('edit');

@@ -14,33 +14,27 @@ class PenjadwalanController extends Controller
 
     public function index(Request $request)
     {
-        // Kolom "status" di database cuma menyimpan selesai/dibatalkan - label
-        // "Aktif" vs "Selesai" di tampilan sebenarnya diturunkan dari apakah waktu
-        // rapat sudah lewat atau belum (lihat isDibatalkan()/$sudahLewat di view),
-        // jadi filternya juga harus dihitung dari tanggal+waktu, bukan match string.
+        // Operator cuma lihat jadwal yang ditugaskan ke dirinya; role lain lihat semua.
         $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])
+            ->when(auth()->user()->role === 'operator', fn($q) =>
+                $q->whereHas('operators', fn($qq) => $qq->where('users.id_user', auth()->user()->id_user))
+            )
+            // where() dibungkus closure supaya orWhere tidak bocor ke scope operator di atas.
             ->when($request->search, fn($q, $s) =>
-                $q->where('judul_kegiatan', 'like', "%{$s}%")
-                  ->orWhere('platform', 'like', "%{$s}%")
+                $q->where(fn($qq) => $qq->where('judul_kegiatan', 'like', "%{$s}%")
+                                        ->orWhere('platform', 'like', "%{$s}%"))
             )
             ->when($request->platform, fn($q, $p) =>
                 $q->where('platform', 'like', "%{$p}%")
             )
+            // Status Aktif/Selesai diturunkan dari tanggal+waktu, bukan kolom status literal.
             ->when($request->status, fn($q, $s) => match ($s) {
                 'aktif'      => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) >= NOW()'),
                 'selesai'    => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) < NOW()'),
                 'dibatalkan' => $q->where('status', 'dibatalkan'),
                 default      => $q,
             })
-            // Urutan default: rapat yang masih Aktif selalu tampil paling atas,
-            // diurutkan dari tanggal yang paling dekat dengan hari ini (fokus utama
-            // pengguna). Rapat yang sudah Selesai ATAU Dibatalkan digabung jadi satu
-            // kelompok "riwayat" di bagian bawah dan diurutkan murni dari yang paling
-            // BARU terjadi ke yang paling lama - bukan dipisah per status - supaya
-            // tidak ada lompatan tanggal yang jauh (mis. rapat dibatalkan bulan
-            // Februari nyempil duluan sebelum rapat selesai bulan Juli yang jauh
-            // lebih baru). Definisi "sudah berakhir" sama persis dengan filter status
-            // di atas supaya konsisten dengan badge yang ditampilkan.
+            // Aktif tampil dulu (tanggal terdekat); Selesai+Dibatalkan digabung satu riwayat di bawah (paling baru dulu).
             ->orderByRaw("(status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()) ASC")
             ->orderByRaw("CASE WHEN status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()
                           THEN -DATEDIFF(tanggal, CURDATE()) ELSE DATEDIFF(tanggal, CURDATE()) END ASC")
@@ -87,7 +81,12 @@ class PenjadwalanController extends Controller
 
     public function show(string $id)
     {
-        $jadwal = Penjadwalan::with(['operators', 'peminjaman.user', 'peralatanReferensi'])->findOrFail($id);
+        $jadwal = Penjadwalan::with([
+            'operators',
+            'peralatanReferensi',
+            // Urut dari yang paling lama diajukan supaya riwayat kebaca runtut.
+            'peminjaman' => fn ($q) => $q->with(['user', 'items'])->orderBy('created_at'),
+        ])->findOrFail($id);
         return view('dashboard.jadwal.show', compact('jadwal'));
     }
 
@@ -141,8 +140,7 @@ class PenjadwalanController extends Controller
 
     private function peralatanUntukReferensi()
     {
-        // stok/rusak ikut diambil supaya accessor stok_tersedia bisa dipakai
-        // di view untuk menandai alat yang stoknya sedang habis (data-badge "Stok Habis").
+        // stok/rusak diambil supaya accessor stok_tersedia bisa dipakai di view.
         return Peralatan::orderBy('nama_peralatan')->get(['id_peralatan', 'nama_peralatan', 'gedung', 'stok', 'rusak']);
     }
 
@@ -162,14 +160,6 @@ class PenjadwalanController extends Controller
                 'mulai'   => substr($j->waktu_mulai, 0, 5),
                 'selesai' => substr($j->waktu_selesai, 0, 5),
             ])->values());
-    }
-
-    public function destroy(string $id)
-    {
-        abort_if(!auth()->user()->punyaAkses('jadwal', 'hapus'), 403, 'Anda tidak memiliki akses untuk menghapus jadwal.');
-        $this->service->hapus(Penjadwalan::findOrFail($id));
-        return redirect()->route(auth()->user()->role . '.jadwal.index')
-            ->with('success', 'Jadwal berhasil dihapus.');
     }
 
     private function validasiForm(Request $request, bool $isUpdate = false): array
@@ -196,10 +186,7 @@ class PenjadwalanController extends Controller
             'peralatan_jumlah.*' => 'nullable|integer|min:1',
         ]);
 
-        // Rule per-field di atas cuma menjamin tanggal >= hari ini dan selesai > mulai -
-        // untuk rapat di HARI INI, jamnya masih bisa diisi jam yang sudah terlewati
-        // sehingga jadwal baru langsung lahir berstatus "Selesai". Gabungan
-        // tanggal+waktu_selesai harus masih di masa depan.
+        // Rule per-field tidak menangkap jam yang sudah lewat untuk rapat hari ini.
         $selesaiPada = Carbon::parse($validated['tanggal'] . ' ' . $validated['waktu_selesai']);
         if ($selesaiPada->isPast()) {
             throw ValidationException::withMessages([

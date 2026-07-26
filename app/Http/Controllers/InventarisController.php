@@ -46,27 +46,6 @@ class InventarisController extends Controller
         ));
     }
 
-    public function peralatanIndex(Request $request)
-    {
-        $peralatan = Peralatan::query()
-            ->when($request->search, fn($q, $s) =>
-                $q->where('nama_peralatan', 'like', "%{$s}%")
-                  ->orWhere('kode_barang',  'like', "%{$s}%")
-            )
-            ->when($request->status, fn($q, $v) => match ($v) {
-                'tersedia'       => $q->whereRaw('(stok - COALESCE(rusak,0)) > 0'),
-                'tidak_tersedia' => $q->whereRaw('(stok - COALESCE(rusak,0)) <= 0'),
-                'kritis'         => $q->whereRaw('(stok - COALESCE(rusak,0)) BETWEEN 1 AND 2'),
-                default          => $q,
-            })
-            ->orderBy('gedung') 
-            ->orderBy('nama_peralatan')
-            ->paginate(10)
-            ->withQueryString();
-
-        return view('dashboard.peralatan.index', compact('peralatan'));
-    }
-
     public function laporanIndex(Request $request)
     {
         $gedungList = Peralatan::distinct()->pluck('gedung')

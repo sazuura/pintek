@@ -116,21 +116,6 @@ class PenjadwalanServiceTest extends TestCase
     }
 
     /** @test */
-    public function hapus_jadwal_menghapus_penugasan_operator_terkait(): void
-    {
-        $this->service->buat(
-            data:        $this->dataJadwal('2030-03-01'),
-            operatorIds: [$this->operator1->id_user],
-        );
-
-        $jadwal = Penjadwalan::first();
-        $this->service->hapus($jadwal);
-
-        $this->assertDatabaseMissing('penjadwalan', ['id_penjadwalan' => $jadwal->id_penjadwalan]);
-        $this->assertDatabaseMissing('jadwal_operator', ['id_penjadwalan' => $jadwal->id_penjadwalan]);
-    }
-
-    /** @test */
     public function batalkan_jadwal_mengubah_status_dan_menyimpan_alasan(): void
     {
         $this->service->buat(
@@ -305,19 +290,63 @@ class PenjadwalanServiceTest extends TestCase
     }
 
     /** @test */
-    public function hapus_jadwal_menghapus_meeting_zoom_jika_ada(): void
+    public function peralatan_sudah_diajukan_menghitung_total_jumlah_bukan_sekadar_nama(): void
     {
-        $this->zoomMock->shouldReceive('buatMeeting')
-            ->once()
-            ->andReturn(['meeting_id' => 'MTG777', 'join_url' => 'https://zoom.us/j/777', 'password' => 'zz11']);
+        // Kasus nyata: jadwal merekomendasikan 2 Proyektor, tapi baru diajukan 1 -
+        // harus terbaca sisa 1, bukan dianggap "sudah lengkap" cuma karena namanya
+        // sudah pernah muncul di satu pengajuan (lihat autoIsiDariReferensi() di
+        // public/js/peminjaman-form.js yang bergantung pada angka ini).
+        $jadwal = $this->service->buat(
+            data: $this->dataJadwal('2030-06-01'),
+            operatorIds: [$this->operator1->id_user],
+        );
 
-        $data = $this->dataJadwal('2030-05-05');
-        $data['link_otomatis'] = true;
-        $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator1->id_user]);
+        $alat = \App\Models\Peralatan::create([
+            'id_peralatan' => 'PR-900', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 5,
+        ]);
 
-        $this->zoomMock->shouldReceive('hapusMeeting')->once()->with('akun_1', 'MTG777')->andReturn(true);
+        $peminjaman = \App\Models\Peminjaman::create([
+            'id_peminjaman' => 'PMJ-900', 'id_user' => $this->operator1->id_user,
+            'id_penjadwalan' => $jadwal->id_penjadwalan,
+            'tanggal_pinjam' => '2030-06-01', 'tanggal_kembali_rencana' => '2030-06-02',
+            'keperluan' => 'Rapat', 'status' => 'diajukan',
+        ]);
+        \App\Models\PeminjamanItem::create([
+            'id_peminjaman' => $peminjaman->id_peminjaman, 'id_peralatan' => $alat->id_peralatan, 'jumlah' => 1,
+        ]);
 
-        $this->service->hapus($jadwal->fresh());
+        $hasil = $jadwal->fresh()->peralatanSudahDiajukan();
+
+        $this->assertSame(['Proyektor' => 1], $hasil);
+    }
+
+    /** @test */
+    public function peralatan_sudah_diajukan_menjumlahkan_lintas_beberapa_pengajuan(): void
+    {
+        $jadwal = $this->service->buat(
+            data: $this->dataJadwal('2030-06-02'),
+            operatorIds: [$this->operator1->id_user, $this->operator2->id_user],
+        );
+
+        $alat = \App\Models\Peralatan::create([
+            'id_peralatan' => 'PR-901', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 5,
+        ]);
+
+        foreach ([['PMJ-901', $this->operator1, 1], ['PMJ-902', $this->operator2, 1]] as [$id, $user, $jumlah]) {
+            $p = \App\Models\Peminjaman::create([
+                'id_peminjaman' => $id, 'id_user' => $user->id_user,
+                'id_penjadwalan' => $jadwal->id_penjadwalan,
+                'tanggal_pinjam' => '2030-06-02', 'tanggal_kembali_rencana' => '2030-06-03',
+                'keperluan' => 'Rapat', 'status' => 'diajukan',
+            ]);
+            \App\Models\PeminjamanItem::create([
+                'id_peminjaman' => $p->id_peminjaman, 'id_peralatan' => $alat->id_peralatan, 'jumlah' => $jumlah,
+            ]);
+        }
+
+        $hasil = $jadwal->fresh()->peralatanSudahDiajukan();
+
+        $this->assertSame(['Proyektor' => 2], $hasil);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

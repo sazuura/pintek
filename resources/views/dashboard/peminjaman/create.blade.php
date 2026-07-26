@@ -15,7 +15,8 @@
             </a>
         </div>
 
-        <form action="{{ route($roleAktif . '.peminjaman.store') }}" method="POST" id="form-peminjaman" novalidate>
+        <form action="{{ route($roleAktif . '.peminjaman.store') }}" method="POST" id="form-peminjaman" novalidate
+            data-cek-spam-url="{{ route($roleAktif . '.peminjaman.cekSpam') }}">
             @csrf
 
             @php
@@ -29,7 +30,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2">
                         <x-select name="id_penjadwalan" id="id_penjadwalan"
-                            hint="Pilih apabila peminjaman ini terkait salah satu rapat yang Anda tugaskan. Keperluan dan Tanggal Pinjam akan terisi otomatis (dapat diubah). Konfirmasi akan ditampilkan apabila peralatan yang sama telah diajukan oleh operator lain untuk mencegah duplikasi.">
+                            hint="Pilih apabila peminjaman ini terkait salah satu rapat yang Anda tugaskan">
                             <x-slot:label>Kaitkan ke Jadwal <small class="font-normal text-text-muted ml-1">(opsional)</small></x-slot:label>
                             <option value="">-- Tidak terkait jadwal tertentu --</option>
                             @foreach($jadwalAktif as $j)
@@ -43,9 +44,9 @@
                                 </option>
                             @endforeach
                         </x-select>
-                        <div id="referensi-hint" class="hidden bg-primary-50 dark:bg-[#0d2a40] rounded-lg py-2.5 px-3.5 mt-1">
-                            <p class="text-[13px] text-primary font-medium m-0"><i class="bx bx-info-circle"></i> Alat yang direkomendasikan admin untuk jadwal ini sudah otomatis ditambahkan di bawah tanpa mengubah alat yang sudah Anda pilih (tetap bisa diubah/dihapus):</p>
-                            <p id="referensi-hint-list" class="text-[13px] text-primary m-0 mt-1"></p>
+                        <div id="referensi-hint" class="hidden bg-page-bg dark:bg-page-bg-dark rounded-lg py-2.5 px-3.5 mt-1">
+                            <p class="text-[13px] text-text dark:text-text-dark font-medium m-0 mb-1.5"><i class="bx bx-info-circle text-primary"></i> Rekomendasi alat untuk jadwal ini:</p>
+                            <div id="referensi-hint-list" class="flex flex-col gap-1"></div>
                         </div>
                     </div>
                     <div class="md:col-span-2">
@@ -62,15 +63,11 @@
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
                     <i class="bx bxs-wrench"></i> Pilih Peralatan <span class="text-[#e74c3c] ml-0.5">*</span></h3>
-                <p class="{{ $hintClass }} mb-3.5">
-                    Peralatan dari gedung berbeda akan mengirim notifikasi ke masing-masing inventaris secara otomatis.
-                    Peralatan yang sudah dipilih di baris lain tersembunyi otomatis.
-                </p>
 
                 <div class="dynamic-list flex flex-col gap-2.5" id="peralatan-list">
                     <div class="dynamic-item flex gap-2.5 items-center">
                         <select name="peralatan_ids[]" class="{{ $inputClass }} peralatan-select searchable"
-                            data-placeholder="Cari alat..." onchange="refreshPeralatanOptions()" required>
+                            data-placeholder="-- Pilih Peralatan --" onchange="refreshPeralatanOptions()" required>
                             <option value="" disabled selected>-- Pilih Peralatan --</option>
                             @foreach($peralatan as $gedung => $items)
                                 <optgroup label="{{ $gedung }}">
@@ -93,7 +90,7 @@
                     </div>
                 </div>
                 <button type="button" id="add-peralatan"
-                    class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-1 w-fit hover:bg-primary-50">
+                    class="h-9 px-3.5 bg-page-bg dark:bg-page-bg-dark text-primary border border-dashed border-primary rounded-lg text-[13px] font-sans font-medium cursor-pointer inline-flex items-center gap-1.5 transition-colors duration-200 mt-4 w-fit hover:bg-primary-50">
                     <i class="bx bx-plus"></i> Tambah Peralatan
                 </button>
                 @error('peralatan_ids')
@@ -146,284 +143,5 @@
 @endsection
 
 @push('scripts')
-    <script>
-        // ── Kaitkan ke Jadwal: auto-isi Keperluan & Tanggal Pinjam, cek peralatan yang
-        //    sudah diajukan operator lain (utk peringatan+konfirmasi, bukan blokir), dan
-        //    auto-isi baris peralatan dari rekomendasi admin (peralatanReferensi) ──
-        var jadwalSudahDiajukan = [];
-        var jadwalReferensi     = [];
-        var jadwalGantiTerakhir = null; // cegah auto-isi ulang kalau jadwal yang sama dipilih lagi
-
-        function updateJadwalDuplikasiState(jadwalBerubah) {
-            var select = document.getElementById('id_penjadwalan');
-            var opt = select.options[select.selectedIndex];
-            if (!opt || !opt.value) {
-                jadwalSudahDiajukan = [];
-                jadwalReferensi = [];
-            } else {
-                try { jadwalSudahDiajukan = JSON.parse(opt.dataset.sudahDiajukan || '[]'); } catch (e) { jadwalSudahDiajukan = []; }
-                try { jadwalReferensi = JSON.parse(opt.dataset.referensi || '[]'); } catch (e) { jadwalReferensi = []; }
-            }
-            updateReferensiHint();
-            if (jadwalBerubah) autoIsiDariReferensi();
-            refreshPeralatanOptions();
-        }
-
-        // Tambahkan rekomendasi admin utk jadwal ini ke daftar peralatan TANPA
-        // menghilangkan baris yang sudah dipilih operator sendiri (mis. alat yang
-        // dibawa dari tombol "Pinjam" di halaman Peralatan) - rekomendasi masuk
-        // sebagai baris baru, yang sudah terlanjur dipilih tidak didobel. Baris
-        // hasil auto-isi ditandai data-auto-ref supaya kalau operator ganti pilihan
-        // jadwal, cuma baris rekomendasi jadwal lama yang dibuang - pilihan manual
-        // tidak pernah disentuh. Alat yang sudah diajukan operator lain dilewati
-        // (tetap disebut di keterangan).
-        var autoFillSedangJalan = false;
-
-        function autoIsiDariReferensi() {
-            var list = document.getElementById('peralatan-list');
-            autoFillSedangJalan = true;
-
-            // Bersihkan baris auto-isi dari jadwal SEBELUMNYA yang belum diubah user.
-            Array.from(list.querySelectorAll('.dynamic-item[data-auto-ref]')).forEach(function (row) {
-                if (list.children.length > 1) {
-                    row.remove();
-                } else {
-                    // Baris terakhir tidak boleh dihapus - kosongkan saja.
-                    row.querySelector('select').value = '';
-                    row.querySelector('input[type=number]').value = '';
-                    delete row.dataset.autoRef;
-                }
-            });
-
-            var bisaDiisi = jadwalReferensi.filter(function (r) { return jadwalSudahDiajukan.indexOf(r.nama) === -1; });
-            var terpilih  = getSelectedPeralatan();
-
-            bisaDiisi.forEach(function (r) {
-                if (terpilih.indexOf(String(r.id)) !== -1) return; // sudah dipilih manual, jangan dobel
-
-                // Pakai baris kosong yang ada dulu (mis. baris pertama yang belum diisi),
-                // baru bikin baris baru kalau semua baris sudah terisi.
-                var kosong = Array.from(list.querySelectorAll('.dynamic-item')).find(function (row) {
-                    return row.querySelector('select').value === '';
-                });
-                var row;
-                if (kosong) {
-                    row = kosong;
-                    var sel = row.querySelector('select');
-                    sel.value = r.id;
-                    sel.dispatchEvent(new Event('change', { bubbles: true }));
-                    row.querySelector('input[type=number]').value = r.jumlah;
-                } else {
-                    row = addPeralatanRow(r.id, r.jumlah);
-                }
-                row.dataset.autoRef = '1';
-                terpilih.push(String(r.id));
-            });
-
-            autoFillSedangJalan = false;
-            updateRemoveButtons();
-            refreshPeralatanOptions();
-            window.SearchableSelect && window.SearchableSelect.refreshAll();
-        }
-
-        // Begitu user mengubah sendiri isi sebuah baris (bukan perubahan dari auto-isi),
-        // baris itu dianggap pilihan manual - lepas tanda auto-ref supaya tidak ikut
-        // terbuang saat pilihan jadwal diganti.
-        document.getElementById('peralatan-list').addEventListener('change', function (e) {
-            if (autoFillSedangJalan) return;
-            var row = e.target.closest('.dynamic-item');
-            if (row) delete row.dataset.autoRef;
-        });
-
-        function updateReferensiHint() {
-            var box  = document.getElementById('referensi-hint');
-            var list = document.getElementById('referensi-hint-list');
-            if (jadwalReferensi.length === 0) {
-                box.classList.add('hidden');
-                return;
-            }
-
-            var teks = jadwalReferensi.map(function (r) {
-                var sudah = jadwalSudahDiajukan.indexOf(r.nama) !== -1;
-                return r.nama + ' (x' + r.jumlah + ')' + (sudah ? ' - sudah diajukan, tidak diisi otomatis' : '');
-            }).join(', ');
-
-            list.textContent = teks;
-            box.classList.remove('hidden');
-        }
-
-        document.getElementById('id_penjadwalan').addEventListener('change', function () {
-            var opt = this.options[this.selectedIndex];
-            if (opt.value) {
-                document.getElementById('keperluan').value = opt.dataset.judul;
-                document.getElementById('tanggal_pinjam').value = opt.dataset.tanggal;
-            }
-            var berubah = jadwalGantiTerakhir !== opt.value;
-            jadwalGantiTerakhir = opt.value;
-            updateJadwalDuplikasiState(berubah);
-        });
-
-        function getSelectedPeralatan() {
-            return Array.from(document.querySelectorAll('.peralatan-select'))
-                .map(function (s) { return s.value; }).filter(function (v) { return v !== ''; });
-        }
-
-        function refreshPeralatanOptions() {
-            var selected = getSelectedPeralatan();
-            document.querySelectorAll('.peralatan-select').forEach(function (select) {
-                var currentVal = select.value;
-                Array.from(select.options).forEach(function (opt) {
-                    if (!opt.value) return;
-                    opt.hidden = selected.includes(opt.value) && opt.value !== currentVal;
-
-                    // Dicocokkan lewat nama alat (bukan id_peralatan) supaya alat yang sama
-                    // tapi baris stoknya beda di gedung lain (mis. Kabel HDMI 15 Meter yang
-                    // ada di Gedung A & Gedung B) tetap kena tanda "Sudah Diajukan".
-                    var sudahDiajukan = jadwalSudahDiajukan.indexOf(opt.dataset.nama) !== -1;
-
-                    // Alat yang sudah diajukan operator lain tetap bisa dipilih (tidak diblokir),
-                    // cuma diberi tanda peringatan - konfirmasi tetap muncul sebelum submit.
-                    if (sudahDiajukan) {
-                        opt.dataset.badge = 'Sudah Diajukan';
-                        opt.dataset.badgeVariant = 'warning';
-                    } else {
-                        delete opt.dataset.badge;
-                        delete opt.dataset.badgeVariant;
-                    }
-                });
-            });
-            window.SearchableSelect && window.SearchableSelect.refreshAll();
-        }
-
-        function removeItem(btn) {
-            var list = document.getElementById('peralatan-list');
-            if (list.children.length > 1) {
-                btn.closest('.dynamic-item').remove();
-                refreshPeralatanOptions();
-            }
-            updateRemoveButtons();
-        }
-
-        function updateRemoveButtons() {
-            var items = document.querySelectorAll('#peralatan-list .dynamic-item');
-            items.forEach(function (item) {
-                item.querySelector('.btn-remove').disabled = items.length <= 1;
-            });
-        }
-
-        document.getElementById('add-peralatan').addEventListener('click', function () {
-            addPeralatanRow();
-            refreshPeralatanOptions();
-            updateRemoveButtons();
-        });
-
-        // Bikin satu baris baru (dipakai tombol "Tambah Peralatan" & auto-isi dari rekomendasi jadwal).
-        // Kalau value/jumlah diisi, langsung di-set & dipicu event change-nya.
-        function addPeralatanRow(value, jumlah) {
-            var list = document.getElementById('peralatan-list');
-            var clone = list.querySelector('.dynamic-item').cloneNode(true);
-            clone.querySelectorAll('option').forEach(function (opt) { opt.hidden = false; opt.disabled = false; delete opt.dataset.badge; delete opt.dataset.badgeVariant; });
-            clone.querySelector('select').value = '';
-            clone.querySelector('input[type=number]').value = '';
-            clone.querySelector('select').onchange = refreshPeralatanOptions;
-            clone.querySelector('.btn-remove').disabled = false;
-            clone.querySelector('.btn-remove').onclick = function () { removeItem(this); };
-            list.appendChild(clone);
-            window.SearchableSelect && window.SearchableSelect.reinitRow(clone);
-
-            if (value) {
-                var select = clone.querySelector('select');
-                select.value = value;
-                select.dispatchEvent(new Event('change', { bubbles: true }));
-                window.SearchableSelect && window.SearchableSelect.refreshAll();
-            }
-            if (jumlah) {
-                clone.querySelector('input[type=number]').value = jumlah;
-            }
-            return clone;
-        }
-        document.addEventListener('DOMContentLoaded', function () {
-            updateJadwalDuplikasiState();
-        });
-
-        // ── Konfirmasi sebelum submit kalau operator memilih alat yang sudah
-        //    diajukan/dipinjam operator lain untuk jadwal yang sama - pakai modal custom
-        //    di tengah layar, bukan window.confirm() bawaan browser ──
-        function escapeHtml(str) {
-            var div = document.createElement('div');
-            div.textContent = str == null ? '' : String(str);
-            return div.innerHTML;
-        }
-
-        // Alur konfirmasi sebelum submit (dua tahap, berurutan):
-        //   1. Duplikasi alat vs jadwal (operator lain sudah ajukan alat sama untuk jadwal ini) - sinkron, dari data yang sudah dimuat di awal halaman.
-        //   2. Pengajuan berulang/spam (operator ini sendiri sudah berkali-kali ajukan alat sama di tanggal pinjam yang sama) - via AJAX ke server karena datanya baru diketahui setelah tanggal & alat dipilih.
-        // Keduanya cuma peringatan (bisa dilanjutkan setelah konfirmasi), bukan blokir keras.
-        document.getElementById('form-peminjaman').addEventListener('submit', function (e) {
-            e.preventDefault();
-            lanjutkanSetelahCekDuplikat();
-        });
-
-        function lanjutkanSetelahCekDuplikat() {
-            var namaBentrok = [];
-            if (jadwalSudahDiajukan.length > 0) {
-                document.querySelectorAll('.peralatan-select').forEach(function (select) {
-                    var opt = select.options[select.selectedIndex];
-                    if (!opt || jadwalSudahDiajukan.indexOf(opt.dataset.nama) === -1) return;
-                    namaBentrok.push(opt.dataset.nama || select.value);
-                });
-            }
-
-            if (namaBentrok.length > 0) {
-                document.getElementById('modalKonfirmasiDuplikatList').innerHTML = namaBentrok.map(function (n) {
-                    return '<li>' + escapeHtml(n) + '</li>';
-                }).join('');
-                bukaModalKonfirmasi('modalKonfirmasiDuplikat');
-                return;
-            }
-
-            cekSpamLaluSubmit();
-        }
-
-        function konfirmasiTetapAjukan() {
-            tutupModalKonfirmasi('modalKonfirmasiDuplikat');
-            cekSpamLaluSubmit();
-        }
-
-        function cekSpamLaluSubmit() {
-            var form = document.getElementById('form-peminjaman');
-            var formData = new FormData(form);
-
-            fetch('{{ route($roleAktif . '.peminjaman.cekSpam') }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                },
-                body: formData,
-            })
-                .then(function (res) { return res.json(); })
-                .then(function (data) {
-                    var peringatan = data.peringatan || [];
-                    if (peringatan.length > 0) {
-                        document.getElementById('modalPeringatanSpamList').innerHTML = peringatan.map(function (p) {
-                            return '<li>' + escapeHtml(p.nama) + ' (sudah diajukan ' + p.jumlah_sebelumnya + 'x untuk tanggal pinjam ini)</li>';
-                        }).join('');
-                        bukaModalKonfirmasi('modalPeringatanSpam');
-                    } else {
-                        form.submit();
-                    }
-                })
-                .catch(function () {
-                    // Kalau pengecekan gagal (mis. jaringan bermasalah), jangan sampai
-                    // memblokir pengajuan asli - langsung submit saja.
-                    form.submit();
-                });
-        }
-
-        function konfirmasiTetapAjukanSpam() {
-            tutupModalKonfirmasi('modalPeringatanSpam');
-            document.getElementById('form-peminjaman').submit();
-        }
-    </script>
+    <script src="{{ asset('js/peminjaman-form.js') }}?v={{ filemtime(public_path('js/peminjaman-form.js')) }}"></script>
 @endpush

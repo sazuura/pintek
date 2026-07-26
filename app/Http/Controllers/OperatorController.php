@@ -1,7 +1,6 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Peminjaman;
-use App\Models\Peralatan;
 use App\Models\Penjadwalan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -173,76 +172,4 @@ class OperatorController extends Controller
         ];
     }
 
-    public function jadwalIndex(Request $request)
-    {
-        // Filter search/platform/status sama persis dengan PenjadwalanController::index()
-        // milik admin - status "Aktif"/"Selesai" diturunkan dari tanggal+waktu, bukan
-        // string literal di kolom status (lihat komentar di sana).
-        $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])
-            ->whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
-            ->when($request->search, fn($q, $s) =>
-                $q->where(fn($qq) => $qq->where('judul_kegiatan', 'like', "%{$s}%")
-                                        ->orWhere('platform', 'like', "%{$s}%"))
-            )
-            ->when($request->platform, fn($q, $p) =>
-                $q->where('platform', 'like', "%{$p}%")
-            )
-            ->when($request->status, fn($q, $s) => match ($s) {
-                'aktif'      => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) >= NOW()'),
-                'selesai'    => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) < NOW()'),
-                'dibatalkan' => $q->where('status', 'dibatalkan'),
-                default      => $q,
-            })
-            // Sama seperti PenjadwalanController::index() - rapat Aktif tampil dulu
-            // (terdekat ke terjauh), baru rapat Selesai+Dibatalkan digabung sebagai
-            // satu riwayat di bawah, diurutkan dari yang paling baru terjadi supaya
-            // tidak ada lompatan tanggal yang jauh antar status.
-            ->orderByRaw("(status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()) ASC")
-            ->orderByRaw("CASE WHEN status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()
-                          THEN -DATEDIFF(tanggal, CURDATE()) ELSE DATEDIFF(tanggal, CURDATE()) END ASC")
-            ->orderBy('waktu_mulai')
-            ->paginate(10)
-            ->withQueryString();
-        $bisaTambah = auth()->user()->punyaAkses('jadwal', 'tambah');
-        $bisaUbah   = auth()->user()->punyaAkses('jadwal', 'ubah');
-        return view('dashboard.jadwal.index', compact('jadwal', 'bisaTambah', 'bisaUbah'));
-    }
-
-    public function peralatanIndex(Request $request)
-    {
-        // Ambang batas status disamakan persis dengan Peralatan::getStatusLabelAttribute()
-        // (>2 Tersedia, 1-2 Hampir Habis, <=0 Tidak Tersedia) supaya filter konsisten
-        // dengan badge status yang ditampilkan di tiap kartu.
-        $stokTersediaRaw = '(stok - COALESCE(rusak,0))';
-
-        $peralatan = Peralatan::query()
-            ->when($request->search, fn($q, $s) =>
-                $q->where('nama_peralatan', 'like', "%{$s}%")
-                  ->orWhere('gedung',       'like', "%{$s}%")
-            )
-            ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
-            ->when($request->status, fn($q, $v) => match ($v) {
-                'tersedia'       => $q->whereRaw("{$stokTersediaRaw} > 2"),
-                'kritis'         => $q->whereRaw("{$stokTersediaRaw} between 1 and 2"),
-                'tidak_tersedia' => $q->whereRaw("{$stokTersediaRaw} <= 0"),
-                default          => $q,
-            })
-            ->when($request->kondisi, fn($q, $v) => match ($v) {
-                'baik'  => $q->whereRaw('COALESCE(rusak,0) <= 0'),
-                'rusak' => $q->whereRaw('COALESCE(rusak,0) > 0'),
-                default => $q,
-            })
-            ->when($request->urutkan, fn($q, $v) => match ($v) {
-                'gedung'    => $q->orderBy('gedung')->orderBy('nama_peralatan'),
-                'nama_asc'  => $q->orderBy('nama_peralatan'),
-                'nama_desc' => $q->orderByDesc('nama_peralatan'),
-                'stok_asc'  => $q->orderByRaw("{$stokTersediaRaw} asc"),
-                'stok_desc' => $q->orderByRaw("{$stokTersediaRaw} desc"),
-                default     => $q->orderBy('gedung')->orderBy('nama_peralatan'),
-            }, fn($q) => $q->orderBy('gedung')->orderBy('nama_peralatan'))
-            ->paginate(10)
-            ->withQueryString();
-        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('dashboard.peralatan.index', compact('peralatan', 'gedungList'));
-    }
 }

@@ -41,14 +41,8 @@ use Illuminate\Database\Eloquent\Model;
     }
 
     /**
-     * Nama peralatan yang sudah diajukan operator manapun untuk jadwal ini (lewat modul
-     * Peminjaman, status diajukan/disetujui/dikembalikan - bukan yang ditolak/dibatalkan).
-     * Dicocokkan lewat NAMA (bukan id_peralatan) supaya alat yang sama tapi tercatat
-     * sebagai baris stok berbeda di gedung lain (mis. "Kabel HDMI 15 Meter" ada di
-     * Gedung A maupun Gedung B) tetap kena tanda "Sudah Diajukan", bukan cuma baris
-     * persis yang sama. Dipakai buat kasih peringatan (bukan blokir) kalau operator lain
-     * mau mengajukan alat yang sama utk jadwal yang sama - operator tetap boleh lanjut
-     * setelah konfirmasi.
+     * Total jumlah tiap alat yang sudah diajukan (siapa pun) untuk jadwal ini, per nama
+     * alat - dipakai form Peminjaman menghitung sisa kebutuhan, bukan sekadar sudah/belum.
      */
     public function peralatanSudahDiajukan(?string $kecualiIdPeminjaman = null): array
     {
@@ -57,10 +51,10 @@ use Illuminate\Database\Eloquent\Model;
             ->when($kecualiIdPeminjaman, fn ($q, $id) => $q->where('id_peminjaman', '!=', $id))
             ->with('items.peralatan')
             ->get()
-            ->flatMap(fn ($p) => $p->items->pluck('peralatan.nama_peralatan'))
-            ->filter()
-            ->unique()
-            ->values()
+            ->flatMap(fn ($p) => $p->items)
+            ->filter(fn ($item) => $item->peralatan)
+            ->groupBy('peralatan.nama_peralatan')
+            ->map(fn ($items) => $items->sum('jumlah'))
             ->all();
     }
 

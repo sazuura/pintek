@@ -27,7 +27,7 @@ dipakai di judul halaman di bawah.
         </div>
 
         {{-- Toolbar filter tampil untuk semua role - operator (baca saja) juga bisa
-             search/filter jadwal miliknya, query-nya ditangani jadwalIndex(). --}}
+             search/filter jadwal miliknya, query-nya ditangani PenjadwalanController::index(). --}}
         <div
             class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
             <form method="GET" action="{{ route($roleAktif . '.jadwal.index') }}" class="contents">

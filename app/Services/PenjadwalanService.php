@@ -98,12 +98,6 @@ class PenjadwalanService
         ];
     }
 
-    public function hapus(Penjadwalan $jadwal): void
-    {
-        $this->hapusMeetingZoomJikaAda($jadwal);
-        $jadwal->delete();
-    }
-
     public function batalkan(Penjadwalan $jadwal, string $alasan): void
     {
         if ($jadwal->isDibatalkan()) {

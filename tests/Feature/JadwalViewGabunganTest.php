@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Menu;
+use App\Models\Peminjaman;
+use App\Models\PeminjamanItem;
 use App\Models\Penjadwalan;
+use App\Models\Peralatan;
 use App\Models\Role;
 use App\Models\RoleMenuAkses;
 use App\Models\User;
@@ -43,6 +46,42 @@ class JadwalViewGabunganTest extends TestCase
             'platform' => 'Offline', 'status' => 'selesai',
         ]);
         $this->jadwal->operators()->sync([$this->operator->id_user]);
+    }
+
+    /** @test */
+    public function detail_jadwal_menampilkan_tabel_peminjaman_terkait_urut_dari_paling_lama(): void
+    {
+        $alat = Peralatan::create([
+            'id_peralatan' => 'PR-500', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 5,
+        ]);
+
+        // Dua pengajuan untuk jadwal yang sama - dibuat sengaja dalam urutan terbalik
+        // supaya assertSeeInOrder benar-benar membuktikan pengurutan created_at, bukan
+        // kebetulan sudah urut dari insert.
+        $baru = Peminjaman::create([
+            'id_peminjaman' => 'PMJ-501', 'id_user' => $this->operator->id_user,
+            'id_penjadwalan' => $this->jadwal->id_penjadwalan,
+            'tanggal_pinjam' => '2026-08-01', 'tanggal_kembali_rencana' => '2026-08-02',
+            'keperluan' => 'Pengajuan susulan alat kedua', 'status' => 'diajukan',
+            'created_at' => now()->addMinute(),
+        ]);
+        PeminjamanItem::create(['id_peminjaman' => $baru->id_peminjaman, 'id_peralatan' => $alat->id_peralatan, 'jumlah' => 1]);
+
+        $lama = Peminjaman::create([
+            'id_peminjaman' => 'PMJ-500', 'id_user' => $this->operator->id_user,
+            'id_penjadwalan' => $this->jadwal->id_penjadwalan,
+            'tanggal_pinjam' => '2026-08-01', 'tanggal_kembali_rencana' => '2026-08-02',
+            'keperluan' => 'Pengajuan alat pertama', 'status' => 'diajukan',
+            'created_at' => now(),
+        ]);
+        PeminjamanItem::create(['id_peminjaman' => $lama->id_peminjaman, 'id_peralatan' => $alat->id_peralatan, 'jumlah' => 2]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.jadwal.show', $this->jadwal->id_penjadwalan));
+
+        $response->assertOk()
+            ->assertSee('Peminjaman Terkait')
+            ->assertSee('Jumlah Alat')
+            ->assertSeeInOrder(['Pengajuan alat pertama', 'Pengajuan susulan alat kedua'], false);
     }
 
     /** @test */

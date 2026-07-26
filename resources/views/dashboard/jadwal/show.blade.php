@@ -88,23 +88,43 @@
             <p class="text-text-muted text-center py-5">Belum ada catatan alat</p>
             @endforelse
         </div>
+    </div>
 
-        <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
-            <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
-                <i class="bx bx-briefcase"></i> Peminjaman Terkait</h3>
-            <p class="text-xs text-text-muted mt-0.5 mb-3">Pengajuan peminjaman peralatan yang dikaitkan operator ke rapat ini.</p>
-            @forelse($jadwal->peminjaman as $p)
-            <div class="flex items-center justify-between py-2.5 border-b border-page-bg dark:border-page-bg-dark">
-                <div>
-                    <div class="font-medium text-text dark:text-text-dark">{{ $p->keperluan }}</div>
-                    <div class="text-xs text-text-muted">{{ $p->user->nama_user ?? '-' }}</div>
-                </div>
-                <x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge>
-            </div>
-            @empty
+    <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-6 mb-5">
+        <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-1 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
+            <i class="bx bx-briefcase"></i> Peminjaman Terkait</h3>
+        <p class="text-xs text-text-muted mt-2 mb-3">Pengajuan peminjaman peralatan yang dikaitkan operator ke rapat ini, diurutkan dari yang paling lama diajukan.</p>
+        @if($jadwal->peminjaman->isEmpty())
             <p class="text-text-muted text-center py-5">Belum ada peminjaman terkait</p>
-            @endforelse
-        </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="py-2.5 px-3 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Pemohon</th>
+                            <th class="py-2.5 px-3 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Tgl Pinjam</th>
+                            <th class="py-2.5 px-3 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rencana Kembali</th>
+                            <th class="py-2.5 px-3 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Jumlah Alat</th>
+                            <th class="py-2.5 px-3 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($jadwal->peminjaman as $p)
+                        <tr class="border-b border-page-bg dark:border-page-bg-dark last:border-b-0">
+                            <td class="py-2.5 px-3 text-sm align-middle">
+                                <div class="font-medium text-text dark:text-text-dark">{{ $p->user->nama_user ?? '-' }}</div>
+                                <div class="text-xs text-text-muted truncate max-w-[220px]">{{ $p->keperluan }}</div>
+                            </td>
+                            <td class="py-2.5 px-3 text-sm text-text dark:text-text-dark align-middle text-left whitespace-nowrap">{{ $p->tanggal_pinjam->format('d/m/Y') }}</td>
+                            <td class="py-2.5 px-3 text-sm text-text dark:text-text-dark align-middle text-left whitespace-nowrap">{{ $p->tanggal_kembali_rencana->format('d/m/Y') }}</td>
+                            <td class="py-2.5 px-3 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->items->sum('jumlah') }}</td>
+                            <td class="py-2.5 px-3 text-sm align-middle text-center"><x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
 </main>
 @endsection
