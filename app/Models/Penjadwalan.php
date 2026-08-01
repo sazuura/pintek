@@ -1,6 +1,5 @@
 <?php
 namespace App\Models;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
     class Penjadwalan extends Model
@@ -41,8 +40,7 @@ use Illuminate\Database\Eloquent\Model;
     }
 
     /**
-     * Total jumlah tiap alat yang sudah diajukan (siapa pun) untuk jadwal ini, per nama
-     * alat - dipakai form Peminjaman menghitung sisa kebutuhan, bukan sekadar sudah/belum.
+     * Total jumlah tiap alat yang sudah diajukan (siapa pun) untuk jadwal ini, per nama alat - dipakai form Peminjaman menghitung sisa kebutuhan, bukan sekadar sudah/belum.
      */
     public function peralatanSudahDiajukan(?string $kecualiIdPeminjaman = null): array
     {
@@ -59,8 +57,7 @@ use Illuminate\Database\Eloquent\Model;
     }
 
     /**
-     * Alat yang dibutuhkan - murni acuan/checklist buat operator, bukan peminjaman
-     * sungguhan (operator tetap harus ajukan lewat modul Peminjaman kalau mau pakai).
+     * Alat yang dibutuhkan 
      */
     public function peralatanReferensi()
     {
@@ -71,26 +68,6 @@ use Illuminate\Database\Eloquent\Model;
     public function isDibatalkan(): bool
     {
         return $this->status === 'dibatalkan' || !empty($this->alasan_batal);
-    }
-
-    public function getStartDateTimeAttribute(): ?Carbon
-    {
-        if (!$this->tanggal || !$this->waktu_mulai) return null;
-
-        return Carbon::parse(
-            $this->tanggal->format('Y-m-d') . ' ' . $this->waktu_mulai,
-            'Asia/Jakarta'
-        );
-    }
-
-    public function getEndDateTimeAttribute(): ?Carbon
-    {
-        if (!$this->tanggal || !$this->waktu_selesai) return null;
-
-        return Carbon::parse(
-            $this->tanggal->format('Y-m-d') . ' ' . $this->waktu_selesai,
-            'Asia/Jakarta'
-        );
     }
 
     public function scopeBentrok($query, string $tanggal, string $mulai, string $selesai, ?string $excludeId = null)

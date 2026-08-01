@@ -1,4 +1,4 @@
-// Logic form Jadwal Rapat (Tambah & Ubah) - dimuat lewat <script src> di kedua halaman, elemen yang diakses di bawah selalu ada.
+// Logic form Jadwal Rapat (Tambah & Ubah) - dimuat lewat @vite() di kedua halaman, elemen yang diakses di bawah selalu ada.
 
 // ── Platform hint & Link Zoom otomatis ─────────────────────────────────────
 function platformPakaiZoom(v) {
@@ -268,3 +268,12 @@ document.addEventListener('DOMContentLoaded', function () {
     updatePeralatanRemoveButtons();
     syncZoomCheckboxUI(false);
 });
+
+// Dipanggil dari onclick="".../onchange="" di Blade (termasuk baris yang di-clone JS saat
+// "Tambah Operator"/"Tambah Alat" diklik) - harus diekspos eksplisit ke window karena file ini
+// dimuat sebagai <script type="module"> lewat Vite, dan deklarasi function di dalam module
+// tidak otomatis jadi global seperti <script src> klasik (sama seperti kasus di content.js).
+window.removeOperator = removeOperator;
+window.removePeralatan = removePeralatan;
+window.refreshOperatorOptions = refreshOperatorOptions;
+window.refreshPeralatanOptions = refreshPeralatanOptions;

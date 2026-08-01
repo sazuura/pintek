@@ -74,7 +74,7 @@
             </button>
         </div>
 
-        <div class="p-4" id="laporan-panels">
+        <div class="p-4" id="laporan-panels" data-skel>
 
             {{-- Panel 1: Jadwal & Operator --}}
             <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab','panel-jadwal') === 'panel-jadwal' ? 'active' : '' }}"
@@ -108,9 +108,14 @@
                                             {{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}
                                         </div>
                                     </td>
-                                    <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $j->tanggal->translatedFormat('D, d/m/Y') }}</td>
+                                    {{-- data-sort-value: grup Aktif (0) selalu di atas grup Selesai/Dibatalkan (1),
+                                         di dalam tiap grup diurutkan tanggal terdekat -> terjauh (lihat public/js/content.js). --}}
+                                    <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left"
+                                        data-sort-value="{{ (($dibatalkan || $sudahLewat) ? 100000000 : 0) + (int) $j->tanggal->format('Ymd') }}">{{ $j->tanggal->translatedFormat('l, d F Y') }}</td>
                                     <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
-                                        @if(str_contains($j->platform,'Online'))
+                                        @if($j->platform === 'Hybrid')
+                                            <x-badge variant="badge-purple"><i class="bx bx-shuffle"></i> Hybrid</x-badge>
+                                        @elseif(str_contains($j->platform,'Online'))
                                             <x-badge variant="badge-info"><i class="bx bx-wifi"></i> Online</x-badge>
                                         @else
                                             <x-badge variant="badge-active"><i class="bx bx-building"></i> Offline</x-badge>
@@ -185,11 +190,11 @@
                             <div class="flex flex-col gap-2 pt-3 border-t border-page-bg dark:border-page-bg-dark">
                                 <div class="flex items-center justify-between text-[13px] text-text-muted">
                                     <span>Tanggal</span>
-                                    <span>{{ $j->tanggal->translatedFormat('D, d M Y') }}</span>
+                                    <span>{{ $j->tanggal->translatedFormat('l, d F Y') }}</span>
                                 </div>
                                 <div class="flex items-center justify-between text-[13px] text-text-muted">
                                     <span>Platform</span>
-                                    <span>{{ str_contains($j->platform, 'Online') ? 'Online' : 'Offline' }}</span>
+                                    <span>{{ $j->platform === 'Hybrid' ? 'Hybrid' : (str_contains($j->platform, 'Online') ? 'Online' : 'Offline') }}</span>
                                 </div>
                                 <div class="flex items-center justify-between text-[13px] text-text-muted">
                                     <span>Status</span>
@@ -243,7 +248,7 @@
                                         </div>
                                     </td>
                                     <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->user->nama_user ?? '-' }}</td>
-                                    <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_pinjam->translatedFormat('D, d/m/Y') }}</td>
+                                    <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</td>
                                 </tr>
                                 <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row" id="{{ $uid }}">
                                     <td colspan="5" class="!p-0">
@@ -317,7 +322,7 @@
                                 </div>
                                 <div class="flex items-center justify-between text-[13px] text-text-muted">
                                     <span>Tanggal Pinjam</span>
-                                    <span>{{ $p->tanggal_pinjam->translatedFormat('D, d/m/Y') }}</span>
+                                    <span>{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</span>
                                 </div>
                                 <div class="flex items-center justify-between text-[13px] text-text-muted">
                                     <span>Status</span>

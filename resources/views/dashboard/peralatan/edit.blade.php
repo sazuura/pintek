@@ -77,7 +77,7 @@
                     <div class="mb-3.5">
                         <p class="text-[13px] text-text-muted mb-2">Foto saat ini:</p>
                         <img src="{{ Storage::url($peralatan->foto) }}" alt="Foto"
-                            class="h-[120px] rounded-lg object-cover border border-page-bg dark:border-page-bg-dark">
+                            class="h-[120px] rounded-lg object-cover border border-page-bg dark:border-page-bg-dark mb-4">
                         <x-checkbox name="hapus_foto">Hapus foto ini</x-checkbox>
                     </div>
                 @endif

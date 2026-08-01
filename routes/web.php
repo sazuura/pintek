@@ -19,14 +19,6 @@ Route::get('/dashboard', function () {
     };
 })->middleware('auth')->name('dashboard');
 
-// Catatan: 'role:X' di tiap grup TETAP dipertahankan sebagai gerbang luar (persis
-// perilaku lama - siapa boleh masuk prefix URL ini sama sekali tidak berubah).
-// Middleware 'menu-akses:{slug}' di dalamnya adalah lapisan TAMBAHAN yang baca
-// dari tabel role_menu_akses (diatur lewat halaman Sistem Settings) - dipakai
-// untuk kontrol visibilitas/CRUD yang dinamis DI DALAM batas role yang sudah ada,
-// bukan pengganti batas role itu sendiri. Menyatukan sepenuhnya (role baru bisa
-// masuk prefix mana pun) baru bisa aman dilakukan setelah Fase 4 (konsolidasi
-// route/view) selesai - lihat docs/plans/planning-role-akses-dinamis.md §4 & §9.
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::middleware('menu-akses:dashboard')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -38,18 +30,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::middleware('menu-akses:users')->group(function () {
         Route::resource('users', UserController::class)->names('users')->except(['show']);
     });
-    // Controller & view dashboard/peralatan/* sudah generik/role-agnostic (PeralatanController::index()
-    // bahkan sudah ada branch khusus role admin untuk search gedung) - rute ini sebelumnya belum
-    // pernah didaftarkan untuk admin, jadi menu Peralatan yang dicentang di Sistem Settings tidak
-    // pernah benar-benar bisa diakses (sidebar skip diam-diam karena Route::has() gagal).
+   
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::resource('peralatan', PeralatanController::class)->names('peralatan')->except(['show']);
     });
-    // Admin cuma bisa mengajukan peminjaman DI LUAR rapat - dropdown "Kaitkan ke Jadwal"
-    // di operatorCreate() bersumber dari jadwalAktifOperator() (jadwal tempat user login
-    // ditugaskan sebagai operator), dan admin tidak pernah tercatat di situ, jadi otomatis
-    // selalu kosong tanpa perlu validasi pembatasan tambahan. Admin TIDAK dapat approve/reject
-    // (itu tetap wewenang Inventaris) - rute yang dipasangkan sengaja cuma yang operator*.
+    
     Route::middleware('menu-akses:peminjaman')->group(function () {
         Route::prefix('peminjaman')->name('peminjaman.')->group(function () {
             Route::get('/',          [PeminjamanController::class, 'operatorIndex'])->name('index');
@@ -74,9 +59,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
             Route::put('/role-akses/{role}/akses',  [RoleAksesController::class, 'updateAkses'])->name('role-akses.updateAkses');
         });
     });
-    // "Alat Terpasang" kontennya generik (data inventaris, bukan spesifik-role) - sama seperti
-    // peralatan, jadi aman dipasangkan lewat controller yang sama supaya benar-benar dinamis
-    // kalau akses menu ini dinyalakan untuk role admin lewat Sistem Settings.
+    
     Route::middleware('menu-akses:alat-terpasang')->group(function () {
         Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang')->except(['show']);
     });
@@ -86,9 +69,7 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
     Route::middleware('menu-akses:dashboard')->group(function () {
         Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
     });
-    // Sama seperti jadwal & peralatan di bawah - "users" tidak pernah dipakai operator secara
-    // default (seeder tidak memberi baris akses sama sekali), tapi begitu admin menyalakan akses
-    // menu ini untuk role operator lewat Sistem Settings, route tujuannya harus benar-benar ada.
+    
     Route::middleware('menu-akses:users')->group(function () {
         Route::resource('users', UserController::class)->names('users')->except(['show']);
     });
@@ -104,7 +85,7 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
     });
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::prefix('peralatan')->name('peralatan.')->group(function () {
-            // index() dipasangkan ke PeralatanController yang sama dengan admin/inventaris - peralatan tidak dibatasi kepemilikan per role.
+            // index() dipasangkan ke PeralatanController yang sama dengan admin/inventaris
             Route::get('/',          [PeralatanController::class, 'index'])->name('index');
             Route::get('/create',    [PeralatanController::class, 'create'])->name('create');
             Route::post('/',         [PeralatanController::class, 'store'])->name('store');

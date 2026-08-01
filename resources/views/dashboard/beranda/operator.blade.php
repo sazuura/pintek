@@ -1,3 +1,4 @@
+{{-- dashboard operator --}}
 @extends('layouts.app')
 @section('title', 'Dashboard Operator')
 @section('sidebar-menu') <x-sidebar /> @endsection
@@ -14,24 +15,21 @@
         @endif
     </div>
 
-    {{-- Statistik & chart di bawah ini mengikuti bulan yang lagi dipilih di kalender
-         kanan - navigasi bulan/tahun di kalender otomatis memperbarui semuanya. Taruh di
-         luar grid 2 kolom (bukan di dalam kolom kiri) supaya kolom kiri & kanan tetap
-         sejajar dari atas. --}}
+    {{-- Statistik & chart di bawah ini mengikuti bulan yang lagi dipilih di kalender --}}
     <p class="text-[13px] text-text-muted mb-3 flex items-center gap-1.5">
         <i class="bx bx-calendar"></i> Menampilkan data:
         <span class="font-semibold text-text dark:text-text-dark">{{ $kalender['labelBulan'] }} {{ $kalender['tahun'] }}</span>
     </p>
 
-    {{-- Layout asimetris: stat card + reminder lebih lebar di kiri, kalender + aktivitas ditumpuk di kanan --}}
+    {{-- Layout asimetris: stat card + reminder lebih lebar di kiri, kalender + aktivitas --}}
     <div class="grid grid-cols-1 min-[1101px]:grid-cols-[14fr_7fr] gap-4 mb-4 items-start">
         <div class="flex flex-col gap-4 min-w-0">
             {{-- Stat cards --}}
-            <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
+            <div data-skel class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
                     <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] dark:bg-[#3C91E6]/15 text-[#3C91E6]"><i class="bx bxs-calendar"></i></div>
                     <div>
-                        <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahJadwal }}</h3>
+                        <h2 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahJadwal }}</h2>
                         <p class="text-[13px] text-text-muted m-0">Jadwal Mendatang</p>
                     </div>
                 </div>
@@ -39,7 +37,7 @@
                 <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
                     <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-warning dark:bg-warning-dark text-warning-text"><i class="bx bxs-hourglass"></i></div>
                     <div>
-                        <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $menungguCount }}</h3>
+                        <h2 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $menungguCount }}</h2>
                         <p class="text-[13px] text-text-muted m-0">Menunggu Persetujuan</p>
                     </div>
                 </div>
@@ -47,7 +45,7 @@
                 <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
                     <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e6f9f0] dark:bg-[#1abc9c]/15 text-[#1abc9c]"><i class="bx bxs-check-circle"></i></div>
                     <div>
-                        <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $disetujuiCount }}</h3>
+                        <h2 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $disetujuiCount }}</h2>
                         <p class="text-[13px] text-text-muted m-0">Disetujui / Dipakai</p>
                     </div>
                 </div>
@@ -55,15 +53,15 @@
                 <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
                     <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-danger dark:bg-danger-dark text-danger-text"><i class="bx bxs-x-circle"></i></div>
                     <div>
-                        <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $ditolakCount }}</h3>
+                        <h2 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $ditolakCount }}</h2>
                         <p class="text-[13px] text-text-muted m-0">Ditolak</p>
                     </div>
                 </div>
             </div>
 
             {{-- Chart: alat yang paling sering dipinjam operator ini sendiri --}}
-            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
-                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-wrench text-primary"></i> Alat yang Paling Sering Saya Pinjam</h3>
+            <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
+                <h2 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-wrench text-primary"></i> Alat yang Paling Sering Saya Pinjam</h2>
                 @if($topPeralatan->isEmpty())
                     <div class="text-center py-10 px-2.5 text-text-muted">
                         <i class="bx bx-package text-3xl block mb-2"></i>
@@ -77,8 +75,8 @@
             </div>
 
             {{-- Reminder: alat yang belum dikembalikan & sudah lewat rencana kembali --}}
-            <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden flex flex-col">
-                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark pt-5 px-5 {{ $perluDikembalikan->isEmpty() ? 'pb-5' : 'mb-4' }}"><i class="bx bxs-wrench text-primary"></i> Peralatan yang Perlu Dikembalikan</h3>
+            <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden flex flex-col">
+                <h2 class="text-[15px] font-semibold text-text dark:text-text-dark pt-5 px-5 {{ $perluDikembalikan->isEmpty() ? 'pb-5' : 'mb-4' }}"><i class="bx bxs-wrench text-primary"></i> Peralatan yang Perlu Dikembalikan</h2>
                 @if($perluDikembalikan->isEmpty())
                     <div class="text-center pb-10 px-2.5 text-text-muted">
                         <i class="bx bx-check-shield text-3xl block mb-2"></i>
@@ -121,10 +119,10 @@
         </div>
 
         <div class="flex flex-col gap-4 min-w-0">
-            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
+            <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
                 <div class="flex items-start flex-wrap gap-3 mb-2.5">
                     <div>
-                        <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-0"><i class="bx bx-calendar-heart text-primary"></i> Jadwal Saya</h3>
+                        <h2 class="text-[15px] font-semibold text-text dark:text-text-dark mb-0"><i class="bx bx-calendar-heart text-primary"></i> Jadwal Saya</h2>
                         <small class="block text-text-muted text-xs mt-0.5">Klik tanggal untuk lihat jadwal rapatnya</small>
                     </div>
                 </div>
@@ -215,8 +213,8 @@
                 </div>
             </div>
 
-            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
-                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-bell text-primary"></i> Aktivitas Terbaru</h3>
+            <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
+                <h2 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-bell text-primary"></i> Aktivitas Terbaru</h2>
                 @if($activities->isEmpty())
                     <div class="text-center py-10 px-2.5 text-text-muted">
                         <i class="bx bx-moon text-3xl block mb-2"></i>
@@ -243,7 +241,7 @@
     <div id="modalJadwalTanggal" class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
         <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
             <div class="flex items-center justify-between gap-3 py-[18px] px-5 border-b border-page-bg dark:border-page-bg-dark">
-                <h3 id="modalJadwalTanggalLabel" class="m-0 text-[15px] font-semibold text-text dark:text-text-dark">Jadwal Rapat</h3>
+                <h2 id="modalJadwalTanggalLabel" class="m-0 text-[15px] font-semibold text-text dark:text-text-dark">Jadwal Rapat</h2>
                 <button type="button"
                     class="w-[30px] h-[30px] rounded-full flex items-center justify-center text-text-muted text-lg shrink-0 transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark hover:text-text dark:hover:text-text-dark"
                     onclick="tutupModalJadwal()"><i class="bx bx-x"></i></button>
@@ -258,19 +256,17 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 var isDark = document.documentElement.classList.contains('dark');
 Chart.defaults.color = isDark ? '#94A3B8' : '#6B7280';
 Chart.defaults.borderColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
 Chart.defaults.font.family = "'Poppins', sans-serif";
 
-// Bar horizontal - alat yang paling sering dipinjam operator ini sendiri. Warna primary sekuensial:
-// makin gelap = makin sering dipinjam, angka juga dicetak langsung di ujung bar.
+// Bar horizontal - alat yang paling sering dipinjam operator ini sendiri
 var chartTopPeralatanEl = document.getElementById('chartTopPeralatan');
 if (chartTopPeralatanEl) {
     var topPeralatanData = @json($topPeralatan->pluck('total_dipinjam'));
-    // Di dark mode gradiennya dipersempit ke rentang biru yang lebih redup (bukan sampai
-    // primary-100 yang nyaris putih) supaya bar-nya tidak menyilaukan di atas background gelap.
     var topPeralatanBlueDark  = isDark ? [0, 41, 102]  : [0, 61, 153];    // #002966 (primary-800) / #003D99 (primary-700)
     var topPeralatanBlueLight = isDark ? [51, 133, 255] : [204, 224, 255]; // #3385FF (primary-400) / #CCE0FF (primary-100)
 
@@ -327,7 +323,7 @@ if (chartTopPeralatanEl) {
     });
 }
 
-// Modal jadwal per tanggal - data jadwal sebulan penuh sudah dikirim controller (tidak perlu request tambahan saat klik).
+// Modal jadwal per tanggal 
 var jadwalPerTanggal = @json($kalender['detailPerTanggal']);
 
 function escapeHtml(str) {
@@ -383,7 +379,7 @@ document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') tutupModalJadwal();
 });
 
-// Picker bulan & tahun - klik judul kalender untuk lompat langsung, bukan cuma next/prev satu-satu.
+// Picker bulan & tahun - klik judul kalender untuk lompat langsung
 var calendarTitleBtn = document.getElementById('calendarTitleBtn');
 var calendarPicker = document.getElementById('calendarPicker');
 var pilihBulan = document.getElementById('pilihBulan');
@@ -414,7 +410,7 @@ function navigasiKalender() {
 pilihBulan.addEventListener('change', navigasiKalender);
 pilihTahun.addEventListener('change', navigasiKalender);
 
-// Tooltip kustom (position:fixed) untuk sel kalender - tidak pernah terpotong oleh overflow:hidden.
+// Tooltip kustom untuk sel kalender 
 var calendarTooltip = document.getElementById('calendarTooltip');
 
 document.querySelectorAll('[data-tooltip]').forEach(function (cell) {

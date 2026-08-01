@@ -35,13 +35,19 @@ class Role extends Model
      * Cek apakah role ini punya izin aksi tertentu ($aksi: lihat/tambah/ubah/hapus)
      * pada menu dengan slug tertentu. Dipakai middleware & controller untuk
      * enforcement granular (lihat docs/plans/planning-role-akses-dinamis.md §4).
+     *
+     * Sengaja pakai $this->aksesMenu (property, di-cache di instance model setelah load
+     * pertama) BUKAN $this->aksesMenu() (method, query SQL baru tiap dipanggil) - method ini
+     * dipanggil berkali-kali per request (middleware menu-akses di hampir semua route, plus
+     * puluhan pemanggilan langsung di controller/Blade untuk show/hide tombol), jadi versi
+     * method-call menghasilkan query identik berulang-ulang padahal datanya tidak berubah
+     * dalam satu request. Lihat docs/plan/performance_fix.md.
      */
     public function punyaAkses(string $menuSlug, string $aksi = 'lihat'): bool
     {
         $kolom = 'bisa_' . $aksi;
-        return $this->aksesMenu()
-            ->whereHas('menu', fn($q) => $q->where('slug', $menuSlug))
-            ->where($kolom, true)
-            ->exists();
+        return $this->aksesMenu
+            ->loadMissing('menu')
+            ->contains(fn ($akses) => $akses->menu?->slug === $menuSlug && $akses->$kolom);
     }
 }

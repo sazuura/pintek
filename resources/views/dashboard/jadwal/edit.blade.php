@@ -43,7 +43,7 @@
                     <div class="md:col-span-2 flex flex-wrap gap-4">
                         <div class="flex-1 basis-[200px]">
                             <x-input type="date" name="tanggal" id="tanggal" label="Tanggal" required
-                                value="{{ old('tanggal', $jadwal->tanggal->format('Y-m-d')) }}" />
+                                value="{{ old('tanggal', $jadwal->tanggal->format('Y-m-d')) }}" data-weekdays-only="1" />
                         </div>
                         <div class="flex-1 basis-[200px]">
                             <x-select name="platform" label="Platform" required>
@@ -194,5 +194,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/jadwal-form.js') }}?v={{ filemtime(public_path('js/jadwal-form.js')) }}"></script>
+    @vite(['resources/js/jadwal-form.js'])
 @endpush

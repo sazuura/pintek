@@ -1,4 +1,4 @@
-// Logic form Peminjaman (Ajukan & Edit) - dimuat lewat <script src> di kedua halaman, elemen yang diakses di bawah selalu ada.
+// Logic form Peminjaman (Ajukan & Edit) - dimuat lewat @vite() di kedua halaman, elemen yang diakses di bawah selalu ada.
 
 // ── Kaitkan ke Jadwal: auto-isi Keperluan/Tanggal Pinjam & baris peralatan dari rekomendasi admin ──
 // jadwalSudahDiajukan: peta {nama_alat: total_jumlah_sudah_diajukan}, dipakai hitung SISA kebutuhan (bukan sekadar sudah/belum).
@@ -318,3 +318,12 @@ function konfirmasiTetapAjukanSpam() {
     tutupModalKonfirmasi('modalPeringatanSpam');
     document.getElementById('form-peminjaman').submit();
 }
+
+// Dipanggil dari onclick="".../onchange="" di Blade (termasuk baris yang di-clone JS saat
+// "Tambah Alat" diklik) - harus diekspos eksplisit ke window karena file ini dimuat sebagai
+// <script type="module"> lewat Vite, dan deklarasi function di dalam module tidak otomatis
+// jadi global seperti <script src> klasik (sama seperti kasus di content.js).
+window.refreshPeralatanOptions = refreshPeralatanOptions;
+window.removeItem = removeItem;
+window.konfirmasiTetapAjukan = konfirmasiTetapAjukan;
+window.konfirmasiTetapAjukanSpam = konfirmasiTetapAjukanSpam;

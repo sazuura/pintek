@@ -7,6 +7,10 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
+                'resources/js/app.js',
+                'resources/js/jadwal-form.js',
+                'resources/js/peminjaman-form.js',
+                'resources/js/login.js',
             ],
             refresh: true,
         }),

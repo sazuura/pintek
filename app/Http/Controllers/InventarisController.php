@@ -24,14 +24,14 @@ class InventarisController extends Controller
             ->get();
 
         // Dashboard cuma jadi shortcut, bukan daftar lengkap - diambil yang tanggal
-        // pinjamnya PALING DEKAT (paling mendesak diputuskan), dibatasi maksimal 6
+        // pinjamnya PALING DEKAT (paling mendesak diputuskan), dibatasi maksimal 4
         // biar tidak kepanjangan. Daftar lengkapnya tetap ada di halaman Peminjaman
         // Peralatan (link "Kelola Semua").
         $peminjamanMenunggu = Peminjaman::with(['user', 'items.peralatan'])
             ->where('status', 'diajukan')
             ->whereDate('tanggal_pinjam', '>=', $today)
             ->orderBy('tanggal_pinjam')
-            ->take(6)
+            ->take(4)
             ->get();
 
         $totalMenunggu = Peminjaman::where('status', 'diajukan')->count();
@@ -88,9 +88,9 @@ class InventarisController extends Controller
                 'peralatan'      => $peminjaman,
                 'namaFile'       => $namaFile,
                 'judul'          => 'LAPORAN RIWAYAT PEMINJAMAN',
-                'pdfHeaders'     => ['#', 'Judul Rapat', 'Peralatan', 'Peminjam', 'Tgl Pinjam', 'Status'],
+                'pdfHeaders'     => ['#', 'Judul Rapat', 'Peralatan', 'Kode', 'Lokasi', 'Jumlah', 'Peminjam', 'Tgl Pinjam', 'Status'],
                 'pdfRows'        => $this->barisPdfPeminjaman($peminjaman),
-                'pdfStatusIndex' => 5,
+                'pdfStatusIndex' => 8,
             ]);
         }
 
@@ -135,25 +135,28 @@ class InventarisController extends Controller
         })->toArray();
     }
 
+    // Satu baris per alat (bukan digabung satu sel per pengajuan) supaya kode, lokasi,
+    // dan jumlah masing-masing punya kolom sendiri - sama seperti tampilan HTML-nya.
     private function barisPdfPeminjaman($peminjaman): array
     {
-        return $peminjaman->values()->map(function ($p, $index) {
-            $daftarAlat = $p->items->map(function ($item) {
-                $nama   = $item->peralatan->nama_peralatan ?? '-';
-                $seri   = $item->peralatan->kode_barang ?? '-';
-                $gedung = $item->peralatan->gedung ?? '-';
-                return "{$nama} ({$seri}, {$gedung}) x{$item->jumlah}";
-            })->join("\n");
-
-            return [
-                $index + 1,
-                $p->penjadwalan->judul_kegiatan ?? $p->keperluan,
-                $daftarAlat,
-                $p->user->nama_user ?? '-',
-                $p->tanggal_pinjam->format('d/m/Y'),
-                $p->badge['label'],
-            ];
-        })->toArray();
+        $baris = [];
+        $no = 1;
+        foreach ($peminjaman->values() as $p) {
+            foreach ($p->items as $item) {
+                $baris[] = [
+                    $no++,
+                    $p->penjadwalan->judul_kegiatan ?? $p->keperluan,
+                    $item->peralatan->nama_peralatan ?? '-',
+                    $item->peralatan->kode_barang ?? '-',
+                    $item->peralatan->gedung ?? '-',
+                    $item->jumlah,
+                    $p->user->nama_user ?? '-',
+                    $p->tanggal_pinjam->translatedFormat('l, d F Y'),
+                    $p->badge['label'],
+                ];
+            }
+        }
+        return $baris;
     }
 
     public function laporanExportExcel(Request $request)
@@ -192,6 +195,10 @@ class InventarisController extends Controller
 
     private function queryStokLaporan(Request $request)
     {
+        // Ambang batas status disamakan persis dengan Peralatan::getStatusLabelAttribute() dan
+        // filter status di PeralatanController (>2 Tersedia, 1-2 Hampir Habis, <=0 Tidak Tersedia).
+        $stokTersediaRaw = '(stok - COALESCE(rusak,0))';
+
         return Peralatan::query()
             ->when($request->search, fn($q, $s) =>
                 $q->where('nama_peralatan', 'like', "%{$s}%")
@@ -202,6 +209,12 @@ class InventarisController extends Controller
                 'baik'  => $q->whereRaw('COALESCE(rusak,0) <= 0'),
                 'rusak' => $q->whereRaw('COALESCE(rusak,0) > 0'),
                 default => $q,
+            })
+            ->when($request->status, fn($q, $v) => match ($v) {
+                'tersedia'       => $q->whereRaw("{$stokTersediaRaw} > 2"),
+                'kritis'         => $q->whereRaw("{$stokTersediaRaw} between 1 and 2"),
+                'tidak_tersedia' => $q->whereRaw("{$stokTersediaRaw} <= 0"),
+                default          => $q,
             })
             ->orderBy('gedung')
             ->orderBy('nama_peralatan');

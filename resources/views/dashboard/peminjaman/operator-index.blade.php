@@ -28,6 +28,12 @@
                         placeholder="Cari keperluan, nama alat..." value="{{ request('search') }}"
                         class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
                 </div>
+                <label class="text-[13px] text-text-muted whitespace-nowrap">Tgl Pinjam</label>
+                <input type="date" name="start" value="{{ request('start') }}" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                <label class="text-[13px] text-text-muted whitespace-nowrap">s/d</label>
+                <input type="date" name="end" value="{{ request('end') }}" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                 <select name="status" onchange="this.form.submit()"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="">Semua Status</option>
@@ -38,12 +44,6 @@
                     </option>
                     <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                 </select>
-                <label class="text-[13px] text-text-muted whitespace-nowrap">Tgl Pinjam</label>
-                <input type="date" name="start" value="{{ request('start') }}" onchange="this.form.submit()"
-                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
-                <label class="text-[13px] text-text-muted whitespace-nowrap">s/d</label>
-                <input type="date" name="end" value="{{ request('end') }}" onchange="this.form.submit()"
-                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                 @if(request()->hasAny(['search', 'status', 'start', 'end']))
                     <a href="{{ route($roleAktif . '.peminjaman.index') }}"
                         class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
@@ -52,7 +52,7 @@
             </form>
         </div>
 
-        <div id="hasil-peminjaman">
+        <div id="hasil-peminjaman" data-skel>
         <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
             <div class="py-4 px-5 flex items-center justify-between border-b border-page-bg dark:border-page-bg-dark">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark">Riwayat Pengajuan</h3>
@@ -294,11 +294,7 @@
 
 @push('scripts')
     <script>
-        // Modal konfirmasi batalkan pengajuan (komponen global modal-konfirmasi) - satu
-        // instance dipakai bareng oleh baris tabel & kartu mobile, tinggal ganti action
-        // form-nya ke URL pengajuan yang mau dibatalkan tiap kali dibuka. Kalau dipanggil
-        // dari dalam modal detail (kartu mobile), tutup dulu modal detail-nya supaya tidak
-        // ada dua overlay bertumpuk.
+        // Modal konfirmasi batalkan pengajuan (komponen global modal-konfirmasi) - satu instance dipakai bareng oleh baris tabel & kartu mobile
         function bukaBatalkanPengajuan(url) {
             var detailModal = document.getElementById('modalPeminjamanDetail');
             if (detailModal) detailModal.classList.remove('open');

@@ -58,7 +58,7 @@
             $bisaUbah = auth()->user()->punyaAkses('peminjaman', 'ubah');
         @endphp
 
-        <div id="hasil-peminjaman-inventaris">
+        <div id="hasil-peminjaman-inventaris" data-skel>
         <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
             <div class="py-4 px-5 flex items-center justify-between border-b border-page-bg dark:border-page-bg-dark">
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark">Daftar Pengajuan</h3>
@@ -90,9 +90,9 @@
                                     <div class="text-xs text-text-muted">{{ $p->user->nohp ?? '-' }}</div>
                                 </td>
                                 <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->keperluan }}</td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_pinjam->format('d/m/Y') }}</td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_kembali_rencana->format('d/m/Y') }}</td>
-                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_kembali_aktual?->format('d/m/Y') ?? '-' }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_pinjam->translatedFormat('d M Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_kembali_rencana->translatedFormat('d M Y') }}</td>
+                                <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left">{{ $p->tanggal_kembali_aktual?->translatedFormat('d M Y') ?? '-' }}</td>
                                 <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
                                     <x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge>
                                 </td>
@@ -125,7 +125,7 @@
                                                 <i class="bx bx-calendar-event text-primary text-base mt-0.5 shrink-0"></i>
                                                 <div>
                                                     <label class="text-[11px] text-text-muted uppercase tracking-[0.4px] block mb-0.5">Terkait Jadwal</label>
-                                                    <p class="text-text dark:text-text-dark m-0 font-medium">{{ $p->penjadwalan->judul_kegiatan }} ({{ $p->penjadwalan->tanggal->format('d/m/Y') }})</p>
+                                                    <p class="text-text dark:text-text-dark m-0 font-medium">{{ $p->penjadwalan->judul_kegiatan }} ({{ $p->penjadwalan->tanggal->translatedFormat('d M Y') }})</p>
                                                 </div>
                                             </div>
                                         @endif
@@ -222,7 +222,7 @@
                          data-nohp="{{ $p->user->nohp ?? '-' }}"
                          data-keperluan="{{ $p->keperluan }}"
                          data-catatan="{{ $p->catatan_inventaris ?? '-' }}"
-                         data-jadwal="{{ $p->penjadwalan ? $p->penjadwalan->judul_kegiatan . ' (' . $p->penjadwalan->tanggal->format('d/m/Y') . ')' : '' }}"
+                         data-jadwal="{{ $p->penjadwalan ? $p->penjadwalan->judul_kegiatan . ' (' . $p->penjadwalan->tanggal->translatedFormat('d M Y') . ')' : '' }}"
                          data-badge-variant="{{ $p->badge['class'] }}"
                          data-badge-label="{{ $p->badge['label'] }}"
                          data-items='@json($itemsUntukKartu)'>
@@ -240,16 +240,16 @@
                             </div>
                             <div class="flex items-center justify-between text-[13px] text-text-muted">
                                 <span>Tanggal Pinjam</span>
-                                <span class="text-text dark:text-text-dark">{{ $p->tanggal_pinjam->format('d/m/Y') }}</span>
+                                <span class="text-text dark:text-text-dark">{{ $p->tanggal_pinjam->translatedFormat('d M Y') }}</span>
                             </div>
                             <div class="flex items-center justify-between text-[13px] text-text-muted">
                                 <span>Rencana Kembali</span>
-                                <span class="text-text dark:text-text-dark">{{ $p->tanggal_kembali_rencana->format('d/m/Y') }}</span>
+                                <span class="text-text dark:text-text-dark">{{ $p->tanggal_kembali_rencana->translatedFormat('d M Y') }}</span>
                             </div>
                             @if($p->tanggal_kembali_aktual)
                                 <div class="flex items-center justify-between text-[13px] text-text-muted">
                                     <span>Tgl Kembali Aktual</span>
-                                    <span class="text-text dark:text-text-dark">{{ $p->tanggal_kembali_aktual->format('d/m/Y') }}</span>
+                                    <span class="text-text dark:text-text-dark">{{ $p->tanggal_kembali_aktual->translatedFormat('d M Y') }}</span>
                                 </div>
                             @endif
                             <div class="flex items-center justify-between text-[13px] text-text-muted">

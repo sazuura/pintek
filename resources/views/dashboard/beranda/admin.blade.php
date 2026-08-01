@@ -1,3 +1,4 @@
+{{-- dashboard admin --}}
 @extends('layouts.app')
 @section('title', 'Dashboard Admin')
 @section('sidebar-menu') <x-sidebar /> @endsection
@@ -17,20 +18,17 @@
         ];
     @endphp
 
-    {{-- Statistik & chart di bawah ini mengikuti bulan yang lagi dipilih di kalender
-         kanan - navigasi bulan/tahun di kalender otomatis memperbarui semuanya. Taruh di
-         luar grid 2 kolom (bukan di dalam kolom kiri) supaya kolom kiri & kanan tetap
-         sejajar dari atas. --}}
+    {{-- Statistik & chart mengikuti bulan yang lagi dipilih di kalender --}}
     <p class="text-[13px] text-text-muted mb-3 flex items-center gap-1.5">
         <i class="bx bx-calendar"></i> Menampilkan data:
         <span class="font-semibold text-text dark:text-text-dark">{{ $kalender['labelBulan'] }} {{ $kalender['tahun'] }}</span>
     </p>
 
-    {{-- Layout asimetris: stat card + chart + peralatan lebih lebar di kiri, kalender + aktivitas ditumpuk di kanan --}}
+    {{-- Layout asimetris: stat card + chart + peralatan lebih lebar di kiri, kalender + aktivitas --}}
     <div class="grid grid-cols-1 min-[1101px]:grid-cols-[14fr_7fr] gap-4 mb-4 items-start">
         <div class="flex flex-col gap-4 min-w-0">
             {{-- Stat cards --}}
-            <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
+            <div data-skel class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
                 <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
                     <span class="{{ $trendClass }} {{ $trendVariant[$trenRapat['arah']] ?? $trendVariant['flat'] }}" title="Dibanding bulan sebelumnya">
                         @if($trenRapat['arah'] === 'up') <i class="bx bx-up-arrow-alt text-[13px]"></i>
@@ -41,7 +39,7 @@
                     </span>
                     <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#f3e8ff] dark:bg-[#8b5cf6]/15 text-[#8b5cf6]"><i class="bx bxs-calendar-event"></i></div>
                     <div>
-                        <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahRapatMendatang }}</h3>
+                        <h2 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahRapatMendatang }}</h2>
                         <p class="text-[13px] text-text-muted m-0">Rapat Mendatang</p>
                     </div>
                 </div>
@@ -50,7 +48,7 @@
                     <span class="{{ $trendClass }} {{ $trendVariant['flat'] }} font-medium" title="Jumlah akun operator berstatus aktif dari total akun operator terdaftar">dari {{ $totalOperatorAkun }} akun</span>
                     <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] dark:bg-[#3C91E6]/15 text-[#3C91E6]"><i class="bx bxs-group"></i></div>
                     <div>
-                        <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahOperator }}</h3>
+                        <h2 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahOperator }}</h2>
                         <p class="text-[13px] text-text-muted m-0">Operator Aktif</p>
                     </div>
                 </div>
@@ -65,7 +63,7 @@
                     </span>
                     <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#FFF0E5] dark:bg-[#FD7238]/15 text-[#FD7238]"><i class="bx bxs-wrench"></i></div>
                     <div>
-                        <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahPeralatanDipinjam }}</h3>
+                        <h2 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahPeralatanDipinjam }}</h2>
                         <p class="text-[13px] text-text-muted m-0">Peralatan Dipinjam</p>
                     </div>
                 </div>
@@ -80,32 +78,23 @@
                     </span>
                     <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e6f9f0] dark:bg-[#1abc9c]/15 text-[#1abc9c]"><i class="bx bxs-calendar-check"></i></div>
                     <div>
-                        <h3 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahJadwal }}</h3>
+                        <h2 class="text-2xl font-bold text-text dark:text-text-dark leading-none mb-1">{{ $jumlahJadwal }}</h2>
                         <p class="text-[13px] text-text-muted m-0">Total Jadwal</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
+            <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
                 <div class="flex items-start justify-between flex-wrap gap-3">
-                    <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-line-chart text-primary"></i> Jadwal per Operator</h3>
-                    <div class="group relative inline-flex gap-1 bg-page-bg dark:bg-page-bg-dark rounded-[11px] p-[3px] shrink-0" role="group" aria-label="Tipe grafik" data-active="line">
-                        <span class="absolute top-[3px] left-[3px] w-8 h-[30px] bg-surface dark:bg-surface-dark rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.15)] transition-transform duration-[250ms] z-0 group-data-[active=line]:translate-x-9"></span>
-                        <button type="button" class="relative z-[1] w-8 h-[30px] flex items-center justify-center border-none outline-none rounded-lg bg-transparent text-text-muted text-base cursor-pointer transition-colors duration-200 hover:text-text dark:hover:text-text-dark [&.active]:text-primary" data-chart-type="bar" title="Tampilan batang">
-                            <i class="bx bx-bar-chart-alt-2"></i>
-                        </button>
-                        <button type="button" class="relative z-[1] w-8 h-[30px] flex items-center justify-center border-none outline-none rounded-lg bg-transparent text-text-muted text-base cursor-pointer transition-colors duration-200 hover:text-text dark:hover:text-text-dark [&.active]:text-primary active" data-chart-type="line" title="Tampilan garis">
-                            <i class="bx bx-trending-up"></i>
-                        </button>
-                    </div>
+                    <h2 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-bar-chart-alt-2 text-primary"></i> Jadwal per Operator</h2>
                 </div>
                 <div class="relative h-[340px] shrink-0 max-wide:h-[300px] max-md:h-[280px] max-xs:h-[260px] [&>canvas]:!max-h-none">
                     <canvas id="chartOperator"></canvas>
                 </div>
             </div>
 
-            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
-                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-wrench text-primary"></i> Peralatan Paling Sering Dipinjam</h3>
+            <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
+                <h2 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-wrench text-primary"></i> Peralatan Paling Sering Dipinjam</h2>
                 @if($topPeralatan->isEmpty())
                     <div class="text-center py-10 px-2.5 text-text-muted">
                         <i class="bx bx-package text-3xl block mb-2"></i>
@@ -120,10 +109,10 @@
         </div>
 
         <div class="flex flex-col gap-4 min-w-0">
-            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
+            <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
                 <div class="flex items-start flex-wrap gap-3 mb-2.5">
                     <div>
-                        <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-0"><i class="bx bx-calendar-heart text-primary"></i> Kepadatan Jadwal Rapat</h3>
+                        <h2 class="text-[15px] font-semibold text-text dark:text-text-dark mb-0"><i class="bx bx-calendar-heart text-primary"></i> Kepadatan Jadwal Rapat</h2>
                         <small class="block text-text-muted text-xs mt-0.5">Klik tanggal untuk lihat jadwal rapatnya</small>
                     </div>
                 </div>
@@ -214,8 +203,8 @@
                 </div>
             </div>
 
-            <div class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
-                <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-bell text-primary"></i> Aktivitas Terbaru</h3>
+            <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card flex flex-col">
+                <h2 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-bell text-primary"></i> Aktivitas Terbaru</h2>
                 @if($activities->isEmpty())
                     <div class="text-center py-10 px-2.5 text-text-muted">
                         <i class="bx bx-moon text-3xl block mb-2"></i>
@@ -242,7 +231,7 @@
     <div id="modalJadwalTanggal" class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
         <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
             <div class="flex items-center justify-between gap-3 py-[18px] px-5 border-b border-page-bg dark:border-page-bg-dark">
-                <h3 id="modalJadwalTanggalLabel" class="m-0 text-[15px] font-semibold text-text dark:text-text-dark">Jadwal Rapat</h3>
+                <h2 id="modalJadwalTanggalLabel" class="m-0 text-[15px] font-semibold text-text dark:text-text-dark">Jadwal Rapat</h2>
                 <button type="button"
                     class="w-[30px] h-[30px] rounded-full flex items-center justify-center text-text-muted text-lg shrink-0 transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark hover:text-text dark:hover:text-text-dark"
                     onclick="tutupModalJadwal()"><i class="bx bx-x"></i></button>
@@ -257,6 +246,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 var isDark = document.documentElement.classList.contains('dark');
 var gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
@@ -266,24 +256,19 @@ Chart.defaults.color = labelColor;
 Chart.defaults.borderColor = gridColor;
 Chart.defaults.font.family = "'Poppins', sans-serif";
 
-// Line - jadwal per operator. Tiap titik operator diwarnai berbeda, garis penghubung memakai warna primary.
+// Bar - jadwal per operator. Tiap batang operator diwarnai berbeda.
 var operatorPalette = ['#0066FF', '#6366f1', '#06b6d4', '#8b5cf6', '#0ea5e9'];
 var operatorLabels = @json($operatorChart->pluck('nama_user')).map(function (nama) {
     return nama.replace(/\s*\(Operator\)\s*$/i, '');
 });
 var operatorColors = operatorLabels.map(function (_, i) { return operatorPalette[i % operatorPalette.length]; });
-
-// Toggle line <-> bar untuk chart Jadwal per Operator. Chart dibuat ulang (destroy + create) tiap
-// ganti tipe, bukan cuma diganti config.type-nya - supaya Chart.js selalu pakai default ukuran
-// bar/line yang benar untuk tipe itu (kalau cuma di-mutate, lebar bar suka jadi tidak konsisten).
 var chartOperatorData = @json($operatorChart->pluck('jadwal_ditugaskan_count'));
-var chartOperatorInstance = null;
 
-function renderChartOperator(type) {
-    if (chartOperatorInstance) chartOperatorInstance.destroy();
-
-    var dataset = type === 'bar'
-        ? {
+new Chart(document.getElementById('chartOperator'), {
+    type: 'bar',
+    data: {
+        labels: operatorLabels,
+        datasets: [{
             label: 'Jumlah Jadwal',
             data: chartOperatorData,
             backgroundColor: operatorColors,
@@ -291,56 +276,23 @@ function renderChartOperator(type) {
             borderSkipped: false,
             barPercentage: 0.55,
             categoryPercentage: 0.6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { ticks: { autoSkip: false, maxRotation: 30, minRotation: 0 } }
         }
-        : {
-            label: 'Jumlah Jadwal',
-            data: chartOperatorData,
-            borderColor: '#0066FF',
-            backgroundColor: 'rgba(0,102,255,.12)',
-            pointBackgroundColor: operatorColors,
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 6,
-            pointHoverRadius: 8,
-            tension: 0.35,
-            fill: true
-        };
-
-    chartOperatorInstance = new Chart(document.getElementById('chartOperator'), {
-        type: type,
-        data: { labels: operatorLabels, datasets: [dataset] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                x: { ticks: { autoSkip: false, maxRotation: 30, minRotation: 0 } }
-            }
-        }
-    });
-}
-
-renderChartOperator('line');
-
-var chartTypeToggle = document.querySelector('[role="group"][aria-label="Tipe grafik"]');
-document.querySelectorAll('[data-chart-type]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-        document.querySelectorAll('[data-chart-type]').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        chartTypeToggle.dataset.active = btn.dataset.chartType;
-        renderChartOperator(btn.dataset.chartType);
-    });
+    }
 });
 
-// Bar horizontal - peralatan paling sering dipinjam. Warna primary sekuensial: makin gelap = makin
-// sering dipinjam, jadi warnanya sendiri ikut menyampaikan info peringkat (bukan sekadar dekorasi).
-// Angka juga dicetak langsung di ujung bar biar tidak perlu menerka-nerka lewat sumbu.
+// Bar horizontal - peralatan paling sering dipinjam. Warna primary sekuensial
 var chartPeralatanEl = document.getElementById('chartPeralatan');
 if (chartPeralatanEl) {
     var peralatanData = @json($topPeralatan->pluck('total_dipinjam'));
-    // Di dark mode gradiennya dipersempit ke rentang biru yang lebih redup (bukan sampai
-    // primary-100 yang nyaris putih) supaya bar-nya tidak menyilaukan di atas background gelap.
     var peralatanBlueDark  = isDark ? [0, 41, 102]  : [0, 61, 153];    // #002966 (primary-800) / #003D99 (primary-700)
     var peralatanBlueLight = isDark ? [51, 133, 255] : [204, 224, 255]; // #3385FF (primary-400) / #CCE0FF (primary-100)
 
@@ -397,9 +349,7 @@ if (chartPeralatanEl) {
     });
 }
 
-// Chart.js kadang tidak ikut resize otomatis saat viewport berubah drastis lewat DevTools device
-// toolbar (ResizeObserver bawaannya kadang telat/tidak terpicu di mode emulasi) - paksa semua chart
-// menghitung ulang ukurannya tiap window resize, bukan hanya mengandalkan mekanisme internalnya.
+// Chart.js kadang tidak ikut resize otomatis saat viewport berubah drastis 
 var chartResizeQueued = false;
 window.addEventListener('resize', function () {
     if (chartResizeQueued) return;
@@ -410,7 +360,7 @@ window.addEventListener('resize', function () {
     });
 });
 
-// Modal jadwal per tanggal - data jadwal sebulan penuh sudah dikirim controller (tidak perlu request tambahan saat klik).
+// Modal jadwal per tanggal - data jadwal sebulan penuh sudah dikirim controller
 var jadwalPerTanggal = @json($kalender['detailPerTanggal']);
 
 function escapeHtml(str) {
@@ -466,7 +416,7 @@ document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') tutupModalJadwal();
 });
 
-// Picker bulan & tahun - klik judul kalender untuk lompat langsung, bukan cuma next/prev satu-satu.
+// Picker bulan & tahun - klik judul kalender untuk lompat langsung
 var calendarTitleBtn = document.getElementById('calendarTitleBtn');
 var calendarPicker = document.getElementById('calendarPicker');
 var pilihBulan = document.getElementById('pilihBulan');
@@ -497,7 +447,7 @@ function navigasiKalender() {
 pilihBulan.addEventListener('change', navigasiKalender);
 pilihTahun.addEventListener('change', navigasiKalender);
 
-// Tooltip kustom (position:fixed) untuk sel kalender - tidak pernah terpotong oleh overflow:hidden.
+// Tooltip kustom (position:fixed) untuk sel kalender 
 var calendarTooltip = document.getElementById('calendarTooltip');
 
 document.querySelectorAll('[data-tooltip]').forEach(function (cell) {

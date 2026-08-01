@@ -24,7 +24,21 @@ class PeminjamanController extends Controller
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
             ->when($request->start, fn($q, $v) => $q->whereDate('tanggal_pinjam', '>=', $v))
             ->when($request->end,   fn($q, $v) => $q->whereDate('tanggal_pinjam', '<=', $v))
-            ->orderByDesc('created_at')
+            // Menunggu & Disetujui paling atas (masih perlu dipantau aktif). Di dalam tier itu,
+            // yang rencana kembalinya masih akan datang (belum lewat hari ini) didahulukan
+            // seluruhnya di atas yang sudah lewat/overdue - baru di dalam masing-masing
+            // kelompok itu diurutkan yang paling dekat ke hari ini. Tanpa pemisah "akan
+            // datang vs lewat" ini, tanggal yang sudah lama overdue bisa numpuk di atas
+            // tanggal yang justru masih akan datang cuma karena kebetulan jarak harinya sama.
+            // Dikembalikan/Ditolak/Dibatalkan sama-sama sudah selesai/tidak aktif lagi - dicampur
+            // satu tumpukan di bawah, tidak perlu dipisah per status.
+            ->orderByRaw("CASE WHEN status IN ('diajukan', 'menunggu', 'disetujui') THEN 0 ELSE 1 END ASC")
+            ->orderByRaw('CASE WHEN tanggal_kembali_rencana < CURDATE() THEN 1 ELSE 0 END ASC')
+            ->orderByRaw('ABS(DATEDIFF(tanggal_kembali_rencana, CURDATE())) ASC')
+            // Kalau tanggalnya kebetulan sama-sama dekat (seri di atas), Menunggu tetap
+            // sedikit diprioritaskan di atas Disetujui - tapi ini cuma pemecah seri, bukan
+            // pemisah blok kaku, jadi Menunggu & Disetujui tetap tercampur berdasarkan tanggal.
+            ->orderByRaw("CASE WHEN status IN ('diajukan', 'menunggu') THEN 0 ELSE 1 END ASC")
             ->paginate(10)
             ->withQueryString();
         return view('dashboard.peminjaman.operator-index', compact('peminjaman'));
@@ -69,11 +83,7 @@ class PeminjamanController extends Controller
     }
 
     /**
-     * Dipanggil lewat AJAX sesaat sebelum form submit (create & edit) - mengecek apakah
-     * operator yang login sudah berkali-kali mengajukan alat yang sama untuk tanggal
-     * pinjam yang sama (indikasi tidak sengaja submit berulang/spam), supaya bisa
-     * ditampilkan sebagai peringatan (bukan blokir) lewat modal sebelum benar-benar
-     * disimpan.
+     * Dipanggil lewat AJAX sesaat sebelum form submit (create & edit) - mengecek apakah operator yang login sudah berkali-kali mengajukan alat yang sama untuk tanggal pinjam yang sama
      */
     public function operatorCekSpam(Request $request)
     {
@@ -93,10 +103,7 @@ class PeminjamanController extends Controller
 
     /**
      * Alat yang sudah diajukan operator ybs (status diajukan/disetujui/dikembalikan)
-     * sebanyak >= 2 kali untuk tanggal pinjam yang sama - dicocokkan lewat NAMA alat
-     * (bukan id_peralatan) supaya alat yang sama tapi baris stoknya beda gedung tetap
-     * terhitung. Dikecualikan pengajuan yang sedang diedit sendiri (tidak menghitung
-     * dirinya sendiri sebagai "pengajuan sebelumnya").
+     * sebanyak >= 2 kali untuk tanggal pinjam yang sama
      */
     private function peringatanSpam(string $tanggalPinjam, array $peralatanIds, ?string $kecualiIdPeminjaman = null): array
     {
@@ -227,7 +234,16 @@ class PeminjamanController extends Controller
             ->when($request->id_user, fn($q, $v) => $q->where('id_user', $v))
             ->when($request->start, fn($q, $v) => $q->whereDate('tanggal_pinjam', '>=', $v))
             ->when($request->end,   fn($q, $v) => $q->whereDate('tanggal_pinjam', '<=', $v))
-            ->orderByDesc('created_at')
+            // Menunggu & Disetujui (masih perlu ditindaklanjuti) dicampur jadi satu grup di
+            // depan, diurutkan rencana kembali paling dekat dulu; Dikembalikan menyusul,
+            // Dibatalkan/Ditolak (sudah selesai/tidak relevan) paling akhir.
+            ->orderByRaw("CASE status
+                WHEN 'diajukan' THEN 0
+                WHEN 'menunggu' THEN 0
+                WHEN 'disetujui' THEN 0
+                WHEN 'dikembalikan' THEN 1
+                ELSE 2 END ASC")
+            ->orderBy('tanggal_kembali_rencana')
             ->paginate(10)
             ->withQueryString();
 

@@ -54,7 +54,7 @@ class PeralatanExport implements FromCollection, WithHeadings, ShouldAutoSize, W
                     'Nomor Seri'     => $item->peralatan->kode_barang ?? '-',
                     'Gedung'         => $item->peralatan->gedung ?? '-',
                     'Peminjam'       => $p->user->nama_user ?? '-',
-                    'Tanggal Pinjam' => $p->tanggal_pinjam->format('d/m/Y'),
+                    'Tanggal Pinjam' => $p->tanggal_pinjam->translatedFormat('l, d F Y'),
                     'Jumlah'         => $item->jumlah,
                     'Status'         => $p->badge['label'],
                 ]);

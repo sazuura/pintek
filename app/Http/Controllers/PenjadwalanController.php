@@ -170,7 +170,16 @@ class PenjadwalanController extends Controller
         ]);
         $validated = $request->validate([
             'judul_kegiatan'   => 'required|string|max:150',
-            'tanggal'          => 'required|date' . ($isUpdate ? '' : '|after_or_equal:today'),
+            'tanggal'          => array_filter([
+                'required',
+                'date',
+                $isUpdate ? null : 'after_or_equal:today',
+                function ($attribute, $value, $fail) {
+                    if (Carbon::parse($value)->isWeekend()) {
+                        $fail('Rapat hanya bisa dijadwalkan pada hari kerja (Senin-Jumat).');
+                    }
+                },
+            ]),
             'waktu_mulai'      => 'required|date_format:H:i',
             'waktu_selesai'    => 'required|date_format:H:i|after:waktu_mulai',
             'platform'         => 'required|string|max:100',

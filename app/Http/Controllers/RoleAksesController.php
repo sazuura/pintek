@@ -6,22 +6,10 @@ use App\Models\RoleMenuAkses;
 use Illuminate\Http\Request;
 
 /**
- * "Sistem Settings" - kelola role & hak akses menu secara dinamis (Gambar 1 & 2 di
- * docs/plans/planning-role-akses-dinamis.md). Perubahan di sini langsung berpengaruh
- * ke akses nyata lewat middleware 'menu-akses' (app/Http/Middleware/MenuAkses.php)
- * dan guard di masing-masing controller (PenjadwalanController, UserController, dst).
+ * "Sistem Settings"
  */
 class RoleAksesController extends Controller
 {
-    /**
-     * Menu yang TIDAK ditampilkan di modal "Hak Akses Halaman" (Gambar 2) - beda dari
-     * Peralatan/Alat Terpasang/Jadwal (satu controller/view dipakai lintas role, jadi
-     * toggle role manapun benar-benar fungsional), tiga menu ini terikat ke SATU role
-     * spesifik masing-masing (tiap role punya controller/tampilan sendiri, dan
-     * Pengaturan malah cuma ada rute admin.pengaturan.* doang). Mencentang kombinasi
-     * yang tidak ada implementasinya bikin menu kelihatan aktif tapi tidak pernah
-     * nongol di sidebar (Route::has() gagal diam-diam), membingungkan.
-     */
     private const MENU_TERKUNCI = ['dashboard', 'laporan', 'pengaturan'];
 
     public function index()
@@ -62,14 +50,6 @@ class RoleAksesController extends Controller
             'akses.*.bisa_hapus'   => 'nullable|boolean',
         ]);
 
-        // Loop ke semua menu yang MUNCUL DI MODAL (bukan cuma key yang ada di request)
-        // karena checkbox yang tidak dicentang tidak pernah dikirim browser - kalau
-        // loopnya cuma mengikuti $data['akses'], menu yang seluruh centangnya dikosongkan
-        // akan terlewat dan nilainya di database tetap tersangkut true selamanya. Menu
-        // terkunci (lihat MENU_TERKUNCI) sengaja DIKECUALIKAN dari loop ini juga - kalau
-        // tidak, setiap kali admin menyimpan role APA PUN, akses dashboard/laporan/
-        // pengaturan role itu (termasuk dashboard-nya sendiri!) ikut ke-reset ke false
-        // karena memang tidak pernah dikirim dari form (checkbox-nya sudah disembunyikan).
         foreach (Menu::whereNotIn('slug', self::MENU_TERKUNCI)->pluck('id') as $idMenu) {
             RoleMenuAkses::updateOrCreate(
                 ['id_role' => $role->id, 'id_menu' => $idMenu],

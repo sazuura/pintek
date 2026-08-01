@@ -15,10 +15,6 @@ class AdminController extends Controller
         $awalBulan  = $bulanAktif->copy()->startOfMonth();
         $akhirBulan = $bulanAktif->copy()->endOfMonth();
 
-        // Rapat "mendatang" dibatasi ke bulan yang lagi dilihat di kalender (bukan lagi
-        // fixed 30 hari dari hari ini) - jadi kalau kalender dipindah ke bulan lain, kartu
-        // statistik & chart ikut menyesuaikan. Untuk bulan yang sudah lewat total, hasilnya
-        // otomatis 0 (memang tidak ada lagi yang "mendatang" di bulan yang sudah lewat).
         $stats = [
             'jumlahRapatMendatang' => Penjadwalan::where('status', '!=', 'dibatalkan')
                 ->whereRaw("TIMESTAMP(tanggal, waktu_selesai) >= NOW()")
@@ -40,7 +36,6 @@ class AdminController extends Controller
             ->get();
 
         // Peralatan paling sering dipinjam di bulan yang lagi dilihat (hanya hitung peminjaman
-        // yang benar-benar terjadi: disetujui/dikembalikan).
         $topPeralatan = PeminjamanItem::query()
             ->join('peralatan', 'peminjaman_item.id_peralatan', '=', 'peralatan.id_peralatan')
             ->join('peminjaman', 'peminjaman_item.id_peminjaman', '=', 'peminjaman.id_peminjaman')
@@ -52,14 +47,11 @@ class AdminController extends Controller
             ->limit(6)
             ->get();
 
-        // Aktivitas Terbaru sengaja TETAP selalu "14 hari terakhir dari hari ini" terlepas
-        // dari bulan yang dipilih di kalender - karena "terbaru" secara alami berarti dekat
-        // dengan sekarang, bukan bulan yang sedang di-browse.
+        // Aktivitas Terbaru sengaja TETAP selalu "14 hari terakhir dari hari ini" 
         $activities = $this->recentActivities();
         $kalender   = $this->jadwalKalender($bulanAktif);
 
-        // Detail tambahan tiap stat card: tren dihitung dari data asli, dibandingkan
-        // terhadap bulan SEBELUM bulan yang sedang dilihat (bukan lagi N hari dari hari ini).
+        // Detail tambahan tiap stat card: tren dihitung dari data asli
         $bulanSebelumnyaAwal  = $awalBulan->copy()->subMonth();
         $bulanSebelumnyaAkhir = $bulanSebelumnyaAwal->copy()->endOfMonth();
 
@@ -93,9 +85,6 @@ class AdminController extends Controller
 
     /**
      * Hitung selisih angka mentah (bukan persentase) antara dua periode.
-     * Dipakai untuk kartu yang angkanya kecil, di mana persentase jadi terkesan
-     * berlebihan/menyesatkan (mis. dari 1 ke 2 rapat itu "100%" tapi tidak berarti apa-apa).
-     * Ditampilkan cukup lewat ikon panah + angka, tanpa teks penjelas.
      */
     private function hitungTrenSelisih(int $sekarang, int $sebelumnya): array
     {
@@ -109,9 +98,6 @@ class AdminController extends Controller
 
     /**
      * 6 aktivitas terbaru (14 hari terakhir): jadwal baru & peminjaman baru diajukan.
-     * Query ini mengambil created_at asli dari database (bukan hardcode), jadi begitu ada
-     * jadwal/peminjaman sungguhan dibuat lewat aplikasi, otomatis ikut tampil di sini.
-     * Untuk sementara data seeder juga ikut ditampilkan (belum ada data produksi asli).
      */
     private function recentActivities()
     {
@@ -143,8 +129,6 @@ class AdminController extends Controller
 
     /**
      * Kalender bulanan (Min–Sab) berisi jadwal per tanggal, dengan navigasi bulan
-     * serta daftar jadwal per tanggal (dipakai saat tanggal diklik di frontend).
-     * Rapat yang sudah dibatalkan sengaja tidak diikutkan sama sekali di kalender ini.
      */
     private function jadwalKalender(Carbon $bulanAktif): array
     {
@@ -210,10 +194,7 @@ class AdminController extends Controller
 
     /**
      * PDF laporan dirender sebagai halaman HTML biasa (Tailwind, sama seperti tampilan
-     * live). Selain ditampilkan sebagai tabel, data yang sama juga disertakan sebagai
-     * headers+rows supaya jsPDF+AutoTable di sisi browser bisa langsung membuat PDF
-     * asli (teks vektor, bisa di-select/search) dan otomatis diunduh - window.print()
-     * tetap disediakan sebagai tombol fallback manual di halamannya.
+     * live).
      */
     public function laporanExportPdf(Request $request)
     {
@@ -225,9 +206,9 @@ class AdminController extends Controller
                 'peralatan'      => $peralatan,
                 'namaFile'       => $namaFile,
                 'judul'          => 'LAPORAN PERALATAN DIGUNAKAN',
-                'pdfHeaders'     => ['#', 'Judul Rapat', 'Peralatan', 'Peminjam', 'Tgl Pinjam', 'Status'],
+                'pdfHeaders'     => ['#', 'Judul Rapat', 'Peralatan', 'Kode', 'Gedung', 'Jumlah', 'Peminjam', 'Tgl Pinjam', 'Status'],
                 'pdfRows'        => $this->barisPdfPeralatan($peralatan),
-                'pdfStatusIndex' => 5,
+                'pdfStatusIndex' => 8,
             ]);
         }
 
@@ -253,39 +234,39 @@ class AdminController extends Controller
                 $index + 1,
                 $j->operators->pluck('nama_user')->join(', ') ?: '-',
                 $j->judul_kegiatan,
-                $j->tanggal->translatedFormat('D, d/m/Y'),
+                $j->tanggal->translatedFormat('l, d F Y'),
                 str_contains($j->platform, 'Online') ? 'Online' : 'Offline',
                 $status,
             ];
         })->toArray();
     }
 
+    // Satu baris per alat (bukan digabung satu sel per pengajuan) supaya kode, gedung,
+    // dan jumlah masing-masing punya kolom sendiri - sama seperti struktur di Excel.
     private function barisPdfPeralatan($peralatan): array
     {
-        return $peralatan->values()->map(function ($p, $index) {
-            $daftarAlat = $p->items->map(function ($item) {
-                $nama   = $item->peralatan->nama_peralatan ?? '-';
-                $seri   = $item->peralatan->kode_barang ?? '-';
-                $gedung = $item->peralatan->gedung ?? '-';
-                return "{$nama} ({$seri}, {$gedung}) x{$item->jumlah}";
-            })->join("\n");
-
-            return [
-                $index + 1,
-                $p->penjadwalan->judul_kegiatan ?? $p->keperluan,
-                $daftarAlat,
-                $p->user->nama_user ?? '-',
-                $p->tanggal_pinjam->format('d/m/Y'),
-                $p->badge['label'],
-            ];
-        })->toArray();
+        $baris = [];
+        $no = 1;
+        foreach ($peralatan->values() as $p) {
+            foreach ($p->items as $item) {
+                $baris[] = [
+                    $no++,
+                    $p->penjadwalan->judul_kegiatan ?? $p->keperluan,
+                    $item->peralatan->nama_peralatan ?? '-',
+                    $item->peralatan->kode_barang ?? '-',
+                    $item->peralatan->gedung ?? '-',
+                    $item->jumlah,
+                    $p->user->nama_user ?? '-',
+                    $p->tanggal_pinjam->translatedFormat('l, d F Y'),
+                    $p->badge['label'],
+                ];
+            }
+        }
+        return $baris;
     }
 
     /**
-     * Excel tetap pakai PhpSpreadsheet (lewat maatwebsite/excel) - beda dengan PDF,
-     * library ini tidak merender HTML/CSS jadi tidak kena masalah kompatibilitas
-     * Tailwind seperti dompdf, dan hasilnya file .xlsx asli tanpa peringatan
-     * "format tidak cocok" dari Excel (yang muncul kalau pakai trik HTML-sebagai-.xls).
+     * Excel tetap pakai PhpSpreadsheet (lewat maatwebsite/excel) 
      */
     public function laporanExportExcel(Request $request)
     {
@@ -336,17 +317,15 @@ class AdminController extends Controller
             ->when($request->operator, fn($q, $v) =>
                 $q->whereHas('operators', fn($qq) => $qq->where('users.id_user', $v))
             )
-            ->orderByDesc('tanggal');
+            // Aktif tampil dulu (tanggal terdekat); Selesai+Dibatalkan digabung satu riwayat di bawah (paling baru dulu).
+            ->orderByRaw("(status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()) ASC")
+            ->orderByRaw("CASE WHEN status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()
+                          THEN -DATEDIFF(tanggal, CURDATE()) ELSE DATEDIFF(tanggal, CURDATE()) END ASC")
+            ->orderBy('waktu_mulai');
     }
 
     /**
-     * Helper method untuk query pemakaian peralatan (monitoring) via Peminjaman -
-     * sumber kebenaran alat dipakai sekarang, bukan alokasi manual admin ke jadwal.
-     */
-    /**
-     * Laporan peralatan dikelompokkan per peminjaman (bukan per item), supaya peminjam &
-     * tanggal pinjam yang sama tidak duplikat jadi banyak baris - daftar alatnya ditampilkan
-     * lewat dropdown per baris.
+     * Helper method untuk query pemakaian peralatan (monitoring) via Peminjaman
      */
     private function queryPeralatanLaporan(Request $request)
     {

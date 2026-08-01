@@ -105,8 +105,6 @@
         </div>
 
         @yield('content')
-
-        <div class="text-right text-[10px] text-gray-400 mt-5">Sistem Penjadwalan Zoom - Diskominfotik</div>
     </div>
 
     <button type="button" onclick="window.print()"

@@ -24,7 +24,7 @@
                     <td class="py-1.5 px-2.5 border-b border-gray-100 text-center">{{ $p->stok }}</td>
                     <td class="py-1.5 px-2.5 border-b border-gray-100 text-center">{{ $p->rusak ?? 0 }}</td>
                     <td class="py-1.5 px-2.5 border-b border-gray-100 text-center">{{ $p->stok_tersedia }}</td>
-                    <td class="py-1.5 px-2.5 border-b border-gray-100 text-center"><span class="bg-gray-100 text-gray-700 py-0.5 px-2 rounded-full text-[10px] font-semibold">{{ $p->statusLabel }}</span></td>
+                    <td class="py-1.5 px-2.5 border-b border-gray-100 text-center"><x-badge :variant="$p->statusBadgeClass">{{ $p->statusLabel }}</x-badge></td>
                 </tr>
             @empty
                 <tr>

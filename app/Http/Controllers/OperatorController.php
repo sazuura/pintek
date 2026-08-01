@@ -33,11 +33,7 @@ class OperatorController extends Controller
             'ditolakCount'   => (clone $peminjamanQuery)->where('status', 'ditolak')->whereBetween('tanggal_pinjam', [$awalBulan, $akhirBulan])->count(),
         ];
 
-        // Semua peminjaman yang sedang dipakai (sudah disetujui, belum ditandai dikembalikan
-        // oleh inventaris) - bukan cuma yang sudah lewat rencana kembalinya, karena pengembalian
-        // H+1/H+2 (apalagi kalau lewat akhir pekan) itu wajar dan bukan berarti "terlambat".
-        // Ini daftar tindakan yang perlu dilakukan SEKARANG, jadi sengaja TIDAK ikut
-        // dibatasi ke bulan kalender (selalu tampilkan yang benar-benar masih perlu dikembalikan).
+        // Semua peminjaman yang sedang dipakai (sudah disetujui, belum ditandai dikembalikan oleh inventaris) 
         $perluDikembalikan = (clone $peminjamanQuery)
             ->where('status', 'disetujui')
             ->with('items.peralatan')

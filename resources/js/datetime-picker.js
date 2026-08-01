@@ -1,14 +1,3 @@
-// Progressive enhancement: mengubah semua <input type="date"> dan <input type="time">
-// jadi picker custom (kalender / daftar jam) bergaya Tailwind, menggantikan picker
-// bawaan browser/OS yang tampilannya berbeda-beda tiap platform. Mengikuti pola yang
-// sama dengan searchable-select.js:
-//   - Input asli TETAP di DOM sebagai sumber kebenaran (value Y-m-d / HH:MM, atribut
-//     min/max, required + validasi native, ikut tersubmit form) - cuma disembunyikan
-//     visual (opacity-0, BUKAN display:none supaya validasi required tetap jalan).
-//   - Setiap pemilihan men-set input.value lalu dispatch event 'input' + 'change'
-//     (bubbles) supaya listener lain tetap jalan: cek bentrok jadwal via
-//     getElementById('tanggal'), filter onchange="this.form.submit()", dsb.
-//   - Class 'open' / 'drop-up' murni untuk query JS + variant Tailwind arbitrary.
 (function () {
     var HARI  = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
     var BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -23,6 +12,20 @@
     var ACTIVE_CLASSES = ['!bg-primary', '!text-white'];
 
     function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+    // Jam:menit saat ini di zona Asia/Jakarta (dipakai posisi scroll awal panel Waktu Mulai/Selesai
+    // saat field masih kosong, bukan terikat timezone perangkat/browser user).
+    function jamMenitSekarang() {
+        var bagian = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false
+        }).formatToParts(new Date());
+        var jam = 0, menit = 0;
+        bagian.forEach(function (b) {
+            if (b.type === 'hour') jam = parseInt(b.value, 10);
+            if (b.type === 'minute') menit = parseInt(b.value, 10);
+        });
+        return { jam: jam, menit: menit };
+    }
 
     function parseTanggal(v) {
         var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
@@ -122,6 +125,7 @@
             var min = parseTanggal(input.min), max = parseTanggal(input.max);
             var selected = parseTanggal(input.value);
             var today = new Date(); today.setHours(0, 0, 0, 0);
+            var hariKerjaSaja = input.dataset.weekdaysOnly !== undefined;
 
             var header = document.createElement('div');
             header.className = 'flex items-center justify-between mb-2';
@@ -163,7 +167,8 @@
                     if (selected && tgl.getTime() === selected.getTime()) {
                         ACTIVE_CLASSES.forEach(function (c) { btn.classList.add(c); });
                     }
-                    if ((min && tgl < min) || (max && tgl > max)) {
+                    var akhirPekan = hariKerjaSaja && (tgl.getDay() === 0 || tgl.getDay() === 6);
+                    if ((min && tgl < min) || (max && tgl > max) || akhirPekan) {
                         btn.disabled = true;
                         btn.classList.add('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
                     }
@@ -182,7 +187,8 @@
             hariIni.type = 'button';
             hariIni.className = 'border-none bg-transparent cursor-pointer text-[13px] font-medium text-primary hover:underline font-sans';
             hariIni.textContent = 'Hari Ini';
-            if ((min && today < min) || (max && today > max)) hariIni.disabled = true, hariIni.classList.add('opacity-40', 'pointer-events-none');
+            var iniAkhirPekan = hariKerjaSaja && (today.getDay() === 0 || today.getDay() === 6);
+            if ((min && today < min) || (max && today > max) || iniAkhirPekan) hariIni.disabled = true, hariIni.classList.add('opacity-40', 'pointer-events-none');
             hariIni.addEventListener('click', function () {
                 setValue(input, toVal(today));
                 panel.classList.remove('open');
@@ -208,14 +214,20 @@
 
         var ui = buatWrapper(input, 'bx-time-five');
         var panel = document.createElement('div');
-        panel.className = PANEL_CLASSES + ' w-[172px]';
+        panel.className = PANEL_CLASSES + ' w-[184px]';
         ui.wrapper.appendChild(panel);
+
+        // Jam yang baru diklik tapi menitnya belum dipilih - sengaja BELUM ditulis ke input
+        // asli (supaya tidak auto ke-set menit 00), disimpan sementara di sini dulu.
+        var jamSementara = null;
 
         function nilai() {
             var m = /^(\d{2}):(\d{2})/.exec(input.value || '');
             return m ? { jam: +m[1], menit: +m[2] } : null;
         }
 
+        // Abu-abu cuma dipakai untuk field wajib yang belum diisi (mis. Waktu Mulai jadwal) -
+        // filter waktu opsional tampil warna teks biasa, sama seperti select.
         function syncLabel() {
             var v = nilai();
             ui.label.textContent = v ? pad(v.jam) + ':' + pad(v.menit) : 'Pilih jam';
@@ -225,62 +237,116 @@
         function render() {
             panel.innerHTML = '';
             var v = nilai();
+            // Field masih kosong - posisi scroll awal ikut jam:menit sekarang (Asia/Jakarta),
+            // supaya user tidak perlu scroll jauh dari atas untuk cari waktu yang relevan.
+            var sekarang = v ? null : jamMenitSekarang();
 
             var kolomWrap = document.createElement('div');
             kolomWrap.className = 'flex gap-1.5';
 
-            // Kolom menit kelipatan 5; kalau nilai tersimpan menitnya "ganjil"
-            // (mis. 13:37 dari data lama), tetap disisipkan supaya terlihat aktif.
-            var daftarMenit = [];
-            for (var mm = 0; mm < 60; mm += 5) daftarMenit.push(mm);
-            if (v && daftarMenit.indexOf(v.menit) === -1) {
-                daftarMenit.push(v.menit);
-                daftarMenit.sort(function (a, b) { return a - b; });
+            // Kolom Jam - cuma 06-20 yang ditampilkan (jam rapat di luar itu tidak relevan untuk jam kantor).
+            var jamBox = document.createElement('div');
+            jamBox.className = 'flex-1 min-w-0';
+            var jamJudul = document.createElement('div');
+            jamJudul.className = 'text-[11px] font-semibold uppercase text-text-muted text-center mb-1';
+            jamJudul.textContent = 'Jam';
+            jamBox.appendChild(jamJudul);
+            var jamList = document.createElement('div');
+            jamList.className = 'custom-scrollbar max-h-[200px] overflow-y-auto flex flex-col gap-0.5 px-1';
+            var jamScrollTarget = sekarang ? Math.max(6, Math.min(20, sekarang.jam)) : null;
+            var jamTombol = [];
+
+            // Update tampilan kolom Jam saja di tempat (tanpa bongkar-pasang DOM/render ulang
+            // kolom Menit) - mencegah kedip & scroll kolom Menit ikut ter-reset tiap klik jam.
+            function updateJamHighlight(scroll) {
+                var vNow = nilai();
+                jamTombol.forEach(function (t) {
+                    t.btn.classList.remove('!bg-primary', '!text-white', 'ring-1', 'ring-primary', 'text-primary');
+                    if ((vNow && vNow.jam === t.angka) || (!vNow && jamSementara === t.angka)) {
+                        ACTIVE_CLASSES.forEach(function (c) { t.btn.classList.add(c); });
+                        if (scroll) jamList.scrollTop = t.btn.offsetTop - jamList.clientHeight / 2 + 16;
+                    } else if (jamScrollTarget === t.angka) {
+                        // Penanda jam sekarang - cuma cincin biru (bukan terpilih), meniru gaya "Hari Ini" di kalender.
+                        t.btn.classList.add('ring-1', 'ring-primary', 'text-primary');
+                        if (scroll) jamList.scrollTop = t.btn.offsetTop - jamList.clientHeight / 2 + 16;
+                    }
+                });
             }
 
-            [{ label: 'Jam',   n: 24, list: null },
-             { label: 'Menit', n: null, list: daftarMenit }].forEach(function (kolom, idx) {
-                var box = document.createElement('div');
-                box.className = 'flex-1 min-w-0';
-                var judul = document.createElement('div');
-                judul.className = 'text-[11px] font-semibold uppercase text-text-muted text-center mb-1';
-                judul.textContent = kolom.label;
-                box.appendChild(judul);
-                var list = document.createElement('div');
-                list.className = 'custom-scrollbar max-h-[200px] overflow-y-auto flex flex-col gap-0.5 pr-0.5';
-
-                var angkaList = kolom.list || Array.from({ length: kolom.n }, function (_, i) { return i; });
-                angkaList.forEach(function (angka) {
+            for (var j = 6; j <= 20; j++) {
+                (function (angka) {
                     var btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = TIME_ITEM_BASE;
                     btn.textContent = pad(angka);
-                    var aktif = v && (idx === 0 ? v.jam === angka : v.menit === angka);
-                    if (aktif) {
+                    btn.addEventListener('click', function () {
+                        var cur = nilai();
+                        if (cur) {
+                            // Sudah ada nilai lengkap sebelumnya - langsung ganti jamnya, menit tetap seperti semula.
+                            setValue(input, pad(angka) + ':' + pad(cur.menit));
+                            jamSementara = null;
+                        } else {
+                            // Field masih kosong - jam dipilih dulu, BELUM ditulis ke input asli,
+                            // tunggu menit dipilih supaya tidak auto ke-set menit 00.
+                            jamSementara = angka;
+                        }
+                        updateJamHighlight(false);
+                    });
+                    jamTombol.push({ btn: btn, angka: angka });
+                    jamList.appendChild(btn);
+                })(j);
+            }
+            updateJamHighlight(false);
+            setTimeout(function () { updateJamHighlight(true); });
+            jamBox.appendChild(jamList);
+            kolomWrap.appendChild(jamBox);
+
+            // Kolom Menit - daftar penuh 00-59 (bukan kelipatan 5).
+            var menitBox = document.createElement('div');
+            menitBox.className = 'flex-1 min-w-0';
+            var menitJudul = document.createElement('div');
+            menitJudul.className = 'text-[11px] font-semibold uppercase text-text-muted text-center mb-1';
+            menitJudul.textContent = 'Menit';
+            menitBox.appendChild(menitJudul);
+            var menitList = document.createElement('div');
+            menitList.className = 'custom-scrollbar max-h-[200px] overflow-y-auto flex flex-col gap-0.5 px-1';
+
+            for (var mm = 0; mm < 60; mm++) {
+                (function (angka) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = TIME_ITEM_BASE;
+                    btn.textContent = pad(angka);
+                    if (v && v.menit === angka) {
                         ACTIVE_CLASSES.forEach(function (c) { btn.classList.add(c); });
-                        setTimeout(function () { list.scrollTop = btn.offsetTop - list.clientHeight / 2 + 16; });
+                        setTimeout(function () { menitList.scrollTop = btn.offsetTop - menitList.clientHeight / 2 + 16; });
+                    } else if (sekarang && sekarang.menit === angka) {
+                        // Penanda menit sekarang - cuma cincin biru (bukan terpilih), meniru gaya "Hari Ini" di kalender.
+                        btn.classList.add('ring-1', 'ring-primary', 'text-primary');
+                        setTimeout(function () { menitList.scrollTop = btn.offsetTop - menitList.clientHeight / 2 + 16; });
                     }
                     btn.addEventListener('click', function () {
-                        var cur = nilai() || { jam: 0, menit: 0 };
-                        if (idx === 0) {
-                            // Pilih jam: set nilai, panel tetap terbuka untuk pilih menit.
-                            setValue(input, pad(angka) + ':' + pad(cur.menit));
-                            render();
-                        } else {
-                            setValue(input, pad(cur.jam) + ':' + pad(angka));
-                            panel.classList.remove('open');
-                        }
+                        // Menit cuma diterapkan kalau jam sudah dipilih (baik dari input tersimpan
+                        // maupun yang baru diklik di kolom Jam) - kalau belum, klik ini diabaikan.
+                        var v2 = nilai();
+                        var jamUntukDipakai = v2 ? v2.jam : jamSementara;
+                        if (jamUntukDipakai === null) return;
+                        setValue(input, pad(jamUntukDipakai) + ':' + pad(angka));
+                        jamSementara = null;
+                        panel.classList.remove('open');
                     });
-                    list.appendChild(btn);
-                });
-                box.appendChild(list);
-                kolomWrap.appendChild(box);
-            });
+                    menitList.appendChild(btn);
+                })(mm);
+            }
+            menitBox.appendChild(menitList);
+            kolomWrap.appendChild(menitBox);
+
             panel.appendChild(kolomWrap);
         }
 
         ui.trigger.addEventListener('click', function () {
             if (panel.classList.contains('open')) { panel.classList.remove('open'); return; }
+            jamSementara = null; // mulai sesi baru bersih, jangan bawa pilihan jam yang belum tuntas dari sesi sebelumnya
             render();
             openPanel(ui.trigger, panel);
         });
@@ -299,6 +365,4 @@
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') closeAllPanels();
     });
-
-    window.DateTimePicker = { enhanceDate: enhanceDate, enhanceTime: enhanceTime };
 })();

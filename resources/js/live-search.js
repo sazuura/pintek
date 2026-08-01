@@ -1,11 +1,21 @@
-// Progressive enhancement: input[data-live-search="#selector"] mem-filter halaman
-// tanpa reload penuh. Setelah user berhenti mengetik sejenak (debounce), request GET
-// dikirim lewat fetch(), lalu cuma bagian hasil (elemen yang cocok dengan selector di
-// data-live-search) yang di-refresh via innerHTML - form & input pencarian sendiri
-// TIDAK ikut diganti, jadi fokus/kursor di kotak pencarian tidak pernah hilang dan
-// tidak ada flash reload tiap huruf dihapus/diketik.
 (function () {
     var DEBOUNCE_MS = 450;
+
+    // Dipanggil tepat sebelum fetch dimulai - menyamarkan (lewat SkeletonUtil.mask, lihat
+    // skeleton.js) baris tabel, kartu mobile, dan kartu grid yang SAAT INI sudah ter-render
+    // (hasil pencarian sebelumnya, atau render awal dari server) supaya user melihat skeleton
+    // alih-alih data lama yang diam/statis selagi menunggu hasil baru. Header tabel & pagination
+    // sengaja tidak disentuh (query-nya cuma ambil baris tbody/kartu) supaya tidak ikut berkedip
+    // tiap kali user mengetik. Begitu fetch selesai, seluruh region ditimpa HTML asli yang baru.
+    function tampilkanSkeleton(region) {
+        window.SkeletonUtil.batasiItem(region);
+        var node = [];
+        region.querySelectorAll('table tbody tr:not(.accordion-detail)').forEach(function (n) { node.push(n); });
+        region.querySelectorAll('.mobile-card').forEach(function (n) { node.push(n); });
+        var grid = region.querySelector('.grid');
+        if (grid) Array.prototype.forEach.call(grid.children, function (n) { node.push(n); });
+        node.forEach(window.SkeletonUtil.mask);
+    }
 
     document.querySelectorAll('input[data-live-search]').forEach(function (input) {
         var form = input.form;
@@ -18,6 +28,7 @@
 
         function refresh() {
             var myId = ++reqId;
+            tampilkanSkeleton(region);
             var params = new URLSearchParams(new FormData(form));
             Array.from(params.keys()).forEach(function (k) {
                 if (!params.get(k)) params.delete(k);

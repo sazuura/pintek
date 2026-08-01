@@ -177,6 +177,13 @@ class RoleAksesControllerTest extends TestCase
             ],
         ]);
 
+        // Ambil ulang $operator dari database (bukan pakai variabel lama) - relasi roleAkses
+        // sempat ke-cache di request pertama di atas (sebelum akses dicabut), dan cache itu
+        // cuma valid untuk SATU request nyata. Request sungguhan berikutnya dari user ini akan
+        // resolve auth()->user() dari awal lagi (proses PHP baru), makanya di sini juga harus
+        // instance baru supaya benar-benar mensimulasikan "request berikutnya", bukan cache basi.
+        $operator = $operator->fresh();
+
         // Sekarang operator MASIH bisa lihat daftar (bisa_lihat tetap true)...
         $this->actingAs($operator)
             ->get(route('operator.peminjaman.index'))

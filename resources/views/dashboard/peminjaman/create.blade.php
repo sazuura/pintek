@@ -123,9 +123,7 @@
             </div>
         </x-modal-konfirmasi>
 
-        {{-- Modal peringatan pengajuan berulang (spam) - dicek lewat AJAX ke cek-spam
-             sesaat sebelum submit, supaya operator sadar kalau alat yang sama sudah
-             berkali-kali diajukan untuk tanggal pinjam yang sama. --}}
+        {{-- Modal peringatan pengajuan berulang (spam) - dicek lewat AJAX ke cek-spam sesaat sebelum submit, supaya operator sadar kalau alat yang sama sudah berkali-kali diajukan untuk tanggal pinjam yang sama. --}}
         <x-modal-konfirmasi id="modalPeringatanSpam" title="Pengajuan Berulang Terdeteksi" icon="bx-error" icon-class="text-warning-text">
             <p class="text-[13px] text-text dark:text-text-dark m-0 mb-2">Anda sudah beberapa kali mengajukan peralatan berikut untuk tanggal pinjam yang sama:</p>
             <ul id="modalPeringatanSpamList" class="text-[13px] text-text dark:text-text-dark m-0 pl-[18px] flex flex-col gap-1"></ul>
@@ -143,5 +141,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/peminjaman-form.js') }}?v={{ filemtime(public_path('js/peminjaman-form.js')) }}"></script>
+    @vite(['resources/js/peminjaman-form.js'])
 @endpush

@@ -21,6 +21,13 @@
                     class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
             </div>
 
+            <label class="text-[13px] text-text-muted whitespace-nowrap">Dari</label>
+            <input type="date" name="start" value="{{ request('start') }}" onchange="this.form.submit()"
+                class="max-md:w-full h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+            <label class="text-[13px] text-text-muted whitespace-nowrap">s/d</label>
+            <input type="date" name="end" value="{{ request('end') }}" onchange="this.form.submit()"
+                class="max-md:w-full h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+
             <select name="gedung" onchange="this.form.submit()"
                 class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                 <option value="">Semua Gedung</option>
@@ -36,14 +43,15 @@
                 <option value="rusak" {{ request('kondisi') == 'rusak' ? 'selected' : '' }}>Rusak</option>
             </select>
 
-            <label class="text-[13px] text-text-muted whitespace-nowrap">Dari</label>
-            <input type="date" name="start" value="{{ request('start') }}" onchange="this.form.submit()"
-                class="max-md:w-full h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
-            <label class="text-[13px] text-text-muted whitespace-nowrap">s/d</label>
-            <input type="date" name="end" value="{{ request('end') }}" onchange="this.form.submit()"
-                class="max-md:w-full h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+            <select name="status" onchange="this.form.submit()"
+                class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                <option value="">Semua Status</option>
+                <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
+                <option value="kritis" {{ request('status') == 'kritis' ? 'selected' : '' }}>Hampir Habis</option>
+                <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak Tersedia</option>
+            </select>
 
-            @if(request()->hasAny(['search','gedung','kondisi','start','end']))
+            @if(request()->hasAny(['search','gedung','kondisi','status','start','end']))
                 <a href="{{ route('inventaris.laporan.index', ['tab' => request('tab','panel-stok')]) }}"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                     <i class="bx bx-x"></i> Reset</a>
@@ -91,7 +99,7 @@
             </button>
         </div>
 
-        <div class="p-4" id="laporan-panels">
+        <div class="p-4" id="laporan-panels" data-skel>
 
             {{-- Panel 1: Stok Peralatan --}}
             <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab','panel-stok') === 'panel-stok' ? 'active' : '' }}"
@@ -103,7 +111,7 @@
                                 <tr>
                                     <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
                                     <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Nama Alat <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                                    <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Gedung</th>
+                                    <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Lokasi</th>
                                     <th class="w-[90px] group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Stok <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
                                     <th class="w-[90px] py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rusak</th>
                                     <th class="w-[90px] py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Tersedia</th>
@@ -179,7 +187,7 @@
                                 <tr>
                                     <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
                                     <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Nama Alat <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                                    <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Gedung / Tempat</th>
+                                    <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Lokasi</th>
                                     <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tanggal Pasang <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
                                     <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Kondisi</th>
                                 </tr>
@@ -192,7 +200,7 @@
                                             <div class="font-medium">{{ $a->nama_alat }}</div>
                                         </td>
                                         <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $a->gedung }}{{ $a->lokasi_detail ? ' - ' . $a->lokasi_detail : '' }}</td>
-                                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $a->tanggal_pasang->format('d/m/Y') }}</td>
+                                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $a->tanggal_pasang->translatedFormat('l, d F Y') }}</td>
                                         <td class="py-3.5 px-4 align-middle text-center"><x-badge :variant="$a->kondisiBadgeClass">{{ $a->kondisiLabel }}</x-badge></td>
                                     </tr>
                                 @empty
@@ -222,7 +230,7 @@
                             </div>
                             <div class="flex items-center justify-between text-[13px] text-text-muted pt-2.5 border-t border-page-bg dark:border-page-bg-dark">
                                 <span>Tanggal Pasang</span>
-                                <span class="text-text dark:text-text-dark">{{ $a->tanggal_pasang->format('d/m/Y') }}</span>
+                                <span class="text-text dark:text-text-dark">{{ $a->tanggal_pasang->translatedFormat('l, d F Y') }}</span>
                             </div>
                         </div>
                     @empty
@@ -264,7 +272,7 @@
                                             <div class="text-xs text-text-muted mt-0.5">{{ $p->items->count() }} peralatan</div>
                                         </td>
                                         <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->user->nama_user ?? '-' }}</td>
-                                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->tanggal_pinjam->format('d/m/Y') }}</td>
+                                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</td>
                                         <td class="py-3.5 px-4 align-middle text-center"><x-badge :variant="$p->badge['class']">{{ $p->badge['label'] }}</x-badge></td>
                                     </tr>
                                     <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row" id="{{ $uid }}">
@@ -330,7 +338,7 @@
                             </div>
                             <div class="flex items-center justify-between text-[13px] text-text-muted pt-2.5 border-t border-page-bg dark:border-page-bg-dark">
                                 <span>Tanggal Pinjam</span>
-                                <span class="text-text dark:text-text-dark">{{ $p->tanggal_pinjam->format('d/m/Y') }}</span>
+                                <span class="text-text dark:text-text-dark">{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</span>
                             </div>
                         </div>
                     @empty

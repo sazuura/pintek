@@ -125,6 +125,20 @@ document.addEventListener('DOMContentLoaded', function () {
         rows.sort(function (a, b) {
             var aCell = a.children[colIdx];
             var bCell = b.children[colIdx];
+
+            // data-sort-value dipakai kolom yang tampilannya tidak bisa diurut apa adanya
+            // dari teksnya (mis. "Jum, 04 Sep 2026" - kalau disort sebagai teks, hasilnya
+            // ikut alfabet nama hari, bukan kronologis). Kalau atribut ini ada, prioritaskan.
+            var aSortAttr = aCell ? aCell.dataset.sortValue : undefined;
+            var bSortAttr = bCell ? bCell.dataset.sortValue : undefined;
+            if (aSortAttr !== undefined && bSortAttr !== undefined) {
+                var aNumAttr = parseFloat(aSortAttr);
+                var bNumAttr = parseFloat(bSortAttr);
+                if (!isNaN(aNumAttr) && !isNaN(bNumAttr)) {
+                    return asc ? aNumAttr - bNumAttr : bNumAttr - aNumAttr;
+                }
+            }
+
             var aText = aCell ? aCell.textContent.trim().toLowerCase() : '';
             var bText = bCell ? bCell.textContent.trim().toLowerCase() : '';
             var aNum  = parseFloat(aText);
@@ -155,9 +169,11 @@ document.addEventListener('DOMContentLoaded', function () {
 // ═══════════════════════════════════════════════════
 // 4. MODAL KONFIRMASI (global, reusable)
 //    Dipakai oleh <x-modal-konfirmasi> - dibuka/ditutup lewat class 'open', tombol
-//    [data-modal-close], klik backdrop, atau Escape. Fungsi buka/tutup ditaruh di
-//    scope global (bukan di dalam DOMContentLoaded) supaya bisa dipanggil langsung
-//    dari onclick="" di Blade file manapun.
+//    [data-modal-close], klik backdrop, atau Escape. Diekspos eksplisit ke window
+//    (bukan cuma deklarasi function biasa) supaya tetap bisa dipanggil dari onclick=""
+//    di Blade file manapun - sejak dibundel lewat Vite, script ini dimuat sebagai
+//    <script type="module">, dan deklarasi top-level di dalam module TIDAK otomatis
+//    jadi global seperti pada <script> klasik.
 // ═══════════════════════════════════════════════════
 function bukaModalKonfirmasi(id) {
     var modal = document.getElementById(id);
@@ -168,6 +184,9 @@ function tutupModalKonfirmasi(id) {
     var modal = document.getElementById(id);
     if (modal) modal.classList.remove('open');
 }
+
+window.bukaModalKonfirmasi = bukaModalKonfirmasi;
+window.tutupModalKonfirmasi = tutupModalKonfirmasi;
 
 document.addEventListener('click', function (e) {
     var closeBtn = e.target.closest('[data-modal-close]');

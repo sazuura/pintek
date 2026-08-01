@@ -54,7 +54,6 @@
                 <select name="urutkan" onchange="this.form.submit()" data-placeholder="-- Urutkan --"
                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                     <option value="" disabled {{ request('urutkan') ? '' : 'selected' }}>-- Urutkan --</option>
-                    <option value="gedung" {{ request('urutkan') == 'gedung' ? 'selected' : '' }}>Gedung</option>
                     <option value="nama_asc" {{ request('urutkan') == 'nama_asc' ? 'selected' : '' }}>Nama (A-Z)</option>
                     <option value="nama_desc" {{ request('urutkan') == 'nama_desc' ? 'selected' : '' }}>Nama (Z-A)</option>
                     <option value="stok_desc" {{ request('urutkan') == 'stok_desc' ? 'selected' : '' }}>Stok Terbanyak</option>
@@ -72,19 +71,15 @@
         </div>
 
         {{-- Grid marketplace --}}
-        <div id="hasil-peralatan-inv">
+        <div id="hasil-peralatan-inv" data-skel>
         @if($peralatan->count())
-            <div class="grid grid-cols-5 max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
+            <div class="grid grid-cols-5 max-tablet:!grid-cols-3 max-xs:!grid-cols-1 gap-4">
                 @foreach($peralatan as $item)
                     <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
-                        {{-- Foto --}}
-                        @if($item->foto)
-                            <img src="{{ Storage::url($item->foto) }}" alt="{{ $item->nama_peralatan }}" class="w-full aspect-[4/3] object-cover bg-page-bg dark:bg-page-bg-dark">
-                        @else
-                            <div class="w-full aspect-[4/3] bg-page-bg dark:bg-page-bg-dark flex items-center justify-center text-text-muted text-4xl">
-                                <i class="bx bx-package"></i>
-                            </div>
-                        @endif
+                        {{-- Foto - fallback ke ikon global kalau kolom foto kosong ATAU filenya sudah tidak ada di storage --}}
+                        <x-foto-item :path="$item->foto" :alt="$item->nama_peralatan" icon="bx-package"
+                            img-class="w-full aspect-[4/3] object-cover bg-page-bg dark:bg-page-bg-dark"
+                            icon-wrap-class="w-full aspect-[4/3] bg-page-bg dark:bg-page-bg-dark flex items-center justify-center text-text-muted text-4xl" />
 
                         <div class="p-3.5 flex flex-col gap-2 flex-1">
                             <div class="text-base font-bold text-text dark:text-text-dark leading-tight">{{ $item->nama_peralatan }}</div>
@@ -142,14 +137,12 @@
                                     </a>
                                 @endif
                                 @if($bisaHapus)
-                                    <form action="{{ route($roleAktif . '.peralatan.destroy', $item->id_peralatan) }}" method="POST">
-                                        @csrf @method('DELETE')
-                                        <button type="submit"
-                                            class="w-9 h-9 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
-                                            onclick="return confirm('Hapus {{ $item->nama_peralatan }}?')" title="Hapus">
-                                            <i class="bx bx-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                        class="w-9 h-9 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
+                                        onclick="bukaKonfirmasiHapusPeralatan('{{ route($roleAktif . '.peralatan.destroy', $item->id_peralatan) }}', '{{ addslashes($item->nama_peralatan) }}')"
+                                        title="Hapus">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
                                 @endif
                             </div>
                         @endif
@@ -175,5 +168,34 @@
             </div>
         @endif
         </div>
+
+        <x-modal-konfirmasi id="modalKonfirmasiHapusPeralatan" title="Hapus Peralatan" icon="bx-trash" icon-class="text-danger-text">
+            <div class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
+                <div class="text-[13px] font-semibold text-danger-text">
+                    <i class="bx bx-error"></i> Hapus <span id="namaPeralatanHapus" class="font-bold"></span>? Tindakan ini tidak bisa dibatalkan.
+                </div>
+            </div>
+            <form id="formKonfirmasiHapusPeralatan" method="POST">
+                @csrf @method('DELETE')
+                <div class="flex justify-end gap-2.5 mt-3">
+                    <button type="button" data-modal-close
+                        class="h-9 px-3.5 rounded-lg bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                    <button type="submit"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white">
+                        <i class="bx bx-trash"></i> Hapus
+                    </button>
+                </div>
+            </form>
+        </x-modal-konfirmasi>
     </main>
 @endsection
+
+@push('scripts')
+    <script>
+        function bukaKonfirmasiHapusPeralatan(url, nama) {
+            document.getElementById('formKonfirmasiHapusPeralatan').action = url;
+            document.getElementById('namaPeralatanHapus').textContent = nama;
+            bukaModalKonfirmasi('modalKonfirmasiHapusPeralatan');
+        }
+    </script>
+@endpush

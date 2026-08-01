@@ -24,8 +24,8 @@
                     <td class="py-1.5 px-2.5 border-b border-gray-100">{{ $index + 1 }}</td>
                     <td class="py-1.5 px-2.5 border-b border-gray-100">{{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}</td>
                     <td class="py-1.5 px-2.5 border-b border-gray-100">{{ $j->judul_kegiatan }}</td>
-                    <td class="py-1.5 px-2.5 border-b border-gray-100">{{ $j->tanggal->translatedFormat('D, d/m/Y') }}</td>
-                    <td class="py-1.5 px-2.5 border-b border-gray-100">{{ str_contains($j->platform, 'Online') ? 'Online' : 'Offline' }}</td>
+                    <td class="py-1.5 px-2.5 border-b border-gray-100">{{ $j->tanggal->translatedFormat('l, d F Y') }}</td>
+                    <td class="py-1.5 px-2.5 border-b border-gray-100">{{ $j->platform === 'Hybrid' ? 'Hybrid' : (str_contains($j->platform, 'Online') ? 'Online' : 'Offline') }}</td>
                     <td class="py-1.5 px-2.5 border-b border-gray-100 text-center"><span class="{{ $badgeColor }} py-0.5 px-2 rounded-full text-[10px] font-semibold">{{ $label }}</span></td>
                 </tr>
             @empty

@@ -1,8 +1,6 @@
 @props(['variant' => ''])
 @php
-    // Peta nama class lama (masih dipakai model: Peminjaman::badge['class'], Peralatan::statusBadgeClass,
-    // dan beberapa @php inline di view) ke utility Tailwind -- satu sumber kebenaran supaya tidak
-    // diulang-ulang di tiap file yang butuh badge dengan warna dinamis.
+    // buat status persegi panjang rounded
     $map = [
         'badge-active'   => 'bg-success dark:bg-success-dark text-success-text',
         'badge-warning'  => 'bg-warning dark:bg-warning-dark text-warning-text',

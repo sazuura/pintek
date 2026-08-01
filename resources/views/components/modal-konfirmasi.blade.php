@@ -1,10 +1,6 @@
 @props(['id', 'title' => 'Konfirmasi', 'icon' => 'bx-error-circle', 'iconClass' => 'text-warning-text'])
 {{--
-    Modal konfirmasi generik dipakai buat semua aksi yang butuh persetujuan user
-    (batalkan jadwal, batalkan pengajuan, konfirmasi duplikasi, dst) - menggantikan
-    window.confirm() bawaan browser & form/toggle inline yang sebelumnya tersebar
-    di tiap halaman. Buka/tutup lewat window.bukaModalKonfirmasi(id) /
-    window.tutupModalKonfirmasi(id) (didefinisikan di public/js/content.js), tombol
+    Modal konfirmasi generik. Buka/tutup lewat window.bukaModalKonfirmasi(id) / window.tutupModalKonfirmasi(id) (didefinisikan di resources/js/content.js), tombol
     dengan atribut [data-modal-close], klik di luar kartu (backdrop), atau Escape.
 --}}
 <div id="{{ $id }}" class="modal-konfirmasi fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">

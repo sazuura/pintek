@@ -281,7 +281,7 @@ class JadwalViewGabunganTest extends TestCase
         $this->actingAs($this->operator)
             ->post(route('operator.jadwal.store'), [
                 'judul_kegiatan'  => 'Rapat Baru Operator',
-                'tanggal'         => now()->addDay()->toDateString(),
+                'tanggal'         => Carbon::parse('next monday')->toDateString(),
                 'waktu_mulai'     => '09:00',
                 'waktu_selesai'   => '10:00',
                 'platform'        => 'Offline',

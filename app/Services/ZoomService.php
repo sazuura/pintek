@@ -4,18 +4,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * ZoomService
- * Membuat/mengubah/menghapus meeting Zoom lewat Server-to-Server OAuth,
- * untuk 2 akun terpisah ("akun_1"/"akun_2", masing-masing punya
- * account_id/client_id/client_secret sendiri di config/services.php).
- *
- * Semua method dibungkus try/catch dan tidak pernah throw ke caller -
- * kegagalan (kredensial kosong, API error, koneksi timeout) selalu
- * dilaporkan lewat Log dan return null/false, supaya alur simpan jadwal
- * di PenjadwalanService tetap jalan (fallback ke pengisian link manual)
- * walau Zoom API sedang bermasalah.
- */
 class ZoomService
 {
     public function buatMeeting(string $akun, array $data): ?array

@@ -35,7 +35,7 @@ class LaporanExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             $sudahLewat   = Carbon::parse($j->tanggal->format('Y-m-d') . ' ' . $j->waktu_selesai)->isPast();
             $status       = $j->isDibatalkan() ? 'Dibatalkan' : ($sudahLewat ? 'Selesai' : 'Aktif');
             return [
-                'Tanggal'     => $j->tanggal?->translatedFormat('D, d/m/Y') ?? '-',
+                'Tanggal'     => $j->tanggal?->translatedFormat('l, d F Y') ?? '-',
                 'Judul Rapat' => $j->judul_kegiatan ?? '-',
                 'Operator'       => $j->operators->pluck('nama_user')->join(', ') ?: '-',
                 'Waktu'          => $waktuMulai . ' - ' . $waktuSelesai,

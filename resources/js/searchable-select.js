@@ -1,23 +1,3 @@
-// Progressive enhancement: mengubah HAMPIR SEMUA <select> di aplikasi (kecuali
-// listbox beratribut "size", mis. picker bulan/tahun di dashboard) jadi dropdown
-// custom (klik kotak trigger -> muncul daftar hasil di bawahnya), supaya tidak ada
-// lagi tampilan dropdown bawaan browser/OS. <select> asli tetap dipertahankan sebagai
-// sumber kebenaran (value, options, disabled state, validasi & submit form native) -
-// cuma disembunyikan secara visual.
-//
-// Search bar di dalam dropdown otomatis muncul HANYA kalau jumlah pilihan (yang
-// benar-benar bisa dipilih, bukan placeholder) lebih dari SEARCH_THRESHOLD - jadi
-// select kecil seperti filter status/role tidak perlu kotak pencarian, sementara
-// select dengan banyak data (daftar alat, operator, jadwal) otomatis dapat search.
-//
-// Data per <option> yang dikenali (semua opsional kecuali value/textContent):
-//   data-subtitle       teks baris kedua di tiap item (mis. nomor HP, "Stok: 5")
-//   data-badge          teks badge kecil di kanan item (mis. "Jadwal Bentrok")
-//   data-badge-variant  'danger' | 'warning' (default 'danger' kalau data-badge ada)
-//
-// Class seperti "searchable-select", "open", "is-active", "is-disabled" TIDAK punya CSS
-// sendiri -- murni dipakai buat query JS (closest(), classList) dan variant Tailwind
-// arbitrary (mis. [&.open]:block) yang ditulis langsung di className konstanta di bawah.
 (function () {
     var SELECT_SELECTOR = 'select:not([size])';
     var SEARCH_THRESHOLD = 7;
@@ -49,12 +29,7 @@
     var MAX_TRIGGER_WIDTH = 340;
     var measureCtx = null;
 
-    // Select filter di toolbar (bukan yang 'fill') dibuat menyesuaikan isi, bukan
-    // selebar-lebarnya - tapi kalau opsinya berupa nama panjang (mis. "Clara Safitri
-    // (Operator)"), lebar minimum bawaan (190px) bikin teks di trigger & tiap item
-    // dropdown kepotong ellipsis. Di sini lebar dihitung dari opsi terpanjang supaya
-    // select dengan data pendek (mis. "Semua Status") tetap ringkas, sementara yang
-    // datanya panjang otomatis dilebarkan (dibatasi MAX supaya tidak berlebihan).
+    // Select filter di toolbar 
     function computeTriggerWidth(select) {
         if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
         measureCtx.font = '400 14px ui-sans-serif, system-ui, sans-serif';
@@ -169,7 +144,6 @@
 
         // Setelah isinya dirender (tinggi dropdown sudah final), cek sisa ruang
         // viewport: kalau di bawah trigger tidak muat dan ruang di atas lebih lega,
-        // buka ke atas supaya daftarnya tidak terpotong tepi bawah layar.
         dropdown.classList.remove('drop-up');
         var trigRect = trigger.getBoundingClientRect();
         var ruangBawah = window.innerHeight - trigRect.bottom;
@@ -195,13 +169,7 @@
         if (select.dataset.enhanced) return;
         select.dataset.enhanced = '1';
 
-        // Select yang aslinya dibuat untuk melebar mengisi baris flex (mis. baris
-        // dinamis peralatan/operator, atau field form lewat <x-select>) ditandai lewat
-        // class 'flex-1' / 'w-full' di elemen aslinya - wrapper ikut melebar. Selain
-        // itu (mis. select filter di toolbar) wrapper dibuat menyesuaikan isi saja,
-        // supaya tidak melebar aneh mengisi sisa ruang flex toolbar - tapi tetap diberi
-        // lebar minimum supaya label seperti "Gedung B (Persandian)" tidak kepotong
-        // ellipsis di kotak yang terlalu sempit.
+        // Select yang aslinya dibuat untuk melebar mengisi baris flex
         var fill = select.classList.contains('flex-1') || select.classList.contains('w-full');
 
         var wrapper = document.createElement('div');
@@ -229,10 +197,7 @@
         var dropdown = document.createElement('div');
         dropdown.className = DROPDOWN_CLASSES;
 
-        // Search bar cuma dibuat kalau opsinya banyak, ATAU select-nya memang ditandai
-        // eksplisit class 'searchable' (mis. pilih operator/peralatan) - select kecil
-        // lain (mis. filter status/role/kondisi) langsung tampil daftarnya tanpa kotak
-        // pencarian.
+        // Search bar cuma dibuat kalau opsinya banyak
         var showSearch = select.classList.contains('searchable') || selectableOptions(select).length > SEARCH_THRESHOLD;
         var input = null, clearBtn = null;
         if (showSearch) {

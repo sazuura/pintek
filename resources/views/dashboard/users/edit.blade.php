@@ -21,12 +21,12 @@
                 <h3 class="text-[15px] font-semibold text-text dark:text-text-dark mb-5 pb-3 border-b border-page-bg dark:border-page-bg-dark flex items-center gap-2">
                     <i class="bx bxs-user-detail"></i> Edit: {{ $user->nama_user }}</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <x-input name="nama_user" label="Nama Lengkap" required value="{{ $user->nama_user }}" />
+                    <x-input name="nama_user" label="Nama Lengkap" required value="{{ $user->nama_user }}" autocomplete="name" />
 
                     <x-input name="nohp" label="No. HP" required value="{{ $user->nohp }}"
-                        hint="Dipakai untuk notifikasi WhatsApp" />
+                        hint="Dipakai untuk notifikasi WhatsApp" autocomplete="tel" />
 
-                    <x-input type="email" name="email" label="Email" required value="{{ $user->email }}" />
+                    <x-input type="email" name="email" label="Email" required value="{{ $user->email }}" autocomplete="email" />
 
                     <x-select name="jenis_kelamin" label="Jenis Kelamin" required>
                         <option value="L" {{ old('jenis_kelamin', $user->jenis_kelamin) == 'L' ? 'selected' : '' }}>Laki-laki</option>
@@ -34,11 +34,13 @@
                     </x-select>
 
                     <div class="md:col-span-2">
-                        <x-input type="textarea" name="alamat" label="Alamat" required value="{{ $user->alamat }}" />
+                        <x-input type="textarea" name="alamat" label="Alamat" required value="{{ $user->alamat }}" autocomplete="street-address" />
                     </div>
 
+                    {{-- autocomplete="new-password" wajib supaya Chrome tidak mengira ini form login
+                         dan menawarkan saran kredensial tersimpan di field lain. --}}
                     <x-input name="password" label="Password Baru" type="password" toggleable
-                        placeholder="Min. 6 karakter" hint="Kosongkan jika tidak berubah" />
+                        placeholder="Min. 6 karakter" hint="Kosongkan jika tidak berubah" autocomplete="new-password" />
 
                     <x-select name="role" label="Role" required>
                         @foreach($roles as $r)

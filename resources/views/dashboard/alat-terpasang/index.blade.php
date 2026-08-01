@@ -87,18 +87,14 @@
             </div>
         </div>
 
-        <div id="hasil-alat-terpasang">
+        <div id="hasil-alat-terpasang" data-skel>
         @if($alat->count())
-            <div class="grid grid-cols-5 max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4">
+            <div class="grid grid-cols-5 max-tablet:!grid-cols-3 max-xs:!grid-cols-1 gap-4">
                 @foreach($alat as $item)
                     <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
-                        @if($item->foto)
-                            <img src="{{ $item->foto_url }}" alt="{{ $item->nama_alat }}" class="w-full aspect-[4/3] object-cover bg-page-bg dark:bg-page-bg-dark">
-                        @else
-                            <div class="w-full aspect-[4/3] bg-page-bg dark:bg-page-bg-dark flex items-center justify-center text-text-muted text-4xl">
-                                <i class="bx bx-tv"></i>
-                            </div>
-                        @endif
+                        <x-foto-item :path="$item->foto" :alt="$item->nama_alat" icon="bx-tv"
+                            img-class="w-full aspect-[4/3] object-cover bg-page-bg dark:bg-page-bg-dark"
+                            icon-wrap-class="w-full aspect-[4/3] bg-page-bg dark:bg-page-bg-dark flex items-center justify-center text-text-muted text-4xl" />
 
                         <div class="p-3.5 flex flex-col gap-2 flex-1">
                             <div class="text-sm font-semibold text-text dark:text-text-dark leading-tight flex items-center gap-1.5">
@@ -136,14 +132,17 @@
                                     </a>
                                 @endif
                                 @if($bisaHapus)
-                                    <form action="{{ route($roleAktif . '.alat-terpasang.destroy', $item->id_alat_terpasang) }}" method="POST">
-                                        @csrf @method('DELETE')
-                                        <button type="submit"
-                                            class="w-9 h-9 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
-                                            onclick="return confirm('{{ $item->jumlah > 1 ? "Hapus {$item->jumlah} unit \\\"{$item->nama_alat}\\\" ini?" : "Hapus {$item->nama_alat}?" }}')" title="Hapus">
-                                            <i class="bx bx-trash"></i>
-                                        </button>
-                                    </form>
+                                    @php
+                                        $pesanHapus = $item->jumlah > 1
+                                            ? "Hapus {$item->jumlah} unit \"{$item->nama_alat}\" ini?"
+                                            : "Hapus {$item->nama_alat}?";
+                                    @endphp
+                                    <button type="button"
+                                        class="w-9 h-9 rounded-lg border-none cursor-pointer inline-flex items-center justify-center text-[15px] transition-opacity duration-200 shrink-0 hover:opacity-80 bg-danger dark:bg-danger-dark text-danger-text"
+                                        onclick="bukaKonfirmasiHapusAlatTerpasang('{{ route($roleAktif . '.alat-terpasang.destroy', $item->id_alat_terpasang) }}', '{{ addslashes($pesanHapus) }}')"
+                                        title="Hapus">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
                                 @endif
                             </div>
                         @endif
@@ -168,5 +167,34 @@
             </div>
         @endif
         </div>
+
+        <x-modal-konfirmasi id="modalKonfirmasiHapusAlatTerpasang" title="Hapus Alat Terpasang" icon="bx-trash" icon-class="text-danger-text">
+            <div class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
+                <div class="text-[13px] font-semibold text-danger-text">
+                    <i class="bx bx-error"></i> <span id="pesanHapusAlatTerpasang"></span> Tindakan ini tidak bisa dibatalkan.
+                </div>
+            </div>
+            <form id="formKonfirmasiHapusAlatTerpasang" method="POST">
+                @csrf @method('DELETE')
+                <div class="flex justify-end gap-2.5 mt-3">
+                    <button type="button" data-modal-close
+                        class="h-9 px-3.5 rounded-lg bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-colors duration-200 hover:bg-page-bg dark:hover:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                    <button type="submit"
+                        class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-danger-text text-white">
+                        <i class="bx bx-trash"></i> Hapus
+                    </button>
+                </div>
+            </form>
+        </x-modal-konfirmasi>
     </main>
 @endsection
+
+@push('scripts')
+    <script>
+        function bukaKonfirmasiHapusAlatTerpasang(url, pesan) {
+            document.getElementById('formKonfirmasiHapusAlatTerpasang').action = url;
+            document.getElementById('pesanHapusAlatTerpasang').textContent = pesan;
+            bukaModalKonfirmasi('modalKonfirmasiHapusAlatTerpasang');
+        }
+    </script>
+@endpush

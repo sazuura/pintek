@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+/* Font Poppins dimuat lewat <link> di <head> masing-masing layout (bukan @import di sini) -
+   @import di dalam CSS memblokir render karena browser harus fetch CSS ini dulu, baca
+   @import-nya, baru mulai fetch font-nya secara berurutan (bukan paralel). */
 @import "tailwindcss";
 
-/* Dark mode di-toggle lewat class .dark di <body> (lihat public/js/adminhub.js),
-   bukan prefers-color-scheme -- custom variant ini yang bikin prefix dark: bekerja
-   berdasarkan class tersebut. */
+/* Dark mode di-toggle lewat class .dark di <body>
+ */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Reset global yang dulu ada di adminhub.css -- dipindah ke base layer Tailwind
-   supaya tidak perlu diulang lewat utility class (no-underline, text-sm) di tiap link/body. */
+
 @layer base {
     a {
         text-decoration: none;
@@ -18,18 +18,15 @@
 }
 
 @theme {
-    /* ── Font ─────────────────────────────────────────────────────────── */
+    /*  Font  */
     --font-sans: 'Poppins', sans-serif;
 
-    /* ── Breakpoint custom (menggantikan/menambah skala breakpoint bawaan)
-       480/768/900/1100 dipakai di seluruh layout admin/operator/inventaris.
-       768 kebetulan sama persis dengan md: bawaan Tailwind. ────────────── */
+    /* responsive */
     --breakpoint-xs: 480px;
     --breakpoint-tablet: 900px;
     --breakpoint-wide: 1100px;
 
-    /* ── Primary -- skala baru "Digital Blue", menggantikan --blue lama
-       (#3C91E6). Base/default di shade 500. ─────────────────────────── */
+    /* warna Primary "Digital Blue" */
     --color-primary-50: #E5F0FF;
     --color-primary-100: #CCE0FF;
     --color-primary-200: #99C2FF;
@@ -43,18 +40,20 @@
     --color-primary-950: #000E24;
     --color-primary: var(--color-primary-500);
 
-    /* ── Background & teks (light mode default, override dark lewat
-       dark: di markup, bukan value kondisional di sini) ─────────────── */
+    /* ── Background & teks (light mode default) */
     --color-surface: #F9F9F9;
     --color-surface-dark: #0C0C1E;
     --color-page-bg: #eee;
     --color-page-bg-dark: #060714;
     --color-text: #342E37;
     --color-text-dark: #FBFBFB;
-    --color-text-muted: #AAAAAA;
+    /* #AAAAAA cuma ~2.2:1 kontras di atas surface/page-bg terang - gagal WCAG AA (butuh 4.5:1).
+       #646464 lolos ~5.1-5.6:1 di kedua background terang. Di dark mode nilai asli #AAAAAA
+       sudah aman (kontras tinggi di atas background gelap), jadi dikembalikan lewat override
+       .dark di bawah. */
+    --color-text-muted: #646464;
 
-    /* ── Status/semantik -- nilai sama persis seperti CSS native
-       sebelumnya, cuma dipindah jadi token global. ──────────────────── */
+    /* Status  global */
     --color-success: #e6f9f0;
     --color-success-dark: #0d3326;
     --color-success-text: #1abc9c;
@@ -76,9 +75,7 @@
     --color-inactive-text: #888;
     --color-inactive-text-dark: #666;
 
-    /* Variabel lain dari :root lama yang masih dipakai (sidebar logout,
-       notifikasi dot, ikon widget box-info dashboard) -- tetap dipertahankan
-       terpisah dari token di atas, bukan hasil konsolidasi. */
+    /* Variabel lain dari sidebar logout, notifikasi dot, ikon widget box-info dashboard. */
     --color-red: #DB504A;
     --color-yellow: #FFCE26;
     --color-yellow-light: #FFF2C6;
@@ -86,7 +83,7 @@
     --color-orange-light: #FFE0D3;
     --color-orange-bg: #FFF0E5;
 
-    /* Shadow kartu yang dipakai berulang di .form-card, .stat-card, dsb. */
+    /* Shadow kartu di .form-card, .stat-card, dsb. */
     --shadow-card: 0 2px 8px rgba(0, 0, 0, .06);
 
     /* Animasi masuk untuk flash toast (components/flash.blade.php) */
@@ -98,8 +95,13 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Scrollbar custom tipis, dipakai di daftar yang overflow-y-auto (mis. dropdown
-   searchable-select) supaya tidak nampilin scrollbar bawaan OS yang tebal & kontras. */
+/* text-muted di-set lebih gelap di @theme demi kontras WCAG AA di light mode - di dark mode
+   nilai asli yang lebih terang sudah cukup kontras di atas background gelap, jadi dikembalikan. */
+:where(.dark, .dark *) {
+    --color-text-muted: #AAAAAA;
+}
+
+/* Scrollbar custom tipis, dipakai di daftar yang overflow-y-auto (mis. dropdown searchable-select) */
 .custom-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, .18) transparent;
@@ -128,9 +130,14 @@
     background-color: rgba(255, 255, 255, .3);
 }
 
-/* Ikon kalender/jam bawaan browser di input type="date"/"time" defaultnya gelap -
-   nyaris tidak kelihatan di atas input dark mode yang juga gelap. Dibalik jadi
-   terang khusus saat dark mode supaya tetap kontras. */
+/* Skeleton loading saat halaman pertama kali dibuka - kelas skel-loading ditaruh di <html>
+   oleh script anti-flash (lihat layouts/app.blade.php) sebelum body dirender, supaya
+   komponen aslinya tersembunyi tanpa sempat kelihatan sekilas sebelum skeleton tampil. */
+html.skel-loading [data-skel] {
+    display: none;
+}
+
+/* Ikon kalender/ defaultnya gelap  */
 .dark input[type="date"]::-webkit-calendar-picker-indicator,
 .dark input[type="time"]::-webkit-calendar-picker-indicator {
     filter: invert(1) brightness(1.5);

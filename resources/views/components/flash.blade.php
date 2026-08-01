@@ -1,7 +1,6 @@
 @php
-    // Kalau validasi form gagal ($errors terisi) tapi controller tidak set session('error')
-    // sendiri, tetap munculkan toast gagal generik - supaya semua form otomatis dapat
-    // notifikasi kegagalan tanpa perlu ubah tiap controller satu-satu.
+    // Kalau validasi form gagal ($errors terisi) tapi controller tidak set session('error') sendiri, tetap munculkan toast gagal generik
+    // notifikasi kegagalan 
     $errorMessage = session('error') ?: ($errors->any() ? 'Periksa kembali input Anda.' : null);
 
     $messages = [
@@ -16,8 +15,7 @@
         'warning' => 'bx-error',
         'info' => 'bx-info-circle',
     ];
-    // Warna toast ini berbeda dari token badge (success/danger/warning) di tema global --
-    // memang set warna terpisah, dipertahankan persis seperti CSS aslinya, bukan dikonsolidasi.
+    // Warna toast berbeda dari token badge (success/danger/warning) 
     $styles = [
         'success' => 'bg-[#d4edda] text-[#1a6b30] border-l-4 border-[#28a745]',
         'error'   => 'bg-[#f8d7da] text-[#842029] border-l-4 border-[#dc3545]',

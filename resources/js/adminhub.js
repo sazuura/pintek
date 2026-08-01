@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         toggleBtn.addEventListener('click', function () {
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 900) {
                 sidebar.classList.contains('sidebar-open') ? closeDrawer() : openDrawer();
             } else {
                 toggleDesktop();
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeDrawer);
 
         // Restore sidebar state saat load
-        if (window.innerWidth > 768) {
+        if (window.innerWidth > 900) {
             if (localStorage.getItem('sidebarState') === 'mini') {
                 sidebar.classList.add('hide');
             }
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         window.addEventListener('resize', function () {
-            if (window.innerWidth > 768) {
+            if (window.innerWidth > 900) {
                 closeDrawer();
                 if (localStorage.getItem('sidebarState') === 'mini') {
                     sidebar.classList.add('hide');
@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var switchMode = document.getElementById('switch-mode');
     var themeIcon  = document.getElementById('theme-icon');
     // Class 'dark' ditaruh di <html>, bukan <body> - sudah di-set oleh script anti-flash
-    // di <head> (lihat layouts/app.blade.php), tidak perlu baca localStorage lagi di sini.
     var isDark = document.documentElement.classList.contains('dark');
 
     // Sinkronkan checkbox dan icon dengan state saat ini
