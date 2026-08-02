@@ -5,9 +5,6 @@ use App\Models\Role;
 use App\Models\RoleMenuAkses;
 use Illuminate\Http\Request;
 
-/**
- * "Sistem Settings"
- */
 class RoleAksesController extends Controller
 {
     private const MENU_TERKUNCI = ['dashboard', 'laporan', 'pengaturan'];
@@ -18,8 +15,7 @@ class RoleAksesController extends Controller
             ->orderBy('id')
             ->get()
             ->map(function ($role) {
-                // Ringkasan C/R/U/D di Gambar 1: true kalau role ini punya kemampuan itu
-                // di MINIMAL satu menu (rincian sebenarnya per-menu, lihat modal Gambar 2).
+
                 $role->ringkasan = [
                     'lihat'  => $role->aksesMenu->contains(fn($a) => $a->bisa_lihat),
                     'tambah' => $role->aksesMenu->contains(fn($a) => $a->bisa_tambah),

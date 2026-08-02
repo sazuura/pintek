@@ -4,12 +4,13 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ErrorPagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function halaman_404_pakai_view_custom(): void
     {
         $this->get('/rute-tidak-ada-xyz')
@@ -18,7 +19,7 @@ class ErrorPagesTest extends TestCase
             ->assertSee('Kembali ke Halaman Sebelumnya');
     }
 
-    /** @test */
+    #[Test]
     public function halaman_403_pakai_view_custom(): void
     {
         $operator = User::create([

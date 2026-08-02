@@ -1,7 +1,5 @@
-// Utilitas skeleton loading bersama - dipakai baik oleh live-search.js (menyamarkan hasil
-// pencarian selagi menunggu fetch) maupun page-skeleton.js (menyamarkan komponen [data-skel]
-// sesaat setelah halaman pertama kali dibuka). Prinsipnya: tidak ada satu kotak abu-abu besar,
-// tiap elemen (judul, badge, tombol ikon, foto, chart) diganti placeholder sesuai bentuknya sendiri.
+
+
 (function () {
     var SKEL = 'bg-gray-200 dark:bg-gray-700 animate-pulse';
     var GAMBAR_KOSONG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
@@ -22,8 +20,7 @@
     }
 
     function mask(el) {
-        // Link/tombol apapun yang ikut tersamarkan dibuat tidak bisa diklik - hrefnya masih
-        // menunjuk data lama/kadaluarsa selagi skeleton tampil.
+
         if (el.tagName === 'A' || el.tagName === 'BUTTON') el.classList.add('pointer-events-none');
 
         if (elBadge(el)) {
@@ -47,8 +44,7 @@
             return;
         }
         if (el.tagName === 'CANVAS') {
-            // Chart.js belum sempat menggambar apapun ke sini - kasih placeholder abu-abu
-            // supaya area chart tidak jadi lubang kosong/transparan selagi skeleton tampil.
+
             el.classList.add('bg-gray-200', 'dark:bg-gray-700', 'animate-pulse', 'rounded');
             return;
         }
@@ -60,9 +56,6 @@
         var anakElemen = Array.prototype.slice.call(el.children);
         anakElemen.forEach(mask);
 
-        // Teks langsung di elemen ini (bukan di dalam anak elemen) - misalnya "Gedung A"
-        // pada <span><i class="bx bx-map"></i> Gedung A</span>, atau "Total Stok: " sebelum
-        // <span>{{ $stok }}</span> - diganti jadi satu bar teks di posisi teks aslinya.
         var teksLangsung = '';
         var acuanNode = null;
         Array.prototype.forEach.call(el.childNodes, function (n) {
@@ -93,10 +86,6 @@
         if (acuanNode) el.insertBefore(bar, acuanNode); else el.appendChild(bar);
     }
 
-    // Batasi jumlah baris/kartu yang ikut disamarkan - list yang panjang (mis. puluhan baris
-    // tabel atau kartu grid) tidak perlu di-mask semuanya, cukup sejumlah yang kelihatan di
-    // layar. Ini yang paling menentukan beban kerja main-thread skeleton, jadi item lebih dari
-    // batas dibuang saja dari DOM sebelum proses mask jalan - bukan cuma disembunyikan.
     var MAKS_ITEM = 6;
     function batasiItem(root) {
         function potong(list) {

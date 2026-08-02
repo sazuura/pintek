@@ -20,7 +20,7 @@ class AdminController extends Controller
                 ->whereRaw("TIMESTAMP(tanggal, waktu_selesai) >= NOW()")
                 ->whereBetween('tanggal', [$awalBulan->format('Y-m-d'), $akhirBulan->format('Y-m-d')])
                 ->count(),
-            // Snapshot akun (bukan data per-periode) - sengaja TIDAK ikut berubah saat pindah bulan.
+
             'jumlahOperator' => User::where('role', 'operator')->where('status', 'active')->count(),
             'jumlahPeralatanDipinjam' => PeminjamanItem::whereHas('peminjaman', fn($q) =>
                 $q->where('status', 'disetujui')->whereBetween('tanggal_pinjam', [$awalBulan->format('Y-m-d'), $akhirBulan->format('Y-m-d')])
@@ -35,7 +35,6 @@ class AdminController extends Controller
             ->orderByDesc('jadwal_ditugaskan_count')
             ->get();
 
-        // Peralatan paling sering dipinjam di bulan yang lagi dilihat (hanya hitung peminjaman
         $topPeralatan = PeminjamanItem::query()
             ->join('peralatan', 'peminjaman_item.id_peralatan', '=', 'peralatan.id_peralatan')
             ->join('peminjaman', 'peminjaman_item.id_peminjaman', '=', 'peminjaman.id_peminjaman')
@@ -47,11 +46,9 @@ class AdminController extends Controller
             ->limit(6)
             ->get();
 
-        // Aktivitas Terbaru sengaja TETAP selalu "14 hari terakhir dari hari ini" 
         $activities = $this->recentActivities();
         $kalender   = $this->jadwalKalender($bulanAktif);
 
-        // Detail tambahan tiap stat card: tren dihitung dari data asli
         $bulanSebelumnyaAwal  = $awalBulan->copy()->subMonth();
         $bulanSebelumnyaAkhir = $bulanSebelumnyaAwal->copy()->endOfMonth();
 
@@ -83,9 +80,6 @@ class AdminController extends Controller
             : now()->startOfMonth();
     }
 
-    /**
-     * Hitung selisih angka mentah (bukan persentase) antara dua periode.
-     */
     private function hitungTrenSelisih(int $sekarang, int $sebelumnya): array
     {
         $selisih = $sekarang - $sebelumnya;
@@ -96,9 +90,6 @@ class AdminController extends Controller
         ];
     }
 
-    /**
-     * 6 aktivitas terbaru (14 hari terakhir): jadwal baru & peminjaman baru diajukan.
-     */
     private function recentActivities()
     {
         $sejak = now()->subDays(14);
@@ -127,9 +118,6 @@ class AdminController extends Controller
         return $jadwal->concat($peminjaman)->sortByDesc('time')->take(6)->values();
     }
 
-    /**
-     * Kalender bulanan (Min–Sab) berisi jadwal per tanggal, dengan navigasi bulan
-     */
     private function jadwalKalender(Carbon $bulanAktif): array
     {
         $awalGrid  = $bulanAktif->copy()->startOfWeek(Carbon::SUNDAY);
@@ -192,10 +180,6 @@ class AdminController extends Controller
         return view('dashboard.laporan.admin-index', compact('jadwal', 'peralatan', 'operators'));
     }
 
-    /**
-     * PDF laporan dirender sebagai halaman HTML biasa (Tailwind, sama seperti tampilan
-     * live).
-     */
     public function laporanExportPdf(Request $request)
     {
         $namaFile = $this->buatNamaLaporan($request);
@@ -241,8 +225,6 @@ class AdminController extends Controller
         })->toArray();
     }
 
-    // Satu baris per alat (bukan digabung satu sel per pengajuan) supaya kode, gedung,
-    // dan jumlah masing-masing punya kolom sendiri - sama seperti struktur di Excel.
     private function barisPdfPeralatan($peralatan): array
     {
         $baris = [];
@@ -265,9 +247,6 @@ class AdminController extends Controller
         return $baris;
     }
 
-    /**
-     * Excel tetap pakai PhpSpreadsheet (lewat maatwebsite/excel) 
-     */
     public function laporanExportExcel(Request $request)
     {
         $namaFile = $this->buatNamaLaporan($request);
@@ -285,10 +264,6 @@ class AdminController extends Controller
         );
     }
 
-    /**
-     * Bikin nama file laporan dinamis dari jenis tab + rentang tanggal filter yang
-     * sedang dipakai, supaya tidak selalu "laporan-jadwal.pdf" yang generik.
-     */
     private function buatNamaLaporan(Request $request): string
     {
         $jenis = $request->tab === 'panel-peralatan' ? 'peralatan-digunakan' : 'jadwal-operator';
@@ -306,9 +281,6 @@ class AdminController extends Controller
         return "laporan-{$jenis}_{$periode}";
     }
 
-    /**
-     * Helper method untuk query Jadwal + Operator agar filter PDF, Excel, dan Index selalu sinkron.
-     */
     private function queryJadwalLaporan(Request $request)
     {
         return Penjadwalan::with('operators')
@@ -317,16 +289,13 @@ class AdminController extends Controller
             ->when($request->operator, fn($q, $v) =>
                 $q->whereHas('operators', fn($qq) => $qq->where('users.id_user', $v))
             )
-            // Aktif tampil dulu (tanggal terdekat); Selesai+Dibatalkan digabung satu riwayat di bawah (paling baru dulu).
+
             ->orderByRaw("(status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()) ASC")
             ->orderByRaw("CASE WHEN status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()
                           THEN -DATEDIFF(tanggal, CURDATE()) ELSE DATEDIFF(tanggal, CURDATE()) END ASC")
             ->orderBy('waktu_mulai');
     }
 
-    /**
-     * Helper method untuk query pemakaian peralatan (monitoring) via Peminjaman
-     */
     private function queryPeralatanLaporan(Request $request)
     {
         return Peminjaman::with(['user', 'penjadwalan', 'items.peralatan'])

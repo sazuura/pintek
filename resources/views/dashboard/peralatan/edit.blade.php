@@ -108,7 +108,6 @@
 
 @push('scripts')
     <script>
-        // Live preview stok tersedia
         ['inp-stok', 'inp-rusak'].forEach(function (id) {
             var el = document.getElementById(id);
             if (el) el.addEventListener('input', function () {
@@ -126,8 +125,6 @@
             else { prev.classList.add('hidden'); }
         });
 
-        // Lokasi Detail bertingkat: saran datalist-nya mengikuti Gedung yang sedang
-        // diketik/dipilih, diambil dari lokasi yang sudah pernah dipakai di gedung itu.
         var lokasiPerGedung = @json($lokasiPerGedung);
         var gedungInput = document.getElementById('gedung');
         var lokasiDatalist = document.getElementById('daftar-lokasi-detail');

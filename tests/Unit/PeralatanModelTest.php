@@ -4,11 +4,8 @@ namespace Tests\Unit;
 
 use App\Models\Peralatan;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * Test accessor/helper di Model Peralatan.
- * Tidak perlu DB - pakai instance langsung.
- */
 class PeralatanModelTest extends TestCase
 {
     private function buat(int $stok, int $rusak = 0): Peralatan
@@ -19,38 +16,38 @@ class PeralatanModelTest extends TestCase
         return $p;
     }
 
-    /** @test */
+    #[Test]
     public function stok_tersedia_dihitung_dengan_benar(): void
     {
         $this->assertEquals(4, $this->buat(stok: 5, rusak: 1)->stok_tersedia);
     }
 
-    /** @test */
+    #[Test]
     public function stok_tersedia_tidak_boleh_negatif(): void
     {
         $this->assertEquals(0, $this->buat(stok: 2, rusak: 5)->stok_tersedia);
     }
 
-    /** @test */
+    #[Test]
     public function status_label_tersedia_jika_stok_cukup(): void
     {
         $this->assertEquals('Tersedia', $this->buat(stok: 5)->statusLabel);
     }
 
-    /** @test */
+    #[Test]
     public function status_label_hampir_habis_jika_stok_1_atau_2(): void
     {
         $this->assertEquals('Hampir Habis', $this->buat(stok: 2)->statusLabel);
         $this->assertEquals('Hampir Habis', $this->buat(stok: 1)->statusLabel);
     }
 
-    /** @test */
+    #[Test]
     public function status_label_tidak_tersedia_jika_stok_0(): void
     {
         $this->assertEquals('Tidak Tersedia', $this->buat(stok: 0)->statusLabel);
     }
 
-    /** @test */
+    #[Test]
     public function badge_class_sesuai_stok(): void
     {
         $this->assertEquals('badge-active',  $this->buat(stok: 5)->statusBadgeClass);

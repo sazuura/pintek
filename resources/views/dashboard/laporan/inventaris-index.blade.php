@@ -8,11 +8,9 @@
         <div><h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Laporan Peralatan</h1></div>
     </div>
 
-    {{-- Filter - berlaku untuk kedua tab (kolom gedung & kondisi ada di kedua model) --}}
     <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-md:flex-col max-md:items-stretch">
         <form method="GET" action="{{ route('inventaris.laporan.index') }}" id="filter-form" class="contents">
 
-            {{-- Input hidden: simpan tab aktif untuk filter & export --}}
             <input type="hidden" name="tab" id="active-tab-input" value="{{ request('tab', 'panel-stok') }}">
 
             <div class="relative flex-1 min-w-[180px] max-w-[300px] max-md:max-w-full">
@@ -58,7 +56,7 @@
             @endif
 
             <div class="ml-auto flex gap-2 items-center max-md:ml-0 max-md:w-full">
-                {{-- Export - URL menyertakan tab aktif + filter yang sedang berlaku --}}
+
                 <a id="btn-pdf" target="_blank" rel="noopener" href="{{ route('inventaris.laporan.exportPdf', array_merge(request()->except(['stok_page','terpasang_page','peminjaman_page']), ['tab' => request('tab','panel-stok')])) }}"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-danger-text text-white">
                     <i class="bx bxs-file-pdf"></i> PDF
@@ -76,7 +74,6 @@
         $tabBadgeClass = 'shrink-0 text-[11px] font-semibold py-px px-[7px] rounded-full leading-[1.6] bg-page-bg dark:bg-page-bg-dark text-text-muted group-[.active]:bg-primary group-[.active]:text-white';
     @endphp
 
-    {{-- Tab container --}}
     <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden">
         <div class="tab-group flex border-b-2 border-page-bg dark:border-page-bg-dark bg-surface dark:bg-surface-dark px-1 gap-0.5" data-panels="laporan-panels">
             <button class="{{ $tabBtnClass }} {{ request('tab','panel-stok') === 'panel-stok' ? 'active' : '' }}"
@@ -101,7 +98,6 @@
 
         <div class="p-4" id="laporan-panels" data-skel>
 
-            {{-- Panel 1: Stok Peralatan --}}
             <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab','panel-stok') === 'panel-stok' ? 'active' : '' }}"
                  id="panel-stok">
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
@@ -148,7 +144,6 @@
                     <x-pagination :paginator="$stok" />
                 </div>
 
-                {{-- Kartu - hanya tampil di mobile --}}
                 <div class="hidden max-xs:flex flex-col gap-3 mb-4">
                     @forelse($stok as $p)
                         <div class="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-2.5">
@@ -177,7 +172,6 @@
                 </div>
             </div>
 
-            {{-- Panel 2: Alat Terpasang --}}
             <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab') === 'panel-terpasang' ? 'active' : '' }}"
                  id="panel-terpasang">
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
@@ -217,7 +211,6 @@
                     <x-pagination :paginator="$terpasang" />
                 </div>
 
-                {{-- Kartu - hanya tampil di mobile --}}
                 <div class="hidden max-xs:flex flex-col gap-3 mb-4">
                     @forelse($terpasang as $a)
                         <div class="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-2.5">
@@ -245,7 +238,6 @@
                 </div>
             </div>
 
-            {{-- Panel 3: Riwayat Peminjaman --}}
             <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab') === 'panel-peminjaman' ? 'active' : '' }}"
                  id="panel-peminjaman">
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
@@ -325,7 +317,6 @@
                     <x-pagination :paginator="$peminjaman" />
                 </div>
 
-                {{-- Kartu - hanya tampil di mobile --}}
                 <div class="hidden max-xs:flex flex-col gap-3 mb-4">
                     @forelse($peminjaman as $p)
                         <div class="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-2.5">

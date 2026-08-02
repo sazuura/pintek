@@ -6,6 +6,7 @@ use App\Models\Peralatan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class PeralatanControllerTest extends TestCase
 {
@@ -17,7 +18,6 @@ class PeralatanControllerTest extends TestCase
     {
         parent::setUp();
 
-        // CRUD peralatan ada di role inventaris saja (admin tidak punya halaman peralatan).
         $this->inventaris = User::create([
             'id_user'   => 'US001',
             'nama_user' => 'Inventaris Test',
@@ -29,7 +29,7 @@ class PeralatanControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function inventaris_bisa_tambah_peralatan(): void
     {
         $this->actingAs($this->inventaris)
@@ -50,7 +50,7 @@ class PeralatanControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function id_peralatan_generate_otomatis(): void
     {
         $this->actingAs($this->inventaris)
@@ -63,7 +63,7 @@ class PeralatanControllerTest extends TestCase
         $this->assertDatabaseHas('peralatan', ['id_peralatan' => 'PR-001']);
     }
 
-    /** @test */
+    #[Test]
     public function kode_barang_harus_unik(): void
     {
         Peralatan::create([
@@ -76,7 +76,7 @@ class PeralatanControllerTest extends TestCase
 
         $this->actingAs($this->inventaris)
              ->post(route('inventaris.peralatan.store'), [
-                 'kode_barang'    => 'GA/MIC/2024/001', // duplikat
+                 'kode_barang'    => 'GA/MIC/2024/001',
                  'nama_peralatan' => 'Mikrofon Lain',
                  'gedung'         => 'Gedung A',
                  'stok'           => 2,
@@ -84,7 +84,7 @@ class PeralatanControllerTest extends TestCase
              ->assertSessionHasErrors('kode_barang');
     }
 
-    /** @test */
+    #[Test]
     public function update_gagal_jika_rusak_melebihi_stok(): void
     {
         $peralatan = Peralatan::create([
@@ -99,12 +99,12 @@ class PeralatanControllerTest extends TestCase
                  'nama_peralatan' => 'Speaker',
                  'gedung'         => 'Gedung B',
                  'stok'           => 3,
-                 'rusak'          => 4, // 4 > 3 → harus error
+                 'rusak'          => 4,
              ])
              ->assertSessionHasErrors('rusak');
     }
 
-    /** @test */
+    #[Test]
     public function inventaris_bisa_update_peralatan(): void
     {
         $peralatan = Peralatan::create([
@@ -130,7 +130,7 @@ class PeralatanControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function index_bisa_difilter_berdasarkan_gedung_dan_status(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Proyektor', 'gedung' => 'Gedung A', 'stok' => 10]);
@@ -149,7 +149,7 @@ class PeralatanControllerTest extends TestCase
         $response->assertDontSee('Proyektor');
     }
 
-    /** @test */
+    #[Test]
     public function index_bisa_diurutkan_berdasarkan_nama_dan_stok(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Zebra Cam', 'gedung' => 'Gedung A', 'stok' => 1]);
@@ -170,7 +170,7 @@ class PeralatanControllerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function index_bisa_difilter_berdasarkan_kondisi(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Proyektor Mulus', 'gedung' => 'Gedung A', 'stok' => 10, 'rusak' => 0]);

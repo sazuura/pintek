@@ -5,21 +5,19 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * Test autentikasi dan routing post-login per role.
- */
 class AuthRoutingTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function guest_diarahkan_ke_login_jika_akses_dashboard(): void
     {
         $this->get('/dashboard')->assertRedirect('/login');
     }
 
-    /** @test */
+    #[Test]
     public function admin_diarahkan_ke_dashboard_admin_setelah_login(): void
     {
         $admin = $this->buatUser('US001', 'admin');
@@ -29,7 +27,7 @@ class AuthRoutingTest extends TestCase
              ->assertRedirect(route('admin.dashboard'));
     }
 
-    /** @test */
+    #[Test]
     public function operator_diarahkan_ke_dashboard_operator_setelah_login(): void
     {
         $operator = $this->buatUser('US002', 'operator');
@@ -39,7 +37,7 @@ class AuthRoutingTest extends TestCase
              ->assertRedirect(route('operator.dashboard'));
     }
 
-    /** @test */
+    #[Test]
     public function inventaris_diarahkan_ke_dashboard_inventaris_setelah_login(): void
     {
         $inventaris = $this->buatUser('US003', 'inventaris');
@@ -49,7 +47,7 @@ class AuthRoutingTest extends TestCase
              ->assertRedirect(route('inventaris.dashboard'));
     }
 
-    /** @test */
+    #[Test]
     public function operator_tidak_bisa_akses_halaman_admin(): void
     {
         $operator = $this->buatUser('US002', 'operator');
@@ -59,7 +57,7 @@ class AuthRoutingTest extends TestCase
              ->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function inventaris_tidak_bisa_akses_halaman_admin(): void
     {
         $inventaris = $this->buatUser('US003', 'inventaris');
@@ -69,7 +67,7 @@ class AuthRoutingTest extends TestCase
              ->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function admin_tidak_bisa_akses_halaman_operator(): void
     {
         $admin = $this->buatUser('US001', 'admin');
@@ -79,7 +77,7 @@ class AuthRoutingTest extends TestCase
              ->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function inventaris_tidak_bisa_akses_halaman_operator(): void
     {
         $inventaris = $this->buatUser('US003', 'inventaris');
@@ -89,7 +87,7 @@ class AuthRoutingTest extends TestCase
              ->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function admin_tidak_bisa_akses_halaman_inventaris(): void
     {
         $admin = $this->buatUser('US001', 'admin');
@@ -99,7 +97,7 @@ class AuthRoutingTest extends TestCase
              ->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function operator_tidak_bisa_akses_halaman_inventaris(): void
     {
         $operator = $this->buatUser('US002', 'operator');
@@ -109,26 +107,23 @@ class AuthRoutingTest extends TestCase
              ->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function user_yang_dinonaktifkan_di_tengah_sesi_langsung_dipaksa_logout(): void
     {
         $operator = $this->buatUser('US002', 'operator');
 
-        // Sesi berjalan normal dulu.
         $this->actingAs($operator)
              ->get(route('operator.dashboard'))
              ->assertOk();
 
-        // Admin menonaktifkan akun ini SAAT sesinya masih hidup.
         $operator->update(['status' => 'inactive']);
 
-        // Request berikutnya harus langsung diputus - bukan menunggu login ulang.
         $this->get(route('operator.dashboard'))
              ->assertRedirect(route('login'));
         $this->assertGuest();
     }
 
-    /** @test */
+    #[Test]
     public function user_nonaktif_yang_dipaksa_logout_mendapat_pesan_akun_dinonaktifkan(): void
     {
         $operator = $this->buatUser('US002', 'operator');
@@ -139,8 +134,6 @@ class AuthRoutingTest extends TestCase
              ->assertRedirect(route('login'))
              ->assertSessionHasErrors('email');
     }
-
-    // ── Helper ────────────────────────────────────────────────────────────────
 
     private function buatUser(string $id, string $role): User
     {

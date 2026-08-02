@@ -1,16 +1,13 @@
-// Logic form Peminjaman (Ajukan & Edit) - dimuat lewat @vite() di kedua halaman, elemen yang diakses di bawah selalu ada.
 
-// ── Kaitkan ke Jadwal: auto-isi Keperluan/Tanggal Pinjam & baris peralatan dari rekomendasi admin ──
-// jadwalSudahDiajukan: peta {nama_alat: total_jumlah_sudah_diajukan}, dipakai hitung SISA kebutuhan (bukan sekadar sudah/belum).
+
 var jadwalSudahDiajukan = {};
 var jadwalReferensi     = [];
-var jadwalGantiTerakhir = null; // cegah auto-isi ulang kalau jadwal yang sama dipilih lagi
+var jadwalGantiTerakhir = null;
 
 function jumlahSudahDiajukan(nama) {
     return jadwalSudahDiajukan[nama] || 0;
 }
 
-// Dropdown cuma berisi alat stok_tersedia > 0 - id dicek (bukan nama) karena nama yang sama bisa ada di gedung lain dengan stok berbeda.
 function opsiTersedia(id) {
     var selects = document.querySelectorAll('.peralatan-select');
     for (var i = 0; i < selects.length; i++) {
@@ -37,26 +34,23 @@ function updateJadwalDuplikasiState(jadwalBerubah) {
     refreshPeralatanOptions();
 }
 
-// Tambahkan rekomendasi admin sebagai baris baru tanpa menghapus pilihan manual operator; baris auto-isi ditandai data-auto-ref supaya bisa dibuang lagi kalau jadwal diganti.
 var autoFillSedangJalan = false;
 
 function autoIsiDariReferensi() {
     var list = document.getElementById('peralatan-list');
     autoFillSedangJalan = true;
 
-    // Bersihkan baris auto-isi dari jadwal SEBELUMNYA yang belum diubah user.
     Array.from(list.querySelectorAll('.dynamic-item[data-auto-ref]')).forEach(function (row) {
         if (list.children.length > 1) {
             row.remove();
         } else {
-            // Baris terakhir tidak boleh dihapus - kosongkan saja.
+
             row.querySelector('select').value = '';
             row.querySelector('input[type=number]').value = '';
             delete row.dataset.autoRef;
         }
     });
 
-    // Sisa kebutuhan = rekomendasi - sudah diajukan; alat tercukupi atau stoknya kosong dilewati (sudah dijelaskan di updateReferensiHint()).
     var bisaDiisi = jadwalReferensi
         .map(function (r) {
             var sisa = r.jumlah - jumlahSudahDiajukan(r.nama);
@@ -66,10 +60,8 @@ function autoIsiDariReferensi() {
     var terpilih  = getSelectedPeralatan();
 
     bisaDiisi.forEach(function (r) {
-        if (terpilih.indexOf(String(r.id)) !== -1) return; // sudah dipilih manual, jangan dobel
+        if (terpilih.indexOf(String(r.id)) !== -1) return;
 
-        // Pakai baris kosong yang ada dulu (mis. baris pertama yang belum diisi),
-        // baru bikin baris baru kalau semua baris sudah terisi.
         var kosong = Array.from(list.querySelectorAll('.dynamic-item')).find(function (row) {
             return row.querySelector('select').value === '';
         });
@@ -80,12 +72,11 @@ function autoIsiDariReferensi() {
             sel.value = r.id;
             sel.dispatchEvent(new Event('change', { bubbles: true }));
         } else {
-            // Jumlah diisi belakangan, setelah alatnya benar-benar kepilih - hindari baris menggantung.
+
             row = addPeralatanRow(r.id, null);
             sel = row.querySelector('select');
         }
 
-        // Kalau dropdown custom gagal sinkron, jangan tinggalkan baris menggantung.
         if (String(sel.value) !== String(r.id)) {
             if (kosong) {
                 sel.value = '';
@@ -107,14 +98,12 @@ function autoIsiDariReferensi() {
     window.SearchableSelect && window.SearchableSelect.refreshAll();
 }
 
-// Baris yang diubah manual user lepas tanda auto-ref, supaya tidak ikut terbuang saat jadwal diganti.
 document.getElementById('peralatan-list').addEventListener('change', function (e) {
     if (autoFillSedangJalan) return;
     var row = e.target.closest('.dynamic-item');
     if (row) delete row.dataset.autoRef;
 });
 
-// Badge status per alat, warnanya mengikuti palet badge Blade tapi dibangun manual di JS.
 function badgeReferensi(teks, variant) {
     var kelas = {
         info:    'bg-primary-50 dark:bg-[#0d2a40] text-primary',
@@ -153,12 +142,25 @@ function updateReferensiHint() {
     box.classList.remove('hidden');
 }
 
+function terapkanBatasKembaliDariJadwal(opt) {
+    var kembali = document.getElementById('tanggal_kembali_rencana');
+    if (opt && opt.value) {
+        kembali.min = opt.dataset.tanggal;
+        if (!kembali.value || kembali.value < opt.dataset.tanggal) {
+            kembali.value = opt.dataset.tanggal;
+        }
+    } else {
+        kembali.removeAttribute('min');
+    }
+}
+
 document.getElementById('id_penjadwalan').addEventListener('change', function () {
     var opt = this.options[this.selectedIndex];
     if (opt.value) {
         document.getElementById('keperluan').value = opt.dataset.judul;
         document.getElementById('tanggal_pinjam').value = opt.dataset.tanggal;
     }
+    terapkanBatasKembaliDariJadwal(opt);
     var berubah = jadwalGantiTerakhir !== opt.value;
     jadwalGantiTerakhir = opt.value;
     updateJadwalDuplikasiState(berubah);
@@ -177,10 +179,8 @@ function refreshPeralatanOptions() {
             if (!opt.value) return;
             opt.hidden = selected.includes(opt.value) && opt.value !== currentVal;
 
-            // Dicocokkan lewat nama (bukan id) supaya alat yang sama di gedung lain ikut kena tanda.
             var sudahDiajukan = jumlahSudahDiajukan(opt.dataset.nama) > 0;
 
-            // Cuma tanda peringatan, tidak diblokir - konfirmasi tetap muncul sebelum submit.
             if (sudahDiajukan) {
                 opt.dataset.badge = 'Sudah Diajukan';
                 opt.dataset.badgeVariant = 'warning';
@@ -215,7 +215,6 @@ document.getElementById('add-peralatan').addEventListener('click', function () {
     updateRemoveButtons();
 });
 
-// Bikin satu baris baru (tombol "Tambah Peralatan" & auto-isi) - kalau value/jumlah diisi, langsung di-set.
 function addPeralatanRow(value, jumlah) {
     var list = document.getElementById('peralatan-list');
     var clone = list.querySelector('.dynamic-item').cloneNode(true);
@@ -236,23 +235,23 @@ function addPeralatanRow(value, jumlah) {
     if (jumlah) {
         clone.querySelector('input[type=number]').value = jumlah;
     }
-    // Refresh instance widget baris ini langsung - tanpa ini baris clone bisa tampil kosong walau valuenya sudah benar.
+
     if (select._searchableSelect) select._searchableSelect.refresh();
     window.SearchableSelect && window.SearchableSelect.refreshAll();
     return clone;
 }
 document.addEventListener('DOMContentLoaded', function () {
+    var select = document.getElementById('id_penjadwalan');
+    terapkanBatasKembaliDariJadwal(select.options[select.selectedIndex]);
     updateJadwalDuplikasiState();
 });
 
-// ── Konfirmasi sebelum submit: modal custom, bukan window.confirm() bawaan browser ──
 function escapeHtml(str) {
     var div = document.createElement('div');
     div.textContent = str == null ? '' : String(str);
     return div.innerHTML;
 }
 
-// Dua tahap berurutan, keduanya cuma peringatan (bisa lanjut setelah konfirmasi): (1) duplikasi vs jadwal, sinkron dari data yang sudah dimuat; (2) pengajuan berulang/spam, via AJAX ke server.
 document.getElementById('form-peminjaman').addEventListener('submit', function (e) {
     e.preventDefault();
     lanjutkanSetelahCekDuplikat();
@@ -309,7 +308,7 @@ function cekSpamLaluSubmit() {
             }
         })
         .catch(function () {
-            // Jangan sampai kegagalan cek ini memblokir pengajuan asli.
+
             form.submit();
         });
 }
@@ -319,10 +318,6 @@ function konfirmasiTetapAjukanSpam() {
     document.getElementById('form-peminjaman').submit();
 }
 
-// Dipanggil dari onclick="".../onchange="" di Blade (termasuk baris yang di-clone JS saat
-// "Tambah Alat" diklik) - harus diekspos eksplisit ke window karena file ini dimuat sebagai
-// <script type="module"> lewat Vite, dan deklarasi function di dalam module tidak otomatis
-// jadi global seperti <script src> klasik (sama seperti kasus di content.js).
 window.refreshPeralatanOptions = refreshPeralatanOptions;
 window.removeItem = removeItem;
 window.konfirmasiTetapAjukan = konfirmasiTetapAjukan;

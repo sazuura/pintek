@@ -1,6 +1,5 @@
 @props(['variant' => ''])
 @php
-    // buat status persegi panjang rounded
     $map = [
         'badge-active'   => 'bg-success dark:bg-success-dark text-success-text',
         'badge-warning'  => 'bg-warning dark:bg-warning-dark text-warning-text',

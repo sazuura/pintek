@@ -12,9 +12,7 @@ class AlatTerpasangController extends Controller
 {
     public function index(Request $request)
     {
-        // Alat yang identik (peralatan, gedung, lokasi, tanggal pasang, kondisi, keterangan,
-        // foto sama persis - artinya ditambahkan dalam satu batch yang sama lewat store())
-        // ditampilkan sebagai SATU kartu dengan badge jumlah, bukan kartu terpisah per unit.
+
         $alat = AlatTerpasang::query()
             ->when($request->search, fn($q, $s) =>
                 $q->where('nama_alat', 'like', "%{$s}%")
@@ -33,9 +31,6 @@ class AlatTerpasangController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Ringkasan berapa unit dari tiap peralatan yang sedang terpasang permanen
-        // vs. yang masih tersimpan di gudang (stok tersedia - yang sudah terpasang),
-        // dipaginasi terpisah (page param sendiri) supaya tidak bentrok dengan pagination kartu.
         $ringkasanSemua = AlatTerpasang::selectRaw('id_peralatan, COUNT(*) as jumlah_terpasang')
             ->groupBy('id_peralatan')
             ->with('peralatan')
@@ -93,8 +88,6 @@ class AlatTerpasangController extends Controller
             'foto'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        // Validasi tiap alat: jumlah yang diminta tidak boleh melebihi stok yang masih
-        // bisa dipasang (stok tersedia dikurangi yang sudah terpasang sebelumnya).
         foreach ($data['id_peralatan'] as $i => $idPeralatan) {
             $peralatan = Peralatan::findOrFail($idPeralatan);
             $sudahTerpasang = AlatTerpasang::where('id_peralatan', $idPeralatan)->count();
@@ -170,9 +163,6 @@ class AlatTerpasangController extends Controller
         $data['nama_alat'] = Peralatan::findOrFail($data['id_peralatan'])->nama_peralatan;
         $data['foto'] = $this->prosesUploadFoto($request, $alat);
 
-        // Perubahan berlaku untuk SELURUH unit identik dalam kelompok yang sama (bukan
-        // cuma baris representatif $alat), supaya konsisten dengan tampilan kartu di index()
-        // yang menggabungkan unit identik jadi satu kartu.
         $kelompok = $this->kelompokQuery($alat)->pluck('id_alat_terpasang');
         AlatTerpasang::whereIn('id_alat_terpasang', $kelompok)->update($data);
 
@@ -198,12 +188,6 @@ class AlatTerpasangController extends Controller
             : 'Alat terpasang berhasil dihapus.');
     }
 
-    /**
-     * Baris-baris lain yang identik dengan $alat (peralatan, gedung, lokasi, tanggal pasang,
-     * kondisi, keterangan, foto sama persis) - representasi "kelompok" yang digabung jadi
-     * satu kartu di index(). Dipakai supaya edit/hapus di satu kartu berlaku ke semua unit
-     * identik di kelompok itu, bukan cuma satu baris representatif.
-     */
     private function kelompokQuery(AlatTerpasang $alat)
     {
         return AlatTerpasang::where('id_peralatan', $alat->id_peralatan)

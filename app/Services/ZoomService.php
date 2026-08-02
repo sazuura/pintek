@@ -18,8 +18,8 @@ class ZoomService
                 ->timeout(10)
                 ->post($this->userUrl($akun) . '/meetings', [
                     'topic'      => $data['topic'],
-                    'type'       => 2, // scheduled meeting
-                    'start_time' => $data['start_time'], // ISO8601, mis. 2026-08-01T09:00:00
+                    'type'       => 2,
+                    'start_time' => $data['start_time'],
                     'duration'   => $data['duration'],
                     'timezone'   => 'Asia/Jakarta',
                     'settings'   => [
@@ -101,9 +101,6 @@ class ZoomService
                 ->timeout(10)
                 ->delete("https://api.zoom.us/v2/meetings/{$meetingId}");
 
-            // Zoom balas 204 kalau sukses; 404 dianggap "sudah tidak ada" - tetap
-            // dianggap sukses (idempotent) supaya hapus/batalkan jadwal di sistem kita
-            // tidak gagal gara-gara meeting-nya sudah duluan dihapus manual dari Zoom.
             if ($response->successful() || $response->status() === 404) {
                 return true;
             }
@@ -168,7 +165,7 @@ class ZoomService
 
             $token = $response->json('access_token');
             if ($token) {
-                // Zoom token expire 1 jam - cache 55 menit biar ada jeda aman.
+
                 Cache::put($cacheKey, $token, now()->addMinutes(55));
             }
             return $token;

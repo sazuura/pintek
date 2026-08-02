@@ -7,6 +7,7 @@ use App\Models\Peralatan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class AlatTerpasangRingkasanTest extends TestCase
 {
@@ -29,7 +30,7 @@ class AlatTerpasangRingkasanTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function ringkasan_menghitung_jumlah_terpasang_dan_tersimpan_per_alat(): void
     {
         $router = Peralatan::create([
@@ -39,8 +40,6 @@ class AlatTerpasangRingkasanTest extends TestCase
             'stok'           => 10,
         ]);
 
-        // 4 unit terpasang permanen di lokasi berbeda, sisanya (6) otomatis dianggap
-        // masih tersimpan di gudang karena tidak punya baris di alat_terpasang.
         foreach (range(1, 4) as $i) {
             AlatTerpasang::create([
                 'id_alat_terpasang' => "AT-00{$i}",
@@ -60,7 +59,7 @@ class AlatTerpasangRingkasanTest extends TestCase
         $response->assertSeeInOrder(['Router Cisco Wi-Fi Pod', '4', '6', '10']);
     }
 
-    /** @test */
+    #[Test]
     public function ringkasan_tidak_muncul_kalau_belum_ada_alat_terpasang(): void
     {
         Peralatan::create([

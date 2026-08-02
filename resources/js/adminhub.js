@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-
-    // ── 2 + 3. Sidebar toggle ─────────────────────────────────────────────────
     var sidebar        = document.getElementById('sidebar');
     var toggleBtn      = document.getElementById('sidebar-toggle');
     var sidebarOverlay = document.getElementById('sidebar-overlay');
@@ -31,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeDrawer);
 
-        // Restore sidebar state saat load
         if (window.innerWidth > 900) {
             if (localStorage.getItem('sidebarState') === 'mini') {
                 sidebar.classList.add('hide');
@@ -55,18 +52,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
-    // ── 4. Dark mode ──────────────────────────────────────────────────────────
     var switchMode = document.getElementById('switch-mode');
     var themeIcon  = document.getElementById('theme-icon');
-    // Class 'dark' ditaruh di <html>, bukan <body> - sudah di-set oleh script anti-flash
+
     var isDark = document.documentElement.classList.contains('dark');
 
-    // Sinkronkan checkbox dan icon dengan state saat ini
     if (switchMode) switchMode.checked = isDark;
     if (themeIcon)  themeIcon.className = isDark ? 'bx bx-moon text-lg' : 'bx bx-sun text-lg';
 
-    // Listener: update semua sekaligus saat user klik toggle
     if (switchMode) {
         switchMode.addEventListener('change', function () {
             var dark = this.checked;
@@ -76,8 +69,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
-    // ── 5. Flash toast auto-dismiss ───────────────────────────────────────────
     document.querySelectorAll('.flash-toast, .toast').forEach(function (el) {
         setTimeout(function () {
             el.style.transition = 'opacity .4s ease';
@@ -86,8 +77,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 4000);
     });
 
-
-    // ── 6. Show/hide password ───────────────────────────────────────────────
     document.querySelectorAll('.password-wrap').forEach(function (wrap) {
         var input   = wrap.querySelector('input');
         var eyeBtn  = wrap.querySelector('.eye-btn');
@@ -100,7 +89,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             input.type = isHidden ? 'text' : 'password';
 
-            // Ganti ikon bx-hide ↔ bx-show
             eyeIcon.classList.toggle('bx-hide', !isHidden);
             eyeIcon.classList.toggle('bx-show',  isHidden);
         });

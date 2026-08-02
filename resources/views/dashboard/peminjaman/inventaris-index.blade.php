@@ -109,7 +109,6 @@
                                 </td>
                             </tr>
 
-                            {{-- Accordion detail --}}
                             <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row" id="{{ $uid }}">
                                 <td colspan="9" class="!p-0">
                                     <div class="p-4 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 text-[13px]">
@@ -198,7 +197,6 @@
             <x-pagination :paginator="$peminjaman">{{ $peminjaman->total() }} total pengajuan</x-pagination>
         </div>
 
-        {{-- Kartu pengajuan - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
         <div class="hidden max-xs:flex flex-col gap-3 mb-4">
             @forelse($peminjaman as $p)
                 @php
@@ -282,9 +280,8 @@
         <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
             <x-pagination :paginator="$peminjaman" />
         </div>
-        </div>{{-- /#hasil-peminjaman-inventaris (region yang di-refresh live-search) --}}
+        </div>
 
-        {{-- Modal detail pengajuan, dipakai kartu mobile --}}
         <div id="modalPengajuanDetail"
             class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
             <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
@@ -298,7 +295,6 @@
             </div>
         </div>
 
-        {{-- Modal konfirmasi setuju & kembali - satu instance dipakai bareng oleh semua baris --}}
         <x-modal-konfirmasi id="modalKonfirmasiSetujui" title="Setujui Pengajuan" icon="bx-check-circle" icon-class="text-success-text">
             <div class="bg-success dark:bg-success-dark rounded-[10px] py-3.5 px-4">
                 <div class="text-[13px] font-semibold text-success-text">
@@ -379,15 +375,12 @@
             bukaModalKonfirmasi('modalKonfirmasiKembali');
         }
 
-        // ── Modal detail pengajuan untuk kartu mobile ───────────────────────────
         function escapeHtml(str) {
             var div = document.createElement('div');
             div.textContent = str == null ? '' : String(str);
             return div.innerHTML;
         }
 
-        // Peta warna badge - sumber kebenarannya ada di resources/views/components/badge.blade.php,
-        // diduplikasi di sini karena badge yang dibangun lewat JS (bukan Blade) tidak bisa memanggil komponen itu langsung.
         var badgeColorMap = {
             'badge-active':   'bg-success dark:bg-success-dark text-success-text',
             'badge-warning':  'bg-warning dark:bg-warning-dark text-warning-text',

@@ -20,22 +20,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'menu-akses' => MenuAkses::class,
         ]);
 
-        // Dicek di setiap request web (setelah session aktif): user yang statusnya
-        // dinonaktifkan admin langsung dipaksa logout saat itu juga, tidak menunggu
-        // dia logout/login ulang.
         $middleware->web(append: PastikanUserAktif::class);
 
-        // Guest yang belum login diarahkan ke halaman login, user yang sudah
-        // login tapi buka halaman guest (mis. login) diarahkan ke /dashboard -
-        // menggantikan App\Http\Middleware\Authenticate & RedirectIfAuthenticated
-        // custom yang sudah dihapus (perilakunya identik, cukup lewat konfigurasi).
         $middleware->redirectTo(
             guests: fn () => route('login'),
             users: fn () => route('dashboard'),
         );
 
-        // Password tidak boleh ikut ke-trim otomatis (mis. spasi di awal/akhir
-        // yang sengaja diketik user), beda dari field lain yang aman di-trim.
         $middleware->trimStrings(except: [
             'current_password',
             'password',
@@ -43,5 +34,5 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+
     })->create();

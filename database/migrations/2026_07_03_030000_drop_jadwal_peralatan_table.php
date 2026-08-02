@@ -11,6 +11,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Proyek masih development, tidak wajib diimplementasikan penuh
+
     }
 };

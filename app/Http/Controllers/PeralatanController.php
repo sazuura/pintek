@@ -11,8 +11,6 @@ class PeralatanController extends Controller
     {
         $userRole = auth()->user()->role;
 
-        // Ambang batas status disamakan persis dengan Peralatan::getStatusLabelAttribute() (>2 Tersedia, 1-2 Hampir Habis, <=0 Tidak Tersedia) supaya filter konsisten
-        // dengan badge status yang ditampilkan di tiap kartu.
         $stokTersediaRaw = '(stok - COALESCE(rusak,0))';
 
         $peralatan = Peralatan::query()
@@ -87,9 +85,6 @@ class PeralatanController extends Controller
         ]);
     }
 
-    /**
-     * Peta gedung => daftar lokasi_detail yang sudah pernah dipakai di gedung itu dipakai form Tambah/Edit supaya saran "Lokasi Detail" bertingkat mengikuti gedung yang dipilih (lihat datalist di create/edit.blade.php).
-     */
     private function lokasiPerGedung(): array
     {
         return Peralatan::whereNotNull('lokasi_detail')->where('lokasi_detail', '!=', '')

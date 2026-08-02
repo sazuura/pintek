@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class UserControllerTest extends TestCase
 {
@@ -28,7 +29,7 @@ class UserControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_bisa_lihat_daftar_user(): void
     {
         $this->actingAs($this->admin)
@@ -36,7 +37,7 @@ class UserControllerTest extends TestCase
              ->assertOk();
     }
 
-    /** @test */
+    #[Test]
     public function admin_bisa_tambah_user_operator(): void
     {
         $this->actingAs($this->admin)
@@ -57,12 +58,10 @@ class UserControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function role_baru_yang_dibuat_lewat_settings_muncul_di_dropdown_dan_bisa_dipakai(): void
     {
-        // Sebelumnya dropdown Role di form Tambah/Edit User (dan filter di index) hardcode
-        // admin/operator/inventaris - role baru dari Sistem Settings tidak pernah muncul dan
-        // validasi 'in:admin,operator,inventaris' menolaknya walau dipaksa dikirim manual.
+
         Role::create(['nama_role' => 'Resepsionis', 'slug' => 'resepsionis', 'status' => 'aktif', 'is_terkunci' => false]);
 
         $this->actingAs($this->admin)
@@ -88,7 +87,7 @@ class UserControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_bisa_tambah_user_inventaris(): void
     {
         $this->actingAs($this->admin)
@@ -109,7 +108,7 @@ class UserControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_bisa_nonaktifkan_user_lain(): void
     {
         $operator = User::create([
@@ -132,7 +131,7 @@ class UserControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_tidak_bisa_nonaktifkan_dirinya_sendiri(): void
     {
         $this->actingAs($this->admin)
@@ -140,21 +139,20 @@ class UserControllerTest extends TestCase
              ->assertRedirect()
              ->assertSessionHas('error');
 
-        // Status admin tetap active
         $this->assertDatabaseHas('users', [
             'id_user' => 'US001',
             'status'  => 'active',
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function email_duplikat_tidak_bisa_disimpan(): void
     {
         $this->actingAs($this->admin)
              ->post(route('admin.users.store'), [
                  'nama_user' => 'Duplikat',
                  'nohp'      => '086666666666',
-                 'email'     => 'admin@test.com', // email admin sudah ada
+                 'email'     => 'admin@test.com',
                  'password'  => 'password',
                  'role'      => 'operator',
              ])

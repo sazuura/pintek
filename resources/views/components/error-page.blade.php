@@ -8,7 +8,6 @@
     <title>{{ $code }} - {{ $title }} | {{ config('app.name', 'Diskominfotik') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
 
-    {{-- Anti-flash dark mode --}}
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
@@ -38,7 +37,6 @@
     </div>
 
     <script>
-        // Kembali ke halaman sebelumnya kalau ada riwayat navigasi dalam situs ini
         function kembali() {
             if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) {
                 window.history.back();

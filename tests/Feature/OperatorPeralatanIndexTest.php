@@ -6,6 +6,7 @@ use App\Models\Peralatan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class OperatorPeralatanIndexTest extends TestCase
 {
@@ -22,12 +23,12 @@ class OperatorPeralatanIndexTest extends TestCase
             'email' => 'operator@test.com', 'password' => bcrypt('password'), 'role' => 'operator', 'status' => 'active',
         ]);
 
-        Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Zebra Cam', 'gedung' => 'Gedung A', 'stok' => 10]); // tersedia
-        Peralatan::create(['id_peralatan' => 'PR-B', 'nama_peralatan' => 'Amplifier', 'gedung' => 'Gedung A', 'stok' => 2]);  // kritis
-        Peralatan::create(['id_peralatan' => 'PR-C', 'nama_peralatan' => 'Mixer', 'gedung' => 'Gedung A', 'stok' => 0]);      // tidak tersedia
+        Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Zebra Cam', 'gedung' => 'Gedung A', 'stok' => 10]);
+        Peralatan::create(['id_peralatan' => 'PR-B', 'nama_peralatan' => 'Amplifier', 'gedung' => 'Gedung A', 'stok' => 2]);
+        Peralatan::create(['id_peralatan' => 'PR-C', 'nama_peralatan' => 'Mixer', 'gedung' => 'Gedung A', 'stok' => 0]);
     }
 
-    /** @test */
+    #[Test]
     public function filter_status_tersedia_hanya_menampilkan_stok_di_atas_dua(): void
     {
         $response = $this->actingAs($this->operator)
@@ -39,7 +40,7 @@ class OperatorPeralatanIndexTest extends TestCase
         $response->assertDontSee('Mixer');
     }
 
-    /** @test */
+    #[Test]
     public function filter_status_kritis_hanya_menampilkan_stok_satu_sampai_dua(): void
     {
         $response = $this->actingAs($this->operator)
@@ -51,7 +52,7 @@ class OperatorPeralatanIndexTest extends TestCase
         $response->assertDontSee('Mixer');
     }
 
-    /** @test */
+    #[Test]
     public function filter_status_tidak_tersedia_hanya_menampilkan_stok_nol_atau_kurang(): void
     {
         $response = $this->actingAs($this->operator)
@@ -63,7 +64,7 @@ class OperatorPeralatanIndexTest extends TestCase
         $response->assertDontSee('Amplifier');
     }
 
-    /** @test */
+    #[Test]
     public function urutkan_nama_asc_mengurutkan_alfabetis(): void
     {
         $response = $this->actingAs($this->operator)
@@ -78,22 +79,22 @@ class OperatorPeralatanIndexTest extends TestCase
         $this->assertTrue($posisiMixer < $posisiZebra);
     }
 
-    /** @test */
+    #[Test]
     public function urutkan_stok_desc_mengurutkan_stok_terbanyak_dulu(): void
     {
         $response = $this->actingAs($this->operator)
             ->get(route('operator.peralatan.index', ['urutkan' => 'stok_desc']))
             ->assertOk();
 
-        $posisiZebra = strpos($response->getContent(), 'Zebra Cam');   // stok 10
-        $posisiAmp   = strpos($response->getContent(), 'Amplifier');   // stok 2
-        $posisiMixer = strpos($response->getContent(), 'Mixer');       // stok 0
+        $posisiZebra = strpos($response->getContent(), 'Zebra Cam');
+        $posisiAmp   = strpos($response->getContent(), 'Amplifier');
+        $posisiMixer = strpos($response->getContent(), 'Mixer');
 
         $this->assertTrue($posisiZebra < $posisiAmp);
         $this->assertTrue($posisiAmp < $posisiMixer);
     }
 
-    /** @test */
+    #[Test]
     public function urutkan_gedung_tetap_bisa_dipilih_eksplisit(): void
     {
         $this->actingAs($this->operator)

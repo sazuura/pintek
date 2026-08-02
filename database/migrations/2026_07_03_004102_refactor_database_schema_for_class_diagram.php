@@ -7,11 +7,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 2. Drop foreign key id_pemateri di tabel penjadwalan dan ubah ke id_user
+
         Schema::table('penjadwalan', function (Blueprint $table) {
             $table->dropForeign(['id_pemateri']);
             $table->dropColumn('id_pemateri');
-            
+
             $table->string('id_user', 10)->nullable();
             $table->foreign('id_user')
                   ->references('id_user')
@@ -19,11 +19,9 @@ return new class extends Migration
                   ->cascadeOnDelete();
         });
 
-        // 3. Drop tabel peminjaman_item dan peminjaman untuk mengganti PK id_peminjaman ke VARCHAR
         Schema::dropIfExists('peminjaman_item');
         Schema::dropIfExists('peminjaman');
 
-        // Buat kembali tabel peminjaman dengan id_peminjaman VARCHAR
         Schema::create('peminjaman', function (Blueprint $table) {
             $table->string('id_peminjaman', 20)->primary();
             $table->string('id_user', 10);
@@ -43,7 +41,6 @@ return new class extends Migration
                   ->cascadeOnDelete();
         });
 
-        // Buat kembali tabel peminjaman_item dengan id_peminjaman VARCHAR
         Schema::create('peminjaman_item', function (Blueprint $table) {
             $table->id('id_item');
             $table->string('id_peminjaman', 20);
@@ -64,6 +61,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Tidak wajib diimplementasikan penuh karena proyek dalam mode development (bisa dikosongkan)
+
     }
 };

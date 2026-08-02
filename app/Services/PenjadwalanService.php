@@ -1,31 +1,21 @@
 <?php
 namespace App\Services;
 use App\Helpers\IdGenerator;
+use App\Mail\JadwalBaruMail;
+use App\Mail\JadwalDiubahMail;
+use App\Mail\JadwalDibatalkanMail;
 use App\Models\Penjadwalan;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
-/**
- * PenjadwalanService
- * Menangani semua business logic terkait jadwal rapat:
- *   - Validasi bentrok waktu per operator
- *   - Simpan jadwal dalam satu transaksi
- *   - Kirim notif WA ke operator yang ditugaskan
- *   - Buat/update/hapus link Zoom otomatis (kalau diminta)
- *
- */
 class PenjadwalanService
 {
-    /**
-     * Diisi kalau ada hal yang perlu diketahui admin setelah buat()/ubah() sukses
-     * tapi bukan alasan untuk membatalkan penyimpanan jadwal (mis. kedua akun Zoom
-     * bentrok, atau API Zoom gagal) - dibaca controller lewat getter setelah memanggil
-     * service, lalu ditampilkan sebagai flash warning terpisah dari flash success.
-     */
+
     private ?string $peringatanZoom = null;
 
-    public function __construct(private WhatsAppService $wa, private ZoomService $zoom) {}
+    public function __construct(private ZoomService $zoom) {}
 
     public function peringatanZoom(): ?string
     {
@@ -60,11 +50,6 @@ class PenjadwalanService
 
         $operatorLamaIds = $jadwal->operators()->pluck('users.id_user')->all();
 
-        // Dibandingkan manual (bukan $jadwal->wasChanged()) karena waktu_mulai/waktu_selesai
-        // kolom TIME - MySQL menyimpan "09:00:00" tapi form submit "09:00", jadi
-        // wasChanged() akan SELALU melihat itu sebagai "berubah" walau user tidak
-        // mengubah apa-apa. Fingerprint di sini menormalisasi format dulu sebelum
-        // dibandingkan, supaya notifikasi "jadwal diubah" tidak salah terkirim.
         $fingerprintLama = $this->fingerprintDetail(
             $jadwal->judul_kegiatan, $jadwal->tanggal->format('Y-m-d'), $jadwal->waktu_mulai,
             $jadwal->waktu_selesai, $jadwal->platform, $jadwal->keterangan, $jadwal->lokasi_fisik
@@ -113,20 +98,17 @@ class PenjadwalanService
             'dibatalkan_at' => now(),
         ]);
 
-        // Kirim notifikasi pembatalan ke semua operator yang ditugaskan
         foreach ($jadwal->operators as $operator) {
-            if (!$operator->nohp) continue;
-            $pesan = $this->wa->templateJadwalDibatalkan(
+            Mail::to($operator->email)->send(new JadwalDibatalkanMail(
                 $operator->nama_user,
-                $jadwal->tanggal->format('d/m/Y'),
+                $jadwal->tanggal->translatedFormat('l, d F Y'),
                 $jadwal->waktu_mulai,
                 $jadwal->waktu_selesai,
                 $jadwal->judul_kegiatan,
                 $jadwal->platform,
                 $alasan,
                 $jadwal->keterangan ?? '-'
-            );
-            $this->wa->kirim($operator->nomor_wa, $pesan);
+            ));
         }
     }
 
@@ -170,12 +152,6 @@ class PenjadwalanService
             ->exists();
     }
 
-    /**
-     * Pilih akun Zoom pertama yang belum punya meeting otomatis lain di jam yang
-     * overlap - reuse scope `bentrok()` yang sama dengan pengecekan bentrok operator.
-     * Return null kalau KEDUA akun sama-sama bentrok (caller menangani sebagai
-     * "tidak bisa generate otomatis", bukan error keras).
-     */
     private function pilihAkunZoomBebas(string $tanggal, string $mulai, string $selesai, ?string $excludeId = null): ?string
     {
         foreach (['akun_1', 'akun_2'] as $akun) {
@@ -191,16 +167,6 @@ class PenjadwalanService
         return $akun === 'akun_1' ? 'Akun 1' : 'Akun 2';
     }
 
-    /**
-     * Buat meeting Zoom baru dan isi field-field terkait ke $data. Kalau gagal
-     * (bentrok akun ATAU API error), $data['link_otomatis'] dipaksa false dan
-     * $this->peringatanZoom diisi supaya controller bisa kasih flash warning -
-     * jadwal TETAP disimpan (bukan gagal total), operator tinggal isi link manual.
-     *
-     * @param ?string $akunPilihan Kalau diisi ('akun_1'/'akun_2'), akun itu WAJIB
-     *   dipakai (tidak fallback ke akun lain kalau bentrok) - sesuai pilihan manual
-     *   admin di form. Kosongkan untuk pemilihan otomatis (akun pertama yang bebas).
-     */
     private function prosesLinkOtomatis(array $data, ?string $excludeId = null, ?string $akunPilihan = null): array
     {
         if ($akunPilihan) {
@@ -241,15 +207,6 @@ class PenjadwalanService
         return $data;
     }
 
-    /**
-     * Selaraskan status link_otomatis lama vs. yang diminta saat edit jadwal:
-     *   - Mau nonaktif (atau platform bukan lagi Zoom/Hybrid) & sebelumnya aktif -> hapus meeting lama.
-     *   - Mau aktif, sebelumnya SUDAH aktif, DAN akun tidak berubah -> update waktu/topik kalau
-     *     berubah, field zoom_* & keterangan dipertahankan dari data lama (BUKAN dari input form,
-     *     karena field keterangan read-only di UI saat link_otomatis menyala).
-     *   - Mau aktif tapi akun DIGANTI (mis. admin pindah dari Akun 1 ke Akun 2 secara manual), atau
-     *     sebelumnya manual -> hapus meeting lama (kalau ada) lalu buat meeting baru di akun yang diminta.
-     */
     private function sinkronkanLinkZoom(Penjadwalan $jadwal, array $data, ?string $akunPilihan = null): array
     {
         $mauOtomatis   = !empty($data['link_otomatis']) && $this->platformPakaiZoom($data['platform']);
@@ -311,10 +268,9 @@ class PenjadwalanService
         $daftarPeralatan = $this->formatPeralatanReferensi($jadwal);
 
         foreach (User::whereIn('id_user', $operatorIds)->get() as $operator) {
-            if (!$operator->nohp) continue;
-            $pesan = $this->wa->templateJadwalBaru(
+            Mail::to($operator->email)->send(new JadwalBaruMail(
                 $operator->nama_user,
-                $jadwal->tanggal->format('d/m/Y'),
+                $jadwal->tanggal->translatedFormat('l, d F Y'),
                 $jadwal->waktu_mulai,
                 $jadwal->waktu_selesai,
                 $jadwal->judul_kegiatan,
@@ -323,35 +279,17 @@ class PenjadwalanService
                 $daftarPeralatan,
                 $jadwal->link_otomatis ? $jadwal->zoom_password : null,
                 $jadwal->lokasi_fisik
-            );
-            $this->wa->kirim($operator->nomor_wa, $pesan);
+            ));
         }
     }
 
-    /**
-     * Format daftar peralatan referensi (catatan acuan admin, bukan pengajuan
-     * peminjaman - lihat form Tambah/Edit Jadwal) untuk ditampilkan di notif WA,
-     * diposisikan di bawah baris Keterangan. Null kalau jadwal tidak punya
-     * rekomendasi peralatan sama sekali (baris ini tidak ditampilkan).
-     */
-    private function formatPeralatanReferensi(Penjadwalan $jadwal): ?string
+    private function formatPeralatanReferensi(Penjadwalan $jadwal): array
     {
-        $items = $jadwal->load('peralatanReferensi')->peralatanReferensi;
-        if ($items->isEmpty()) {
-            return null;
-        }
-
-        return $items->map(fn($p) => "   - {$p->nama_peralatan} (x{$p->pivot->jumlah})")->implode("\n");
+        return $jadwal->load('peralatanReferensi')->peralatanReferensi
+            ->map(fn($p) => ['nama' => $p->nama_peralatan, 'jumlah' => $p->pivot->jumlah])
+            ->all();
     }
 
-    /**
-     * Operator yang BARU ditambahkan di edit ini dapat notif "jadwal baru" (baru
-     * pertama kali ditugaskan), sementara operator yang SUDAH ada sebelumnya dan
-     * tetap ditugaskan cuma dinotif "jadwal diubah" - dan hanya kalau memang ada
-     * detail yang berubah (bukan cuma re-sync operator/peralatan tanpa perubahan).
-     * Ini mencegah operator lama dapat notif "jadwal baru" yang salah/membingungkan
-     * tiap kali admin edit jadwal.
-     */
     private function kirimNotifPerubahan(Penjadwalan $jadwal, array $operatorLamaIds, array $operatorBaruIds, bool $adaPerubahanDetail): void
     {
         $operatorBaruSaja = array_diff($operatorBaruIds, $operatorLamaIds);
@@ -366,10 +304,9 @@ class PenjadwalanService
         $daftarPeralatan = $this->formatPeralatanReferensi($jadwal);
 
         foreach (User::whereIn('id_user', $operatorTetap)->get() as $operator) {
-            if (!$operator->nohp) continue;
-            $pesan = $this->wa->templateJadwalDiubah(
+            Mail::to($operator->email)->send(new JadwalDiubahMail(
                 $operator->nama_user,
-                $jadwal->tanggal->format('d/m/Y'),
+                $jadwal->tanggal->translatedFormat('l, d F Y'),
                 $jadwal->waktu_mulai,
                 $jadwal->waktu_selesai,
                 $jadwal->judul_kegiatan,
@@ -378,8 +315,7 @@ class PenjadwalanService
                 $daftarPeralatan,
                 $jadwal->link_otomatis ? $jadwal->zoom_password : null,
                 $jadwal->lokasi_fisik
-            );
-            $this->wa->kirim($operator->nomor_wa, $pesan);
+            ));
         }
     }
 }

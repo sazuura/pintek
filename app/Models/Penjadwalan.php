@@ -39,9 +39,6 @@ use Illuminate\Database\Eloquent\Model;
         return $this->hasMany(Peminjaman::class, 'id_penjadwalan', 'id_penjadwalan');
     }
 
-    /**
-     * Total jumlah tiap alat yang sudah diajukan (siapa pun) untuk jadwal ini, per nama alat - dipakai form Peminjaman menghitung sisa kebutuhan, bukan sekadar sudah/belum.
-     */
     public function peralatanSudahDiajukan(?string $kecualiIdPeminjaman = null): array
     {
         return $this->peminjaman()
@@ -56,9 +53,6 @@ use Illuminate\Database\Eloquent\Model;
             ->all();
     }
 
-    /**
-     * Alat yang dibutuhkan 
-     */
     public function peralatanReferensi()
     {
         return $this->belongsToMany(Peralatan::class, 'jadwal_peralatan', 'id_penjadwalan', 'id_peralatan')

@@ -3,12 +3,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Tabel referensi "alat yang dibutuhkan" per jadwal - murni catatan/acuan untuk operator,
- * TIDAK memotong stok dan TIDAK sama dengan peminjaman sungguhan (yang tetap harus
- * diajukan operator lewat modul Peminjaman). Beda dari tabel jadwal_peralatan lama
- * yang sudah dihapus (itu dulu ikut mengunci stok saat admin alokasikan alat).
- */
 return new class extends Migration
 {
     public function up(): void

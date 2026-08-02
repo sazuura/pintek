@@ -2,14 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Mail\JadwalBaruMail;
+use App\Mail\JadwalDibatalkanMail;
 use App\Models\Penjadwalan;
 use App\Models\User;
 use App\Services\PenjadwalanService;
-use App\Services\WhatsAppService;
 use App\Services\ZoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Mockery;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class PenjadwalanServiceTest extends TestCase
 {
@@ -25,28 +28,19 @@ class PenjadwalanServiceTest extends TestCase
     {
         parent::setUp();
 
-        // Mock WhatsAppService - kita tidak mau benar-benar kirim WA saat test
-        $waMock = Mockery::mock(WhatsAppService::class);
-        $waMock->shouldReceive('templateJadwalBaru')->andReturn('pesan test');
-        $waMock->shouldReceive('templateJadwalDiubah')->andReturn('pesan test');
-        $waMock->shouldReceive('templateJadwalDibatalkan')->andReturn('pesan test');
-        $waMock->shouldReceive('kirim')->andReturn(true);
-        $this->app->instance(WhatsAppService::class, $waMock);
+        Mail::fake();
 
-        // Mock ZoomService - default tidak pernah dipanggil, tiap test yang butuh
-        // link_otomatis akan set expectation-nya sendiri.
         $this->zoomMock = Mockery::mock(ZoomService::class);
         $this->app->instance(ZoomService::class, $this->zoomMock);
 
         $this->service = $this->app->make(PenjadwalanService::class);
 
-        // Buat data dasar
         $this->admin     = User::create($this->dataUser('US001', 'admin'));
         $this->operator1 = User::create($this->dataUser('US002', 'operator', '081111111111'));
         $this->operator2 = User::create($this->dataUser('US003', 'operator', '082222222222'));
     }
 
-    /** @test */
+    #[Test]
     public function buat_jadwal_menyimpan_record_penjadwalan(): void
     {
         $this->service->buat(
@@ -58,9 +52,10 @@ class PenjadwalanServiceTest extends TestCase
             'judul_kegiatan' => 'Rapat Test',
             'tanggal'        => '2030-01-01',
         ]);
+        Mail::assertSent(JadwalBaruMail::class, fn($mail) => $mail->hasTo($this->operator1->email));
     }
 
-    /** @test */
+    #[Test]
     public function buat_jadwal_menugaskan_semua_operator_yang_dipilih(): void
     {
         $this->service->buat(
@@ -80,26 +75,25 @@ class PenjadwalanServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function buat_jadwal_gagal_jika_operator_sudah_punya_jadwal_bentrok(): void
     {
-        // Buat jadwal pertama
+
         $this->service->buat(
             data:        $this->dataJadwal('2030-01-05', '09:00', '11:00'),
             operatorIds: [$this->operator1->id_user],
         );
 
-        // Coba buat jadwal kedua di waktu yang sama untuk operator yang sama
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/sudah memiliki jadwal/');
 
         $this->service->buat(
-            data:        $this->dataJadwal('2030-01-05', '10:00', '12:00'), // overlap
+            data:        $this->dataJadwal('2030-01-05', '10:00', '12:00'),
             operatorIds: [$this->operator1->id_user],
         );
     }
 
-    /** @test */
+    #[Test]
     public function id_penjadwalan_generate_sequential(): void
     {
         $this->service->buat(
@@ -115,7 +109,7 @@ class PenjadwalanServiceTest extends TestCase
         $this->assertEquals(['JDW-001', 'JDW-002'], $ids);
     }
 
-    /** @test */
+    #[Test]
     public function batalkan_jadwal_mengubah_status_dan_menyimpan_alasan(): void
     {
         $this->service->buat(
@@ -131,9 +125,10 @@ class PenjadwalanServiceTest extends TestCase
             'status'         => 'dibatalkan',
             'alasan_batal'   => 'Kuorum tidak terpenuhi',
         ]);
+        Mail::assertSent(JadwalDibatalkanMail::class, fn($mail) => $mail->hasTo($this->operator1->email));
     }
 
-    /** @test */
+    #[Test]
     public function buat_jadwal_dengan_link_otomatis_sukses(): void
     {
         $this->zoomMock->shouldReceive('buatMeeting')
@@ -157,7 +152,7 @@ class PenjadwalanServiceTest extends TestCase
         $this->assertNull($this->service->peringatanZoom());
     }
 
-    /** @test */
+    #[Test]
     public function buat_jadwal_dengan_link_otomatis_gagal_tetap_tersimpan(): void
     {
         $this->zoomMock->shouldReceive('buatMeeting')->once()->andReturn(null);
@@ -175,10 +170,10 @@ class PenjadwalanServiceTest extends TestCase
         $this->assertStringContainsString('gagal dibuat', $this->service->peringatanZoom());
     }
 
-    /** @test */
+    #[Test]
     public function buat_jadwal_link_otomatis_kedua_akun_bentrok_tidak_generate(): void
     {
-        // Isi akun_1 dan akun_2 dengan jadwal otomatis di jam yang sama.
+
         Penjadwalan::create(array_merge($this->dataJadwal('2030-05-03', '09:00', '10:00'), [
             'id_penjadwalan' => 'JDW-901', 'link_otomatis' => true, 'zoom_account' => 'akun_1', 'zoom_meeting_id' => 'A1',
         ]));
@@ -188,7 +183,7 @@ class PenjadwalanServiceTest extends TestCase
 
         $this->zoomMock->shouldReceive('buatMeeting')->never();
 
-        $data = $this->dataJadwal('2030-05-03', '09:30', '10:30'); // overlap dgn keduanya
+        $data = $this->dataJadwal('2030-05-03', '09:30', '10:30');
         $data['link_otomatis'] = true;
 
         $jadwal = $this->service->buat(data: $data, operatorIds: [$this->operator2->id_user]);
@@ -200,7 +195,7 @@ class PenjadwalanServiceTest extends TestCase
         $this->assertStringContainsString('sudah terpakai', $this->service->peringatanZoom());
     }
 
-    /** @test */
+    #[Test]
     public function buat_jadwal_dengan_akun_zoom_dipilih_manual(): void
     {
         $this->zoomMock->shouldReceive('buatMeeting')
@@ -219,11 +214,10 @@ class PenjadwalanServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function buat_jadwal_akun_zoom_pilihan_manual_bentrok_tidak_fallback_ke_akun_lain(): void
     {
-        // Akun 2 sudah kepakai di jam ini, akun 1 masih kosong - tapi karena admin
-        // MEMAKSA pilih akun 2 secara manual, sistem TIDAK BOLEH otomatis pindah ke akun 1.
+
         Penjadwalan::create(array_merge($this->dataJadwal('2030-05-07', '09:00', '10:00'), [
             'id_penjadwalan' => 'JDW-903', 'link_otomatis' => true, 'zoom_account' => 'akun_2', 'zoom_meeting_id' => 'A3',
         ]));
@@ -242,7 +236,7 @@ class PenjadwalanServiceTest extends TestCase
         $this->assertStringContainsString('Akun 2 sudah terpakai', $this->service->peringatanZoom());
     }
 
-    /** @test */
+    #[Test]
     public function ubah_jadwal_pindah_akun_zoom_manual_membuat_meeting_baru(): void
     {
         $this->zoomMock->shouldReceive('buatMeeting')
@@ -268,7 +262,7 @@ class PenjadwalanServiceTest extends TestCase
         $this->assertSame('MTG-BARU', $jadwalBaru->zoom_meeting_id);
     }
 
-    /** @test */
+    #[Test]
     public function ubah_jadwal_update_meeting_zoom_saat_waktu_berubah(): void
     {
         $this->zoomMock->shouldReceive('buatMeeting')
@@ -284,18 +278,15 @@ class PenjadwalanServiceTest extends TestCase
             ->with('akun_1', 'MTG555', Mockery::any())
             ->andReturn(true);
 
-        $dataUbah = $this->dataJadwal('2030-05-04', '11:00', '12:00'); // waktu berubah
+        $dataUbah = $this->dataJadwal('2030-05-04', '11:00', '12:00');
         $dataUbah['link_otomatis'] = true;
         $this->service->ubah($jadwal->fresh(), $dataUbah, [$this->operator1->id_user]);
     }
 
-    /** @test */
+    #[Test]
     public function peralatan_sudah_diajukan_menghitung_total_jumlah_bukan_sekadar_nama(): void
     {
-        // Kasus nyata: jadwal merekomendasikan 2 Proyektor, tapi baru diajukan 1 -
-        // harus terbaca sisa 1, bukan dianggap "sudah lengkap" cuma karena namanya
-        // sudah pernah muncul di satu pengajuan (lihat autoIsiDariReferensi() di
-        // public/js/peminjaman-form.js yang bergantung pada angka ini).
+
         $jadwal = $this->service->buat(
             data: $this->dataJadwal('2030-06-01'),
             operatorIds: [$this->operator1->id_user],
@@ -320,7 +311,7 @@ class PenjadwalanServiceTest extends TestCase
         $this->assertSame(['Proyektor' => 1], $hasil);
     }
 
-    /** @test */
+    #[Test]
     public function peralatan_sudah_diajukan_menjumlahkan_lintas_beberapa_pengajuan(): void
     {
         $jadwal = $this->service->buat(
@@ -348,8 +339,6 @@ class PenjadwalanServiceTest extends TestCase
 
         $this->assertSame(['Proyektor' => 2], $hasil);
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function dataUser(string $id, string $role, string $nohp = '080000000000'): array
     {

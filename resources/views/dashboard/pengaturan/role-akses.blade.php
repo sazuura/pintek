@@ -10,7 +10,6 @@
 
         <div class="grid grid-cols-1 gap-4 items-start">
 
-            {{-- Tabel role - jumlah role sudah fix (admin/operator/inventaris), tidak ada tambah role lagi --}}
             <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-5">
                 <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
                     <h3 class="text-[15px] font-semibold text-text dark:text-text-dark flex items-center gap-2 m-0">
@@ -74,7 +73,6 @@
                     </table>
                 </div>
 
-                {{-- Kartu role - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
                 <div class="hidden max-xs:flex flex-col gap-3">
                     @foreach($roles as $role)
                         <div class="bg-page-bg dark:bg-page-bg-dark rounded-xl p-4 flex flex-col gap-3">
@@ -108,8 +106,6 @@
             </div>
         </div>
 
-        {{-- Modal Hak Akses Halaman (Gambar 2) - satu instance dipakai bareng semua role,
-             diisi lewat JS saat tombol gear diklik --}}
         <div id="modalHakAkses" class="modal-konfirmasi fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
             <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[85vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
                 <div class="flex items-center justify-between gap-3 py-[18px] px-5 border-b border-page-bg dark:border-page-bg-dark">

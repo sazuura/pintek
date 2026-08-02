@@ -30,11 +30,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::middleware('menu-akses:users')->group(function () {
         Route::resource('users', UserController::class)->names('users')->except(['show']);
     });
-   
+
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::resource('peralatan', PeralatanController::class)->names('peralatan')->except(['show']);
     });
-    
+
     Route::middleware('menu-akses:peminjaman')->group(function () {
         Route::prefix('peminjaman')->name('peminjaman.')->group(function () {
             Route::get('/',          [PeminjamanController::class, 'operatorIndex'])->name('index');
@@ -59,7 +59,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
             Route::put('/role-akses/{role}/akses',  [RoleAksesController::class, 'updateAkses'])->name('role-akses.updateAkses');
         });
     });
-    
+
     Route::middleware('menu-akses:alat-terpasang')->group(function () {
         Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang')->except(['show']);
     });
@@ -69,12 +69,12 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
     Route::middleware('menu-akses:dashboard')->group(function () {
         Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
     });
-    
+
     Route::middleware('menu-akses:users')->group(function () {
         Route::resource('users', UserController::class)->names('users')->except(['show']);
     });
     Route::middleware('menu-akses:jadwal')->group(function () {
-        // index() dipasangkan ke PenjadwalanController yang sama dengan admin (bedanya cuma cakupan data, ditangani di dalam method).
+
         Route::get('/jadwal',           [PenjadwalanController::class, 'index'])->name('jadwal.index');
         Route::get('/jadwal/create',    [PenjadwalanController::class, 'create'])->name('jadwal.create');
         Route::post('/jadwal',          [PenjadwalanController::class, 'store'])->name('jadwal.store');
@@ -85,7 +85,7 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
     });
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::prefix('peralatan')->name('peralatan.')->group(function () {
-            // index() dipasangkan ke PeralatanController yang sama dengan admin/inventaris
+
             Route::get('/',          [PeralatanController::class, 'index'])->name('index');
             Route::get('/create',    [PeralatanController::class, 'create'])->name('create');
             Route::post('/',         [PeralatanController::class, 'store'])->name('store');

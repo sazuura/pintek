@@ -114,7 +114,6 @@
             else { prev.classList.add('hidden'); }
         });
 
-        // ── Alat yang dipasang: cegah alat yang sama dipilih dobel, tampilkan input Jml ──
         function refreshPeralatanOptions() {
             var selected = Array.from(document.querySelectorAll('.peralatan-select'))
                 .map(function (s) { return s.value; })

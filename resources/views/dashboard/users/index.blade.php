@@ -168,7 +168,6 @@
             <x-pagination :paginator="$users" label="user" />
         </div>
 
-        {{-- Kartu user - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
         <div class="hidden max-xs:flex flex-col gap-3 mb-4">
             @forelse($users as $user)
                 @php
@@ -233,7 +232,6 @@
         </div>
         </div>
 
-        {{-- Modal detail user, dipakai kartu mobile --}}
         <div id="modalUserDetail"
             class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
             <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
@@ -247,7 +245,6 @@
             </div>
         </div>
 
-        {{-- Modal konfirmasi nonaktifkan/aktifkan user - satu instance dipakai bareng oleh semua baris/kartu --}}
         <x-modal-konfirmasi id="modalKonfirmasiStatusUser" title="Ubah Status User" icon="bx-error-circle" icon-class="text-danger-text">
             <div id="statusUserBanner" class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
                 <div id="statusUserMessage" class="text-[13px] font-semibold text-[#c0392b]"></div>
@@ -275,9 +272,6 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
-// Modal konfirmasi nonaktifkan/aktifkan user (komponen global modal-konfirmasi) - satu
-// instance dipakai bareng oleh semua baris tabel & kartu mobile. Warna & teks tombol
-// menyesuaikan arah aksi: merah/danger kalau menonaktifkan, hijau/success kalau mengaktifkan.
 function bukaKonfirmasiStatusUser(url, isActive, namaUser) {
     var banner   = document.getElementById('statusUserBanner');
     var message  = document.getElementById('statusUserMessage');

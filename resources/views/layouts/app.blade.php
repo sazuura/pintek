@@ -8,8 +8,6 @@
     <title>@yield('title', 'Sistem') - Diskominfotik</title>
     <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
 
-    {{-- ANTI-FLASH - wajib jadi script PERTAMA di <head>, sebelum CSS apapun. agar konsisten
-    --}}
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
@@ -17,9 +15,6 @@
         document.documentElement.classList.add('skel-loading');
     </script>
 
-        {{-- preconnect dulu supaya koneksi TCP/TLS ke domain font & CDN sudah siap sebelum
-             browser sempat minta file-nya - font sendiri dipindah dari @import di app.css ke
-             <link> di sini karena @import di dalam CSS memaksa fetch berurutan (bukan paralel). --}}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="preconnect" href="https://unpkg.com">
@@ -29,7 +24,6 @@
 
         @stack('styles')
 </head>
-
 
     <body class="bg-page-bg dark:bg-page-bg-dark overflow-x-hidden font-sans">
 
@@ -109,12 +103,6 @@
             @yield('content')
         </section>
 
-        {{-- Chart.js SENGAJA tidak dimuat di sini - cuma 3 halaman dashboard yang benar-benar
-             pakai grafik, jadi dimuat lokal lewat @push('scripts') di masing-masing halaman itu
-             saja (lihat dashboard/beranda/admin|operator|inventaris.blade.php) supaya halaman
-             lain (daftar, form, laporan, dll) tidak ikut menanggung beban unduh library ini. --}}
-        {{-- Digabung+diminify lewat Vite (resources/js/app.js) - dulu 7 <script src> terpisah
-             yang tidak di-minify, sekarang satu file lewat build pipeline yang sama dengan CSS. --}}
         @vite(['resources/js/app.js'])
         @stack('scripts')
     </body>

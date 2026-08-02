@@ -1,12 +1,6 @@
 (function () {
     var DEBOUNCE_MS = 450;
 
-    // Dipanggil tepat sebelum fetch dimulai - menyamarkan (lewat SkeletonUtil.mask, lihat
-    // skeleton.js) baris tabel, kartu mobile, dan kartu grid yang SAAT INI sudah ter-render
-    // (hasil pencarian sebelumnya, atau render awal dari server) supaya user melihat skeleton
-    // alih-alih data lama yang diam/statis selagi menunggu hasil baru. Header tabel & pagination
-    // sengaja tidak disentuh (query-nya cuma ambil baris tbody/kartu) supaya tidak ikut berkedip
-    // tiap kali user mengetik. Begitu fetch selesai, seluruh region ditimpa HTML asli yang baru.
     function tampilkanSkeleton(region) {
         window.SkeletonUtil.batasiItem(region);
         var node = [];
@@ -39,13 +33,13 @@
             fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(function (res) { return res.text(); })
                 .then(function (html) {
-                    if (myId !== reqId) return; // ada request lebih baru menyusul, abaikan respons basi ini
+                    if (myId !== reqId) return;
                     var doc = new DOMParser().parseFromString(html, 'text/html');
                     var fresh = doc.querySelector(targetSelector);
                     if (fresh) region.innerHTML = fresh.innerHTML;
                     window.history.replaceState({}, '', url);
                 })
-                .catch(function () { form.submit(); }); // fallback: request gagal -> submit biasa (reload penuh)
+                .catch(function () { form.submit(); });
         }
 
         input.addEventListener('input', function () {

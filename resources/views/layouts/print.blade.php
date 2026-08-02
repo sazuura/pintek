@@ -15,10 +15,6 @@
         }
     </style>
     <script>
-        // Warna status disamakan dengan badge di tampilan live & Excel - dipetakan
-        // sekali di sini supaya dipakai bareng oleh laporan jadwal & peralatan.
-        // Didefinisikan di head (bukan di akhir body) supaya sudah tersedia
-        // sebelum dipanggil dari script di konten anak (child view).
         var LP_STATUS_COLORS = {
             'Aktif':          { bg: [232, 244, 253], text: [29, 111, 184] },
             'Disetujui':      { bg: [230, 249, 240], text: [22, 130, 90] },
@@ -34,17 +30,6 @@
             'Rusak':          { bg: [253, 236, 234], text: [192, 57, 43] },
         };
 
-        /**
-         * Bikin PDF asli (teks vektor, bisa di-select/copy/search) dari data
-         * headers+rows pakai jsPDF + AutoTable, lalu langsung diunduh browser -
-         * tanpa dialog print, karena ini file yang benar-benar di-generate di JS
-         * (bukan print-to-PDF bawaan browser yang wajib lewat dialog).
-         *
-         * @param {string[]} headers
-         * @param {Array<Array<string>>} rows
-         * @param {string} namaFile  tanpa ekstensi
-         * @param {number} statusColIndex  index kolom Status (0-based) buat pewarnaan, -1 kalau tidak ada
-         */
         function lpBuatDanUnduhPdf(headers, rows, namaFile, statusColIndex) {
             try {
                 var jsPDF = window.jspdf.jsPDF;

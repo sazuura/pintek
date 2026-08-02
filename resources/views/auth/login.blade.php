@@ -1,6 +1,5 @@
 <x-guest-layout>
 
-    {{-- Session status (misal: "Link reset password sudah dikirim") --}}
     @if (session('status'))
         <div class="text-xs text-[#2ecc71] mb-[14px]">
             {{ session('status') }}
@@ -12,7 +11,6 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        {{-- Email --}}
         <div class="mb-[18px]">
             <label class="block text-[13px] font-medium text-text mb-1.5" for="email">Email</label>
             <input id="email"
@@ -23,7 +21,6 @@
             @enderror
         </div>
 
-        {{-- Password dengan tombol show/hide --}}
         <div class="mb-[18px]">
             <label class="block text-[13px] font-medium text-text mb-1.5" for="password">Password</label>
             <div class="relative login-password-wrap">
@@ -41,7 +38,6 @@
             @enderror
         </div>
 
-        {{-- Remember me + lupa password --}}
         <div class="mb-[18px] flex items-center justify-between">
             <x-checkbox name="remember">Ingat saya</x-checkbox>
             <button type="button" onclick="bukaLupaPassword()"
@@ -50,11 +46,6 @@
             </button>
         </div>
 
-        {{-- reCAPTCHA --}}
-        {{-- Widget resminya cuma tersedia ukuran normal (304x78) atau compact - di-scale up
-             (bukan resize) via CSS transform biar lebar visualnya sepadan dengan field lain.
-             Skala dihitung dinamis lewat JS (bukan angka tetap) berdasarkan lebar kartu yang
-             tersedia, supaya di layar HP sempit widget-nya ikut mengecil, bukan overflow/kepotong. --}}
         @if(class_exists(\Anhskohbo\NoCaptcha\NoCaptchaServiceProvider::class))
             <div class="mb-[18px]">
                 <div id="recaptcha-wrap" class="w-full max-w-[356px] overflow-hidden">
@@ -68,7 +59,6 @@
             </div>
         @endif
 
-        {{-- Tombol login --}}
         <button type="submit"
             class="flex items-center justify-center w-full h-11 bg-primary hover:bg-primary-600 text-white border-0 rounded-lg font-sans text-[15px] font-semibold cursor-pointer gap-2 transition-colors duration-200">
             <i class="bx bx-log-in"></i>
@@ -77,12 +67,10 @@
 
     </form>
 
-    {{-- reCAPTCHA script --}}
     @if(class_exists(\Anhskohbo\NoCaptcha\NoCaptchaServiceProvider::class))
         {!! NoCaptcha::renderJs() !!}
     @endif
 
-    {{-- Modal lupa password: 3 step (email -> kode OTP WhatsApp -> kata sandi baru) --}}
     @php
         $lpBadgeBase = 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 border border-gray-300 text-text-muted transition-colors duration-200';
         $lpLineBase = 'flex-1 h-[2px] bg-page-bg transition-colors duration-200';
@@ -101,7 +89,7 @@
             </div>
 
             <div class="pt-4 px-5 pb-5 overflow-y-auto flex flex-col gap-4">
-                {{-- Stepper --}}
+
                 <div class="flex items-center gap-1.5">
                     <span id="lp-badge-1" class="{{ $lpBadgeBase }}">1</span>
                     <div id="lp-line-1" class="{{ $lpLineBase }}"></div>
@@ -110,7 +98,6 @@
                     <span id="lp-badge-3" class="{{ $lpBadgeBase }}">3</span>
                 </div>
 
-                {{-- Step 1: Email --}}
                 <div id="lp-step-1" class="flex flex-col gap-3">
                     <p class="text-[13px] text-text-muted m-0">Masukkan email akun kamu untuk melanjutkan.</p>
                     <div>
@@ -124,9 +111,8 @@
                     </div>
                 </div>
 
-                {{-- Step 2: Kode OTP --}}
                 <div id="lp-step-2" class="hidden flex-col gap-3">
-                    <p class="text-[13px] text-text-muted m-0">Kode verifikasi sudah dikirim ke WhatsApp yang terdaftar. Masukkan kode tersebut.</p>
+                    <p class="text-[13px] text-text-muted m-0">Kode verifikasi sudah dikirim ke email yang terdaftar. Masukkan kode tersebut.</p>
                     <div>
                         <label class="block text-[13px] font-medium text-text mb-1.5">Kode OTP</label>
                         <input type="text" id="lp-otp" inputmode="numeric" maxlength="6" placeholder="6 digit kode" class="{{ $lpInputClass }}">
@@ -142,7 +128,6 @@
                     </div>
                 </div>
 
-                {{-- Step 3: Kata sandi baru --}}
                 <div id="lp-step-3" class="hidden flex-col gap-3">
                     <p class="text-[13px] text-text-muted m-0">Kode terverifikasi. Masukkan kata sandi baru kamu.</p>
                     <div>

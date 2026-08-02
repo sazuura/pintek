@@ -4,8 +4,7 @@
 
     var TRIGGER_CLASSES = 'searchable-select-trigger w-full h-10 px-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-surface dark:bg-surface-dark text-sm font-sans flex items-center justify-between gap-2 cursor-pointer transition-[border-color,box-shadow] duration-200 [&.open]:border-primary [&.open]:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]';
     var TRIGGER_ERROR_CLASSES = 'searchable-select-trigger w-full h-10 px-3 border border-danger-text rounded-lg bg-surface dark:bg-surface-dark text-sm font-sans flex items-center justify-between gap-2 cursor-pointer transition-[border-color,box-shadow] duration-200 [&.open]:shadow-[0_0_0_3px_rgba(231,76,60,0.15)]';
-    // Class 'drop-up' ditambahkan openDropdown() saat ruang viewport di bawah trigger
-    // tidak cukup - dropdown pindah membuka ke atas supaya tidak terpotong layar.
+
     var DROPDOWN_CLASSES = 'searchable-select-dropdown hidden absolute top-[calc(100%+4px)] left-0 right-0 z-30 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 rounded-lg p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] [&.open]:block [&.drop-up]:top-auto [&.drop-up]:bottom-[calc(100%+4px)] [&.drop-up]:shadow-[0_-8px_24px_rgba(0,0,0,0.12)]';
     var SEARCH_INPUT_CLASSES = 'searchable-select-input w-full h-9 pl-8 pr-8 border border-gray-300 dark:border-gray-700 rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-sm font-sans focus:outline-none focus:border-primary';
 
@@ -29,7 +28,6 @@
     var MAX_TRIGGER_WIDTH = 340;
     var measureCtx = null;
 
-    // Select filter di toolbar 
     function computeTriggerWidth(select) {
         if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
         measureCtx.font = '400 14px ui-sans-serif, system-ui, sans-serif';
@@ -38,14 +36,11 @@
             var w = measureCtx.measureText(optionLabel(o)).width;
             if (w > longest) longest = w;
         });
-        // padding trigger (px-3 kiri+kanan) + gap + lebar ikon chevron + sedikit buffer.
+
         var width = longest + 24 + 8 + 16 + 12;
         return Math.max(MIN_TRIGGER_WIDTH, Math.min(MAX_TRIGGER_WIDTH, Math.ceil(width)));
     }
 
-    // Opsi yang dianggap "bisa dipilih & tampil di daftar": bukan disabled (placeholder
-    // mis. "-- Pilih X --" selalu ditandai disabled) dan tidak hidden. Opsi dengan
-    // value="" TETAP dimasukkan selama tidak disabled (mis. "Semua Status" di filter).
     function selectableOptions(select) {
         return Array.from(select.options).filter(function (o) { return !o.disabled && !o.hidden; });
     }
@@ -113,8 +108,7 @@
         if (!wrapper) return;
         var label = wrapper.querySelector('.searchable-select-trigger-label');
         var opt = select.options[select.selectedIndex];
-        // Opsi valid (termasuk yang value="" tapi tidak disabled, mis. "Semua Status")
-        // ditampilkan apa adanya. Cuma placeholder (disabled) yang jatuh ke teks abu-abu.
+
         if (opt && !opt.disabled) {
             label.textContent = optionLabel(opt);
             label.classList.remove('text-text-muted');
@@ -142,8 +136,6 @@
         }
         renderOptions(select, listEl, '');
 
-        // Setelah isinya dirender (tinggi dropdown sudah final), cek sisa ruang
-        // viewport: kalau di bawah trigger tidak muat dan ruang di atas lebih lega,
         dropdown.classList.remove('drop-up');
         var trigRect = trigger.getBoundingClientRect();
         var ruangBawah = window.innerHeight - trigRect.bottom;
@@ -151,8 +143,7 @@
         if (ruangBawah < dropdown.offsetHeight + 12 && ruangAtas > ruangBawah) {
             dropdown.classList.add('drop-up');
         }
-        // Dua arah sama-sama sempit (mis. trigger di toolbar atas halaman pendek):
-        // gulir container scroll seminimal mungkin supaya dropdown terlihat utuh.
+
         dropdown.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 
         if (input) input.focus();
@@ -169,7 +160,6 @@
         if (select.dataset.enhanced) return;
         select.dataset.enhanced = '1';
 
-        // Select yang aslinya dibuat untuk melebar mengisi baris flex
         var fill = select.classList.contains('flex-1') || select.classList.contains('w-full');
 
         var wrapper = document.createElement('div');
@@ -179,8 +169,6 @@
         wrapper.appendChild(select);
         select.classList.add('searchable-select-native', 'hidden');
 
-        // Kalau select aslinya ditandai error (mis. class '!border-danger-text' dari
-        // $errors->has(...) di Blade), trigger-nya pakai border merah juga.
         var hasError = select.classList.contains('!border-danger-text') || select.classList.contains('border-danger-text');
 
         var trigger = document.createElement('button');
@@ -197,7 +185,6 @@
         var dropdown = document.createElement('div');
         dropdown.className = DROPDOWN_CLASSES;
 
-        // Search bar cuma dibuat kalau opsinya banyak
         var showSearch = select.classList.contains('searchable') || selectableOptions(select).length > SEARCH_THRESHOLD;
         var input = null, clearBtn = null;
         if (showSearch) {
@@ -272,17 +259,12 @@
         delete select._searchableSelect;
     }
 
-    // Re-render label trigger + (kalau lagi terbuka) daftar hasil tiap combobox yang sudah
-    // di-enhance. Panggil ini setelah kode lain mengubah select.value / option.hidden/disabled
-    // / data-badge / data-subtitle.
     function refreshAll(root) {
         (root || document).querySelectorAll(SELECT_SELECTOR + '[data-enhanced]').forEach(function (select) {
             if (select._searchableSelect) select._searchableSelect.refresh();
         });
     }
 
-    // Untuk baris hasil cloneNode(true): DOM ter-enhance ikut ter-copy tapi listener JS-nya
-    // tidak, jadi bongkar dulu baru enhance ulang supaya event handler-nya segar.
     function reinitRow(container) {
         container.querySelectorAll(SELECT_SELECTOR).forEach(function (select) {
             unenhance(select);

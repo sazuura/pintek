@@ -7,12 +7,6 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-/**
- * Styling bersama buat semua Export laporan (header biru bold, border tipis,
- * baris selang-seling, kolom Status diwarnai sesuai isinya, header dibekukan +
- * auto-filter) - dipakai lewat WithEvents supaya tidak perlu diulang di tiap
- * class Export.
- */
 trait StyledExport
 {
     public function registerEvents(): array

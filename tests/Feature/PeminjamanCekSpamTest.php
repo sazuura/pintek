@@ -9,6 +9,7 @@ use App\Models\Peralatan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class PeminjamanCekSpamTest extends TestCase
 {
@@ -40,7 +41,7 @@ class PeminjamanCekSpamTest extends TestCase
         $this->tanggalPinjam = now()->addDay()->format('Y-m-d');
     }
 
-    /** @test */
+    #[Test]
     public function tidak_ada_peringatan_kalau_belum_pernah_mengajukan(): void
     {
         $this->actingAs($this->operator)
@@ -52,13 +53,12 @@ class PeminjamanCekSpamTest extends TestCase
             ->assertJson(['peringatan' => []]);
     }
 
-    /** @test */
+    #[Test]
     public function ada_peringatan_setelah_alat_yang_sama_diajukan_dua_kali_sebelumnya(): void
     {
         $this->buatPeminjaman($this->operator, [$this->mouseGedungA->id_peralatan]);
         $this->buatPeminjaman($this->operator, [$this->mouseGedungA->id_peralatan]);
 
-        // Pengajuan ketiga - sekarang harus muncul peringatan.
         $response = $this->actingAs($this->operator)
             ->postJson(route('operator.peminjaman.cekSpam'), [
                 'tanggal_pinjam' => $this->tanggalPinjam,
@@ -72,11 +72,10 @@ class PeminjamanCekSpamTest extends TestCase
         $this->assertSame(2, $peringatan[0]['jumlah_sebelumnya']);
     }
 
-    /** @test */
+    #[Test]
     public function peringatan_tetap_muncul_walau_gedung_alatnya_berbeda(): void
     {
-        // Dua pengajuan sebelumnya pakai mouse dari Gedung A, pengecekan sekarang
-        // untuk mouse dari Gedung B (nama sama, id_peralatan berbeda).
+
         $this->buatPeminjaman($this->operator, [$this->mouseGedungA->id_peralatan]);
         $this->buatPeminjaman($this->operator, [$this->mouseGedungA->id_peralatan]);
 
@@ -90,7 +89,7 @@ class PeminjamanCekSpamTest extends TestCase
         $this->assertCount(1, $response->json('peringatan'));
     }
 
-    /** @test */
+    #[Test]
     public function pengajuan_yang_ditolak_tidak_dihitung(): void
     {
         $p1 = $this->buatPeminjaman($this->operator, [$this->mouseGedungA->id_peralatan]);
@@ -107,7 +106,7 @@ class PeminjamanCekSpamTest extends TestCase
             ->assertJson(['peringatan' => []]);
     }
 
-    /** @test */
+    #[Test]
     public function tanggal_pinjam_berbeda_tidak_dihitung(): void
     {
         $this->buatPeminjaman($this->operator, [$this->mouseGedungA->id_peralatan], now()->addDays(5)->format('Y-m-d'));
@@ -115,21 +114,19 @@ class PeminjamanCekSpamTest extends TestCase
 
         $this->actingAs($this->operator)
             ->postJson(route('operator.peminjaman.cekSpam'), [
-                'tanggal_pinjam' => $this->tanggalPinjam, // beda tanggal dari yang di atas
+                'tanggal_pinjam' => $this->tanggalPinjam,
                 'peralatan_ids'  => [$this->mouseGedungA->id_peralatan],
             ])
             ->assertOk()
             ->assertJson(['peringatan' => []]);
     }
 
-    /** @test */
+    #[Test]
     public function pengajuan_yang_sedang_diedit_tidak_menghitung_dirinya_sendiri(): void
     {
         $this->buatPeminjaman($this->operator, [$this->mouseGedungA->id_peralatan]);
         $sedangDiedit = $this->buatPeminjaman($this->operator, [$this->mouseGedungA->id_peralatan]);
 
-        // Cuma ada 2 pengajuan lain (bukan 2 + dirinya sendiri = 3), jadi belum kena peringatan
-        // begitu pengajuan yang sedang diedit dikecualikan dari hitungan.
         $this->actingAs($this->operator)
             ->postJson(route('operator.peminjaman.cekSpam'), [
                 'tanggal_pinjam'          => $this->tanggalPinjam,

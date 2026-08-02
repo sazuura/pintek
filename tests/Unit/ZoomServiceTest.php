@@ -6,6 +6,7 @@ use App\Services\ZoomService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ZoomServiceTest extends TestCase
 {
@@ -15,9 +16,6 @@ class ZoomServiceTest extends TestCase
     {
         parent::setUp();
 
-        // Token di-cache per akun (lihat ZoomService::getAccessToken) - kalau tidak
-        // di-flush, token dari test lain bisa "bocor" ke sini dan bikin mock Http::fake()
-        // di test ini tidak pernah benar-benar kena (request token di-skip karena cache hit).
         Cache::flush();
 
         config([
@@ -32,7 +30,7 @@ class ZoomServiceTest extends TestCase
         $this->zoom = new ZoomService();
     }
 
-    /** @test */
+    #[Test]
     public function buat_meeting_sukses_mengembalikan_data_meeting(): void
     {
         Http::fake([
@@ -56,7 +54,7 @@ class ZoomServiceTest extends TestCase
         $this->assertSame('ab12cd', $hasil['password']);
     }
 
-    /** @test */
+    #[Test]
     public function buat_meeting_gagal_kalau_token_gagal_diambil(): void
     {
         Http::fake([
@@ -72,7 +70,7 @@ class ZoomServiceTest extends TestCase
         $this->assertNull($hasil);
     }
 
-    /** @test */
+    #[Test]
     public function buat_meeting_gagal_kalau_api_meeting_error(): void
     {
         Http::fake([
@@ -89,14 +87,14 @@ class ZoomServiceTest extends TestCase
         $this->assertNull($hasil);
     }
 
-    /** @test */
+    #[Test]
     public function buat_meeting_gagal_kalau_kredensial_kosong(): void
     {
         config(['services.zoom.akun_2' => [
             'account_id' => '', 'client_id' => '', 'client_secret' => '', 'user_id' => 'me',
         ]]);
 
-        Http::fake(); // tidak boleh ada request sama sekali
+        Http::fake();
 
         $hasil = $this->zoom->buatMeeting('akun_2', [
             'topic' => 'Rapat Test', 'start_time' => '2030-01-01T09:00:00', 'duration' => 60,
@@ -106,7 +104,7 @@ class ZoomServiceTest extends TestCase
         Http::assertNothingSent();
     }
 
-    /** @test */
+    #[Test]
     public function token_di_cache_supaya_tidak_request_ulang(): void
     {
         Http::fake([
@@ -119,10 +117,10 @@ class ZoomServiceTest extends TestCase
         $this->zoom->buatMeeting('akun_1', ['topic' => 'A', 'start_time' => '2030-01-01T09:00:00', 'duration' => 30]);
         $this->zoom->buatMeeting('akun_1', ['topic' => 'B', 'start_time' => '2030-01-02T09:00:00', 'duration' => 30]);
 
-        Http::assertSentCount(3); // 1x token + 2x create meeting (bukan 2x token)
+        Http::assertSentCount(3);
     }
 
-    /** @test */
+    #[Test]
     public function update_meeting_sukses(): void
     {
         Http::fake([
@@ -135,7 +133,7 @@ class ZoomServiceTest extends TestCase
         $this->assertTrue($ok);
     }
 
-    /** @test */
+    #[Test]
     public function update_meeting_gagal_kalau_api_error(): void
     {
         Http::fake([
@@ -148,7 +146,7 @@ class ZoomServiceTest extends TestCase
         $this->assertFalse($ok);
     }
 
-    /** @test */
+    #[Test]
     public function hapus_meeting_sukses(): void
     {
         Http::fake([
@@ -161,7 +159,7 @@ class ZoomServiceTest extends TestCase
         $this->assertTrue($ok);
     }
 
-    /** @test */
+    #[Test]
     public function hapus_meeting_dianggap_sukses_kalau_sudah_tidak_ada_404(): void
     {
         Http::fake([
@@ -174,7 +172,7 @@ class ZoomServiceTest extends TestCase
         $this->assertTrue($ok);
     }
 
-    /** @test */
+    #[Test]
     public function hapus_meeting_gagal_kalau_error_lain(): void
     {
         Http::fake([

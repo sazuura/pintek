@@ -12,8 +12,6 @@ return new class extends Migration
             $table->enum('status', ['diajukan', 'disetujui', 'ditolak'])->default('diajukan')->after('jumlah');
         });
 
-        // Backfill dari status peminjaman induk supaya data lama tetap konsisten begitu
-        // approve/reject per-item mulai dipakai (lihat PeminjamanService::rekomputeStatusPeminjaman).
         DB::table('peminjaman_item')
             ->join('peminjaman', 'peminjaman_item.id_peminjaman', '=', 'peminjaman.id_peminjaman')
             ->whereIn('peminjaman.status', ['disetujui', 'dikembalikan'])

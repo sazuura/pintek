@@ -70,13 +70,12 @@
             </div>
         </div>
 
-        {{-- Grid marketplace --}}
         <div id="hasil-peralatan-inv" data-skel>
         @if($peralatan->count())
             <div class="grid grid-cols-5 max-tablet:!grid-cols-3 max-xs:!grid-cols-1 gap-4">
                 @foreach($peralatan as $item)
                     <div class="bg-surface dark:bg-surface-dark rounded-xl overflow-hidden shadow-card transition-[transform,box-shadow] duration-200 flex flex-col hover:-translate-y-[3px] hover:shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
-                        {{-- Foto - fallback ke ikon global kalau kolom foto kosong ATAU filenya sudah tidak ada di storage --}}
+
                         <x-foto-item :path="$item->foto" :alt="$item->nama_peralatan" icon="bx-package"
                             img-class="w-full aspect-[4/3] object-cover bg-page-bg dark:bg-page-bg-dark"
                             icon-wrap-class="w-full aspect-[4/3] bg-page-bg dark:bg-page-bg-dark flex items-center justify-center text-text-muted text-4xl" />
@@ -150,7 +149,6 @@
                 @endforeach
             </div>
 
-            {{-- Pagination untuk grid --}}
             <div class="mt-5 bg-surface dark:bg-surface-dark rounded-xl shadow-card">
                 <x-pagination :paginator="$peralatan" label="peralatan" />
             </div>

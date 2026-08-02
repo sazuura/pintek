@@ -13,9 +13,9 @@
     $value = old($name, $attributes->get('value'));
     $fieldId = $id ?? $name;
 
-    $base = 'h-10 px-3 rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:outline-none border'; // form input, navbar (garis)
+    $base = 'h-10 px-3 rounded-lg bg-surface dark:bg-surface-dark text-text dark:text-text-dark text-sm font-sans transition-[border-color,box-shadow] duration-200 w-full box-border focus:outline-none border';
     $base .= $hasError
-        ? ' border-danger-text focus:border-danger-text focus:shadow-[0_0_0_3px_rgba(231,76,60,0.15)]' // danger merah kalau gagal
+        ? ' border-danger-text focus:border-danger-text focus:shadow-[0_0_0_3px_rgba(231,76,60,0.15)]'
         : ' border-gray-300 dark:border-gray-700 focus:border-primary focus:shadow-[0_0_0_3px_rgba(0,102,255,0.10)]'; 
     if ($toggleable) $base .= ' pr-11';
 @endphp

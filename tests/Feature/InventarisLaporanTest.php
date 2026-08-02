@@ -9,6 +9,7 @@ use App\Models\Peralatan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class InventarisLaporanTest extends TestCase
 {
@@ -31,7 +32,7 @@ class InventarisLaporanTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function halaman_laporan_bisa_diakses_dan_menampilkan_kedua_tab(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router Cisco', 'gedung' => 'Gedung A', 'stok' => 10, 'rusak' => 2]);
@@ -53,7 +54,7 @@ class InventarisLaporanTest extends TestCase
         $response->assertSee('Alat Terpasang');
     }
 
-    /** @test */
+    #[Test]
     public function stok_bisa_difilter_berdasarkan_kondisi(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Proyektor Mulus', 'gedung' => 'Gedung A', 'stok' => 10, 'rusak' => 0]);
@@ -67,7 +68,7 @@ class InventarisLaporanTest extends TestCase
         $response->assertDontSee('Proyektor Mulus');
     }
 
-    /** @test */
+    #[Test]
     public function terpasang_bisa_difilter_berdasarkan_gedung(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router A', 'gedung' => 'Gedung A', 'stok' => 5]);
@@ -89,7 +90,7 @@ class InventarisLaporanTest extends TestCase
         $response->assertDontSee('Router B');
     }
 
-    /** @test */
+    #[Test]
     public function export_pdf_stok_berhasil(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router Cisco', 'gedung' => 'Gedung A', 'stok' => 10]);
@@ -100,7 +101,7 @@ class InventarisLaporanTest extends TestCase
             ->assertSee('Router Cisco');
     }
 
-    /** @test */
+    #[Test]
     public function export_pdf_terpasang_berhasil(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router Cisco', 'gedung' => 'Gedung A', 'stok' => 10]);
@@ -115,7 +116,7 @@ class InventarisLaporanTest extends TestCase
             ->assertSee('Router Cisco');
     }
 
-    /** @test */
+    #[Test]
     public function export_excel_stok_dan_terpasang_berhasil(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router Cisco', 'gedung' => 'Gedung A', 'stok' => 10]);
@@ -129,7 +130,7 @@ class InventarisLaporanTest extends TestCase
             ->assertOk();
     }
 
-    /** @test */
+    #[Test]
     public function riwayat_peminjaman_bisa_difilter_berdasarkan_rentang_tanggal(): void
     {
         $peralatan = Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Kamera DSLR', 'gedung' => 'Gedung A', 'stok' => 5]);
@@ -166,7 +167,7 @@ class InventarisLaporanTest extends TestCase
         $response->assertDontSee('Rapat lama');
     }
 
-    /** @test */
+    #[Test]
     public function export_pdf_dan_excel_riwayat_peminjaman_berhasil(): void
     {
         $peralatan = Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Kamera DSLR', 'gedung' => 'Gedung A', 'stok' => 5]);
@@ -190,7 +191,7 @@ class InventarisLaporanTest extends TestCase
             ->assertOk();
     }
 
-    /** @test */
+    #[Test]
     public function operator_tidak_bisa_akses_laporan_inventaris(): void
     {
         $operator = User::create([

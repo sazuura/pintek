@@ -36,11 +36,6 @@ class User extends Authenticatable
 
     public function isActive(): bool { return $this->status === 'active'; }
 
-    /**
-     * Relasi ke tabel roles lewat kolom string role<->slug (BUKAN role_id) - lihat
-     * docs/plans/planning-role-akses-dinamis.md §2 untuk alasan kolom `role` sengaja
-     * tetap string, bukan diubah jadi foreign key literal.
-     */
     public function roleAkses()
     {
         return $this->belongsTo(Role::class, 'role', 'slug');
@@ -51,12 +46,6 @@ class User extends Authenticatable
         return $this->roleAkses?->punyaAkses($menuSlug, $aksi) ?? false;
     }
 
-    /**
-     * Nomor HP dinormalisasi ke format internasional (62xxx) yang dibutuhkan Fonnte -
-     * nohp di DB tersimpan format lokal (mis. "081336297501"). Selalu pakai accessor
-     * ini (bukan $user->nohp mentah) tiap kali mau kirim WA, supaya tidak ada lagi
-     * jalur pengiriman yang lupa menormalisasi nomornya.
-     */
     public function getNomorWaAttribute(): ?string
     {
         return $this->nohp ? '62' . ltrim(preg_replace('/\D/', '', $this->nohp), '0') : null;

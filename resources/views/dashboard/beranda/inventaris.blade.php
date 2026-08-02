@@ -14,7 +14,6 @@
             </div>
         </div>
 
-        {{-- Stat cards --}}
         <div data-skel class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-md:grid-cols-2 max-xs:!grid-cols-1 gap-4 mb-6">
             <div class="relative bg-surface dark:bg-surface-dark rounded-xl p-5 flex items-center gap-4 shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
                 <div class="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[#e8f4fd] dark:bg-[#3C91E6]/15 text-[#3C91E6]"><i class="bx bxs-data"></i></div>
@@ -46,21 +45,15 @@
             </div>
         </div>
 
-        {{-- Grid utama: proporsional 2 kolom di desktop (kiri 5/12, kanan 7/12) dengan
-             tinggi yang seragam dan scroll internal di masing-masing panel; di mobile
-             kembali ke tumpukan biasa (tanpa tinggi tetap) supaya tidak ada overflow. --}}
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6 lg:h-[640px]">
 
-            {{-- KOLOM KIRI: Komposisi Stok + Stok Sisa Sedikit ditumpuk --}}
             <div class="lg:col-span-5 flex flex-col gap-4 lg:h-full lg:min-h-0">
 
-                {{-- Donut: komposisi stok --}}
                 <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card shrink-0">
                     <h2 class="text-[15px] font-semibold text-text dark:text-text-dark mb-4"><i class="bx bx-doughnut-chart text-primary"></i> Komposisi Stok</h2>
                     <canvas id="chartStok" class="max-h-[260px]"></canvas>
                 </div>
 
-                {{-- Stok Sisa Sedikit: mengisi sisa tinggi kolom kiri, daftar scroll internal --}}
                 <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl shadow-card flex-1 lg:min-h-0 flex flex-col overflow-hidden">
                     <div class="p-5 pb-3.5 shrink-0 flex items-start justify-between gap-3 flex-wrap">
                         <h2 class="text-[15px] font-semibold text-text dark:text-text-dark m-0"><i class="bx bx-error text-[#f39c12]"></i> Stok Sisa Sedikit
@@ -101,7 +94,6 @@
                 </div>
             </div>
 
-            {{-- KOLOM KANAN: Pengajuan Menunggu Persetujuan, tinggi menyamai kolom kiri --}}
             <div class="lg:col-span-7 lg:h-full lg:min-h-0">
                 <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-card lg:h-full flex flex-col">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5 shrink-0">
@@ -118,7 +110,7 @@
                     </div>
 
                     <div class="flex-1 lg:min-h-0 lg:overflow-y-auto custom-scrollbar pr-1">
-                        {{-- Desktop/tablet: kartu penuh (judul, tombol di kanan atas, daftar alat langsung terlihat) --}}
+
                         <div class="max-xs:hidden">
                             @forelse($peminjamanMenunggu as $p)
                                 @php
@@ -130,7 +122,7 @@
                                         : $mulai->translatedFormat('d F Y') . ' - ' . $selesai->translatedFormat('d F Y');
                                 @endphp
                                 <div class="bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 rounded-[14px] p-4 mb-3 flex gap-4 items-stretch shadow-sm">
-                                    {{-- Kiri: judul + peminjam + tanggal (ringkasan pengajuan) --}}
+
                                     <div class="min-w-0 basis-[38%] flex flex-col justify-center">
                                         <h3 class="text-[15px] font-bold text-text dark:text-text-dark m-0 mb-1.5 leading-snug">{{ $p->keperluan }}</h3>
                                         <div class="text-xs text-text-muted mb-1.5">
@@ -143,8 +135,6 @@
 
                                     <div class="w-px self-stretch bg-gray-300 dark:bg-gray-700 shrink-0"></div>
 
-                                    {{-- Kanan: daftar alat (foto asli, fallback ikon kalau belum ada), lokasi per
-                                         alat ditampilkan di bawah nama - bukan diulang di kolom kiri. --}}
                                     <div class="min-w-0 basis-[62%] flex flex-col">
                                         <div class="flex flex-col gap-2 flex-1">
                                             @foreach($p->items as $item)
@@ -160,8 +150,7 @@
                                                 </div>
                                             @endforeach
                                         </div>
-                                        {{-- Warna tombol pakai token semantik (soft bg + teks jenuh) yang sama dengan
-                                             <x-badge>, kotak agak rounded + border, ukuran pendek. --}}
+
                                         <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-300 dark:border-gray-700">
                                             <button type="button"
                                                 class="h-8 px-3 rounded-lg border border-success-text/30 text-xs font-sans cursor-pointer inline-flex items-center justify-center gap-1.5 font-semibold transition-opacity duration-200 hover:opacity-85 bg-success dark:bg-success-dark text-success-text"
@@ -184,8 +173,6 @@
                             @endforelse
                         </div>
 
-                        {{-- Mobile: kartu ringkas ala daftar lain di aplikasi (ikon+judul+chevron untuk buka
-                             detail via modal, baris info ringkas, tombol aksi di paling bawah). --}}
                         <div class="hidden max-xs:flex flex-col gap-3">
                             @forelse($peminjamanMenunggu as $p)
                                 @php
@@ -252,7 +239,6 @@
 
         </div>
 
-        {{-- Modal detail pengajuan untuk kartu mobile - isi diambil dari data-* kartu yang diklik. --}}
         <div id="modalDetailPengajuan"
             class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
             <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
@@ -316,8 +302,6 @@
         var isDark = document.documentElement.classList.contains('dark');
         var labelTextColor = isDark ? '#FBFBFB' : '#342E37';
 
-        // Label jumlah (bukan persen) di luar donat dengan garis penunjuk (leader line) ke
-        // tiap segmen - Chart.js tidak punya ini bawaan, jadi digambar manual lewat afterDraw.
         var doughnutLeaderLabels = {
             id: 'doughnutLeaderLabels',
             afterDraw: function (chart) {
@@ -356,8 +340,6 @@
             }
         };
 
-        // Warna segmen jenuh penuh ('#1abc9c' dkk) nyaman di atas background terang, tapi
-        // menyilaukan kalau ditaruh langsung di atas background gelap - jadi diredupkan sedikit khusus dark mode.
         var warnaSegmen = isDark ? ['#0f9b82', '#c0392b', '#6b7280'] : ['#1abc9c', '#e74c3c', '#aaaaaa'];
 
         var chartStok = new Chart(document.getElementById('chartStok'), {
@@ -384,9 +366,6 @@
             plugins: [doughnutLeaderLabels]
         });
 
-        // Toggle tema (di adminhub.js) cuma menambah/hapus class 'dark' di <html> tanpa reload
-        // halaman - tanpa listener ini, warna chart yang sudah dibaca sekali di atas jadi basi
-        // dan kelihatan pudar/salah kontras sampai halaman di-refresh manual.
         new MutationObserver(function () {
             isDark = document.documentElement.classList.contains('dark');
             labelTextColor = isDark ? '#FBFBFB' : '#342E37';
@@ -409,7 +388,6 @@
             bukaModalKonfirmasi('modalKonfirmasiTolak');
         }
 
-        // Modal detail untuk kartu mobile "Pengajuan Menunggu Persetujuan" - isi diambil dari data-* kartu.
         function escapeHtmlInventaris(str) {
             var div = document.createElement('div');
             div.textContent = str == null ? '' : String(str);
@@ -423,7 +401,6 @@
             var items = [];
             try { items = JSON.parse(d.items || '[]'); } catch (e) {}
 
-            // Gedung tidak diulang di sini karena sudah dirangkum di field "Lokasi" pada bagian atas modal.
             var itemsHtml = items.map(function (item) {
                 return '<div class="flex items-center justify-between py-2.5 border-b border-page-bg dark:border-page-bg-dark last:border-b-0">' +
                     '<div class="font-medium text-[13px] text-text dark:text-text-dark">' + escapeHtmlInventaris(item.nama) + '</div>' +

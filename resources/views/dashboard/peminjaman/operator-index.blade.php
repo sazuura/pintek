@@ -152,7 +152,6 @@
                                         @endif
                                     </div>
 
-                                    {{-- Daftar Peralatan - tabel group, konsisten dengan tab Peralatan Digunakan di Laporan --}}
                                     <div class="px-4 pb-4">
                                         <div class="flex items-center justify-between mb-2.5 px-0.5">
                                             <span class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-text dark:text-text-dark"><i class="bx bx-wrench text-primary text-[15px]"></i> Daftar Peralatan</span>
@@ -198,7 +197,6 @@
             <x-pagination :paginator="$peminjaman">{{ $peminjaman->total() }} total pengajuan</x-pagination>
         </div>
 
-        {{-- Kartu pengajuan - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
         <div class="hidden max-xs:flex flex-col gap-3 mb-4">
             @forelse($peminjaman as $p)
                 <div class="mobile-card bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-3.5 cursor-pointer {{ $p->isDibatalkan() ? 'opacity-60' : '' }}"
@@ -251,9 +249,8 @@
         <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
             <x-pagination :paginator="$peminjaman">{{ $peminjaman->total() }} total pengajuan</x-pagination>
         </div>
-        </div>{{-- /#hasil-peminjaman (region yang di-refresh live-search) --}}
+        </div>
 
-        {{-- Modal detail pengajuan, dipakai kartu mobile --}}
         <div id="modalPeminjamanDetail"
             class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
             <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
@@ -267,7 +264,6 @@
             </div>
         </div>
 
-        {{-- Modal konfirmasi batalkan pengajuan - satu instance dipakai bareng oleh semua baris/kartu --}}
         <x-modal-konfirmasi id="modalBatalkanPengajuan" title="Batalkan Pengajuan" icon="bx-error" icon-class="text-danger-text">
             <div class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
                 <div class="text-[13px] font-semibold text-[#c0392b]">
@@ -294,7 +290,6 @@
 
 @push('scripts')
     <script>
-        // Modal konfirmasi batalkan pengajuan (komponen global modal-konfirmasi) - satu instance dipakai bareng oleh baris tabel & kartu mobile
         function bukaBatalkanPengajuan(url) {
             var detailModal = document.getElementById('modalPeminjamanDetail');
             if (detailModal) detailModal.classList.remove('open');
@@ -304,7 +299,6 @@
             bukaModalKonfirmasi('modalBatalkanPengajuan');
         }
 
-        // Modal detail pengajuan untuk kartu mobile - isinya sama dengan dropdown detail di tabel desktop.
         function escapeHtml(str) {
             var div = document.createElement('div');
             div.textContent = str == null ? '' : String(str);

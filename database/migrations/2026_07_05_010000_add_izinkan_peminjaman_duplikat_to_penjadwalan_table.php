@@ -6,11 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Toggle per-jadwal: kalau true, operator tetap boleh mengajukan peminjaman untuk
-     * peralatan yang sudah diajukan operator lain di jadwal yang sama (lewat konfirmasi
-     * di form), bukan diblokir keras. Default false (strict - cegah duplikasi).
-     */
+
     public function up(): void
     {
         Schema::table('penjadwalan', function (Blueprint $table) {

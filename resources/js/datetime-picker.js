@@ -13,8 +13,6 @@
 
     function pad(n) { return (n < 10 ? '0' : '') + n; }
 
-    // Jam:menit saat ini di zona Asia/Jakarta (dipakai posisi scroll awal panel Waktu Mulai/Selesai
-    // saat field masih kosong, bukan terikat timezone perangkat/browser user).
     function jamMenitSekarang() {
         var bagian = new Intl.DateTimeFormat('en-GB', {
             timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false
@@ -54,8 +52,6 @@
         input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    // Buka panel + flip ke atas kalau ruang viewport di bawah trigger tidak cukup
-    // (logika sama dengan searchable-select.js).
     function openPanel(trigger, panel) {
         closeAllPanels(panel);
         panel.classList.add('open');
@@ -65,9 +61,7 @@
         if (ruangBawah < panel.offsetHeight + 12 && rect.top > ruangBawah) {
             panel.classList.add('drop-up');
         }
-        // Kalau dua arah sama-sama sempit (mis. trigger di toolbar paling atas halaman
-        // yang kontennya pendek), gulir container scroll seminimal mungkin supaya
-        // panel yang terlanjur terpotong tepi layar jadi terlihat utuh.
+
         panel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
 
@@ -78,8 +72,6 @@
         input.parentNode.insertBefore(wrapper, input);
         wrapper.appendChild(input);
 
-        // Trigger meniru seluruh class input aslinya (tinggi, lebar, border error,
-        // dark mode) supaya tampilannya identik dengan field lain di form yang sama.
         var trigger = document.createElement('button');
         trigger.type = 'button';
         trigger.className = input.className + ' flex items-center justify-between gap-2 cursor-pointer text-left';
@@ -91,15 +83,12 @@
         trigger.appendChild(icon);
         wrapper.appendChild(trigger);
 
-        // Sembunyikan input asli TANPA display:none - tetap tervalidasi browser
-        // (required) dan bubble errornya muncul menempel di posisi field ini.
         input.className = 'dtp-native absolute left-0 bottom-0 w-full h-px opacity-0 pointer-events-none';
         input.tabIndex = -1;
 
         return { wrapper: wrapper, trigger: trigger, label: label };
     }
 
-    // ── DATE: panel kalender bulanan ──────────────────────────────────────────
     function enhanceDate(input) {
         if (input.dataset.dtp) return;
         input.dataset.dtp = '1';
@@ -111,8 +100,6 @@
 
         var viewDate = parseTanggal(input.value) || new Date();
 
-        // Abu-abu cuma dipakai untuk field wajib yang belum diisi (mis. Tanggal jadwal) -
-        // filter tanggal opsional (mis. Laporan) tampil warna teks biasa, sama seperti select.
         function syncLabel() {
             var teks = formatTanggal(input.value);
             ui.label.textContent = teks || 'Pilih tanggal';
@@ -154,7 +141,6 @@
                 grid.appendChild(el);
             });
 
-            // Grid dimulai dari hari Minggu pada minggu berisi tanggal 1.
             var awal = new Date(y, m, 1 - new Date(y, m, 1).getDay());
             for (var i = 0; i < 42; i++) {
                 (function (tgl) {
@@ -207,7 +193,6 @@
         syncLabel();
     }
 
-    // ── TIME: panel dua kolom (jam + menit) ───────────────────────────────────
     function enhanceTime(input) {
         if (input.dataset.dtp) return;
         input.dataset.dtp = '1';
@@ -217,8 +202,6 @@
         panel.className = PANEL_CLASSES + ' w-[184px]';
         ui.wrapper.appendChild(panel);
 
-        // Jam yang baru diklik tapi menitnya belum dipilih - sengaja BELUM ditulis ke input
-        // asli (supaya tidak auto ke-set menit 00), disimpan sementara di sini dulu.
         var jamSementara = null;
 
         function nilai() {
@@ -226,8 +209,6 @@
             return m ? { jam: +m[1], menit: +m[2] } : null;
         }
 
-        // Abu-abu cuma dipakai untuk field wajib yang belum diisi (mis. Waktu Mulai jadwal) -
-        // filter waktu opsional tampil warna teks biasa, sama seperti select.
         function syncLabel() {
             var v = nilai();
             ui.label.textContent = v ? pad(v.jam) + ':' + pad(v.menit) : 'Pilih jam';
@@ -237,14 +218,12 @@
         function render() {
             panel.innerHTML = '';
             var v = nilai();
-            // Field masih kosong - posisi scroll awal ikut jam:menit sekarang (Asia/Jakarta),
-            // supaya user tidak perlu scroll jauh dari atas untuk cari waktu yang relevan.
+
             var sekarang = v ? null : jamMenitSekarang();
 
             var kolomWrap = document.createElement('div');
             kolomWrap.className = 'flex gap-1.5';
 
-            // Kolom Jam - cuma 06-20 yang ditampilkan (jam rapat di luar itu tidak relevan untuk jam kantor).
             var jamBox = document.createElement('div');
             jamBox.className = 'flex-1 min-w-0';
             var jamJudul = document.createElement('div');
@@ -256,8 +235,6 @@
             var jamScrollTarget = sekarang ? Math.max(6, Math.min(20, sekarang.jam)) : null;
             var jamTombol = [];
 
-            // Update tampilan kolom Jam saja di tempat (tanpa bongkar-pasang DOM/render ulang
-            // kolom Menit) - mencegah kedip & scroll kolom Menit ikut ter-reset tiap klik jam.
             function updateJamHighlight(scroll) {
                 var vNow = nilai();
                 jamTombol.forEach(function (t) {
@@ -266,7 +243,7 @@
                         ACTIVE_CLASSES.forEach(function (c) { t.btn.classList.add(c); });
                         if (scroll) jamList.scrollTop = t.btn.offsetTop - jamList.clientHeight / 2 + 16;
                     } else if (jamScrollTarget === t.angka) {
-                        // Penanda jam sekarang - cuma cincin biru (bukan terpilih), meniru gaya "Hari Ini" di kalender.
+
                         t.btn.classList.add('ring-1', 'ring-primary', 'text-primary');
                         if (scroll) jamList.scrollTop = t.btn.offsetTop - jamList.clientHeight / 2 + 16;
                     }
@@ -282,12 +259,11 @@
                     btn.addEventListener('click', function () {
                         var cur = nilai();
                         if (cur) {
-                            // Sudah ada nilai lengkap sebelumnya - langsung ganti jamnya, menit tetap seperti semula.
+
                             setValue(input, pad(angka) + ':' + pad(cur.menit));
                             jamSementara = null;
                         } else {
-                            // Field masih kosong - jam dipilih dulu, BELUM ditulis ke input asli,
-                            // tunggu menit dipilih supaya tidak auto ke-set menit 00.
+
                             jamSementara = angka;
                         }
                         updateJamHighlight(false);
@@ -301,7 +277,6 @@
             jamBox.appendChild(jamList);
             kolomWrap.appendChild(jamBox);
 
-            // Kolom Menit - daftar penuh 00-59 (bukan kelipatan 5).
             var menitBox = document.createElement('div');
             menitBox.className = 'flex-1 min-w-0';
             var menitJudul = document.createElement('div');
@@ -321,13 +296,12 @@
                         ACTIVE_CLASSES.forEach(function (c) { btn.classList.add(c); });
                         setTimeout(function () { menitList.scrollTop = btn.offsetTop - menitList.clientHeight / 2 + 16; });
                     } else if (sekarang && sekarang.menit === angka) {
-                        // Penanda menit sekarang - cuma cincin biru (bukan terpilih), meniru gaya "Hari Ini" di kalender.
+
                         btn.classList.add('ring-1', 'ring-primary', 'text-primary');
                         setTimeout(function () { menitList.scrollTop = btn.offsetTop - menitList.clientHeight / 2 + 16; });
                     }
                     btn.addEventListener('click', function () {
-                        // Menit cuma diterapkan kalau jam sudah dipilih (baik dari input tersimpan
-                        // maupun yang baru diklik di kolom Jam) - kalau belum, klik ini diabaikan.
+
                         var v2 = nilai();
                         var jamUntukDipakai = v2 ? v2.jam : jamSementara;
                         if (jamUntukDipakai === null) return;
@@ -346,7 +320,7 @@
 
         ui.trigger.addEventListener('click', function () {
             if (panel.classList.contains('open')) { panel.classList.remove('open'); return; }
-            jamSementara = null; // mulai sesi baru bersih, jangan bawa pilihan jam yang belum tuntas dari sesi sebelumnya
+            jamSementara = null;
             render();
             openPanel(ui.trigger, panel);
         });

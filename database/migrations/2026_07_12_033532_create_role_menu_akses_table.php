@@ -3,10 +3,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Satu baris = hak akses satu role terhadap satu menu (gabungan konsep matrix C/R/U/D
- * di Gambar 1 dan checklist menu di Gambar 2 - satu sumber data untuk keduanya).
- */
 return new class extends Migration
 {
     public function up(): void

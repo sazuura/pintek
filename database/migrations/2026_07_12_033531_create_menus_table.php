@@ -3,11 +3,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Registry menu/halaman aplikasi - dipakai bareng oleh sidebar dinamis dan modal
- * "Hak Akses Halaman". Mendukung menu bertingkat lewat id_parent meskipun struktur
- * menu Pintek saat ini masih 1 tingkat (lihat docs/plans/planning-role-akses-dinamis.md §3).
- */
 return new class extends Migration
 {
     public function up(): void

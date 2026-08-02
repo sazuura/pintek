@@ -2,19 +2,19 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OtpLupaPasswordMail;
 use App\Models\User;
-use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 
 class PasswordResetController extends Controller
 {
     private const OTP_TTL_MINUTES = 10;
-
-    public function __construct(private WhatsAppService $wa) {}
+    private const RESEND_COOLDOWN_SECONDS = 60;
 
     public function sendOtp(Request $request)
     {
@@ -27,16 +27,20 @@ class PasswordResetController extends Controller
             return response()->json(['message' => "Terlalu banyak percobaan. Coba lagi dalam {$detik} detik."], 429);
         }
 
+        $cooldownKey = 'forgot-password-cooldown:' . $email;
+        if (RateLimiter::tooManyAttempts($cooldownKey, 1)) {
+            $detik = RateLimiter::availableIn($cooldownKey);
+            return response()->json(['message' => "Mohon tunggu {$detik} detik sebelum meminta kode baru."], 429);
+        }
+
         $user = User::where('email', $email)->first();
         if (!$user) {
             RateLimiter::hit($throttleKey, 900);
             return response()->json(['message' => 'Email tidak terdaftar.'], 422);
         }
-        if (!$user->nohp) {
-            return response()->json(['message' => 'Akun ini tidak memiliki nomor WhatsApp terdaftar. Hubungi admin.'], 422);
-        }
 
         RateLimiter::hit($throttleKey, 900);
+        RateLimiter::hit($cooldownKey, self::RESEND_COOLDOWN_SECONDS);
 
         $kode = (string) random_int(100000, 999999);
 
@@ -45,13 +49,9 @@ class PasswordResetController extends Controller
             ['token' => Hash::make($kode), 'created_at' => now()]
         );
 
-        $terkirim = $this->wa->kirim($user->nomor_wa, $this->wa->templateOtpLupaPassword($user->nama_user, $kode));
+        Mail::to($user->email)->send(new OtpLupaPasswordMail($user->nama_user, $kode));
 
-        if (!$terkirim) {
-            return response()->json(['message' => 'Gagal mengirim kode verifikasi. Coba lagi nanti.'], 500);
-        }
-
-        return response()->json(['message' => 'Kode verifikasi sudah dikirim ke WhatsApp terdaftar.']);
+        return response()->json(['message' => 'Kode verifikasi sudah dikirim ke email terdaftar.']);
     }
 
     public function verifyOtp(Request $request)
@@ -91,9 +91,6 @@ class PasswordResetController extends Controller
         return response()->json(['message' => 'Kata sandi berhasil diperbarui. Silakan login dengan kata sandi baru.']);
     }
 
-    /**
-     * Cek kode OTP untuk email tertentu. Null kalau valid, atau pesan error kalau tidak.
-     */
     private function cekOtp(string $email, string $otp): ?string
     {
         $throttleKey = 'forgot-password-verify:' . $email;

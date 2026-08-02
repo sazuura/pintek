@@ -6,13 +6,6 @@ use App\Models\Role;
 use App\Models\RoleMenuAkses;
 use Illuminate\Database\Seeder;
 
-/**
- * Seed data awal untuk sistem role akses dinamis. Baris role_menu_akses di sini
- * SENGAJA dibuat untuk mereplikasi PERSIS kondisi akses yang sudah berjalan sekarang
- * (hasil audit routes/web.php + middleware role:X yang ada) - supaya begitu sistem
- * baru ini mulai dipakai (Fase 3+), tidak ada perubahan perilaku akses untuk role
- * admin/operator/inventaris yang sudah ada. Lihat docs/plans/planning-role-akses-dinamis.md.
- */
 class RoleAksesSeeder extends Seeder
 {
     public function run(): void
@@ -45,18 +38,13 @@ class RoleAksesSeeder extends Seeder
             $menus[$m['slug']] = Menu::updateOrCreate(['slug' => $m['slug']], $m);
         }
 
-        // [role][menu] => [lihat, tambah, ubah, hapus] - hasil audit akses yang sudah
-        // berjalan sekarang per role (lihat §3 planning doc untuk penjelasan tiap baris).
         $matrix = [
             'admin' => [
                 'dashboard'  => [true, false, false, false],
                 'jadwal'     => [true, true,  true,  true],
                 'users'      => [true, true,  true,  true],
                 'peralatan'  => [true, true,  true,  true],
-                // Admin cuma bisa ajukan/ubah/batalkan (bukan approve/reject - itu tetap
-                // wewenang Inventaris), sama seperti operator. "Kaitkan ke Jadwal" otomatis
-                // selalu kosong untuk admin (lihat catatan di routes/web.php), jadi
-                // peminjamannya pasti di luar rapat.
+
                 'peminjaman' => [true, true,  true,  false],
                 'laporan'    => [true, false, false, false],
                 'pengaturan' => [true, true,  true,  true],

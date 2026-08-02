@@ -18,7 +18,6 @@
             @endif
         </div>
 
-        {{-- Toolbar filter tampil untuk semua role - operator (baca saja) juga bisa search/filter jadwal miliknya --}}
         <div
             class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-xs:flex-col max-xs:items-stretch">
             <form method="GET" action="{{ route($roleAktif . '.jadwal.index') }}" class="contents">
@@ -176,7 +175,6 @@
                                     @endif
                                 </tr>
 
-                                {{-- Accordion detail --}}
                                 <tr class="accordion-detail bg-page-bg dark:bg-page-bg-dark [&:not(.open)]:hidden [&.open]:table-row"
                                     id="{{ $uid }}">
                                     <td colspan="{{ $kolomTotal }}" class="!p-0">
@@ -297,7 +295,6 @@
                 <x-pagination :paginator="$jadwal" label="jadwal" />
             </div>
 
-            {{-- Kartu jadwal - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
             <div class="hidden max-xs:flex flex-col gap-3 mb-4">
                 @forelse($jadwal as $j)
                     @php
@@ -399,7 +396,6 @@
             </div>
         </div>
 
-        {{-- Modal detail jadwal, dipakai kartu mobile --}}
         <div id="modalJadwalDetail"
             class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
             <div
@@ -418,7 +414,7 @@
         </div>
 
         @if($bisaUbah)
-            {{-- Modal konfirmasi batalkan jadwal - satu instance dipakai bareng oleh semua baris/kartu --}}
+
             <x-modal-konfirmasi id="modalBatalkanJadwal" title="Batalkan Jadwal" icon="bx-error" icon-class="text-danger-text">
                 <div class="bg-danger dark:bg-danger-dark rounded-[10px] py-3.5 px-4">
                     <div class="text-[13px] font-semibold text-[#c0392b]">
@@ -447,7 +443,6 @@
 @push('scripts')
     <script>
         @if($bisaUbah)
-            // Modal konfirmasi batalkan jadwal (komponen global modal-konfirmasi) dan card versi mobile
             function bukaBatalkanJadwal(url) {
                 document.getElementById('formBatalkanJadwal').action = url;
                 document.getElementById('inputAlasanBatalJadwal').value = '';
@@ -455,7 +450,6 @@
             }
         @endif
 
-            // Modal detail jadwal untuk kartu mobile - isinya sama dengan dropdown detail di tabel desktop.
             function escapeHtml(str) {
                 var div = document.createElement('div');
                 div.textContent = str == null ? '' : String(str);

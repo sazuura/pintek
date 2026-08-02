@@ -1,10 +1,5 @@
-/* Font Poppins dimuat lewat <link> di <head> masing-masing layout (bukan @import di sini) -
-   @import di dalam CSS memblokir render karena browser harus fetch CSS ini dulu, baca
-   @import-nya, baru mulai fetch font-nya secara berurutan (bukan paralel). */
 @import "tailwindcss";
 
-/* Dark mode di-toggle lewat class .dark di <body>
- */
 @custom-variant dark (&:where(.dark, .dark *));
 
 
@@ -18,15 +13,12 @@
 }
 
 @theme {
-    /*  Font  */
     --font-sans: 'Poppins', sans-serif;
 
-    /* responsive */
     --breakpoint-xs: 480px;
     --breakpoint-tablet: 900px;
     --breakpoint-wide: 1100px;
 
-    /* warna Primary "Digital Blue" */
     --color-primary-50: #E5F0FF;
     --color-primary-100: #CCE0FF;
     --color-primary-200: #99C2FF;
@@ -40,20 +32,14 @@
     --color-primary-950: #000E24;
     --color-primary: var(--color-primary-500);
 
-    /* ── Background & teks (light mode default) */
     --color-surface: #F9F9F9;
     --color-surface-dark: #0C0C1E;
     --color-page-bg: #eee;
     --color-page-bg-dark: #060714;
     --color-text: #342E37;
     --color-text-dark: #FBFBFB;
-    /* #AAAAAA cuma ~2.2:1 kontras di atas surface/page-bg terang - gagal WCAG AA (butuh 4.5:1).
-       #646464 lolos ~5.1-5.6:1 di kedua background terang. Di dark mode nilai asli #AAAAAA
-       sudah aman (kontras tinggi di atas background gelap), jadi dikembalikan lewat override
-       .dark di bawah. */
     --color-text-muted: #646464;
 
-    /* Status  global */
     --color-success: #e6f9f0;
     --color-success-dark: #0d3326;
     --color-success-text: #1abc9c;
@@ -75,7 +61,6 @@
     --color-inactive-text: #888;
     --color-inactive-text-dark: #666;
 
-    /* Variabel lain dari sidebar logout, notifikasi dot, ikon widget box-info dashboard. */
     --color-red: #DB504A;
     --color-yellow: #FFCE26;
     --color-yellow-light: #FFF2C6;
@@ -83,10 +68,8 @@
     --color-orange-light: #FFE0D3;
     --color-orange-bg: #FFF0E5;
 
-    /* Shadow kartu di .form-card, .stat-card, dsb. */
     --shadow-card: 0 2px 8px rgba(0, 0, 0, .06);
 
-    /* Animasi masuk untuk flash toast (components/flash.blade.php) */
     --animate-flash-in: flash-in .25s ease;
 }
 
@@ -95,13 +78,10 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* text-muted di-set lebih gelap di @theme demi kontras WCAG AA di light mode - di dark mode
-   nilai asli yang lebih terang sudah cukup kontras di atas background gelap, jadi dikembalikan. */
 :where(.dark, .dark *) {
     --color-text-muted: #AAAAAA;
 }
 
-/* Scrollbar custom tipis, dipakai di daftar yang overflow-y-auto (mis. dropdown searchable-select) */
 .custom-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, .18) transparent;
@@ -130,14 +110,10 @@
     background-color: rgba(255, 255, 255, .3);
 }
 
-/* Skeleton loading saat halaman pertama kali dibuka - kelas skel-loading ditaruh di <html>
-   oleh script anti-flash (lihat layouts/app.blade.php) sebelum body dirender, supaya
-   komponen aslinya tersembunyi tanpa sempat kelihatan sekilas sebelum skeleton tampil. */
 html.skel-loading [data-skel] {
     display: none;
 }
 
-/* Ikon kalender/ defaultnya gelap  */
 .dark input[type="date"]::-webkit-calendar-picker-indicator,
 .dark input[type="time"]::-webkit-calendar-picker-indicator {
     filter: invert(1) brightness(1.5);

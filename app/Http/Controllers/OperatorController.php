@@ -21,8 +21,6 @@ class OperatorController extends Controller
         $jadwalQuery     = Penjadwalan::whereHas('operators', fn($q) => $q->where('users.id_user', $userId));
         $peminjamanQuery = Peminjaman::where('id_user', $userId);
 
-        // Jadwal & pengajuan dibatasi ke bulan yang lagi dilihat di kalender - jadi kalau
-        // kalender dipindah ke bulan lain, kartu statistik & chart ikut menyesuaikan.
         $stats = [
             'jumlahJadwal'   => (clone $jadwalQuery)->where('status', '!=', 'dibatalkan')
                 ->whereDate('tanggal', '>=', $today)
@@ -33,7 +31,6 @@ class OperatorController extends Controller
             'ditolakCount'   => (clone $peminjamanQuery)->where('status', 'ditolak')->whereBetween('tanggal_pinjam', [$awalBulan, $akhirBulan])->count(),
         ];
 
-        // Semua peminjaman yang sedang dipakai (sudah disetujui, belum ditandai dikembalikan oleh inventaris) 
         $perluDikembalikan = (clone $peminjamanQuery)
             ->where('status', 'disetujui')
             ->with('items.peralatan')
@@ -41,8 +38,6 @@ class OperatorController extends Controller
             ->paginate(4, ['*'], 'kembali_page')
             ->withQueryString();
 
-        // Alat yang paling sering dipinjam operator ini sendiri di bulan yang lagi dilihat
-        // (hanya peminjaman yang benar-benar terjadi: disetujui/dikembalikan).
         $topPeralatan = \App\Models\PeminjamanItem::query()
             ->join('peminjaman', 'peminjaman_item.id_peminjaman', '=', 'peminjaman.id_peminjaman')
             ->join('peralatan', 'peminjaman_item.id_peralatan', '=', 'peralatan.id_peralatan')
@@ -55,18 +50,12 @@ class OperatorController extends Controller
             ->limit(6)
             ->get();
 
-        // Aktivitas Terbaru sengaja TETAP selalu "14 hari terakhir dari hari ini" terlepas
-        // dari bulan yang dipilih di kalender.
         $activities = $this->recentActivities($userId);
         $kalender   = $this->jadwalKalender($request->query('bulan'), $userId);
 
         return view('dashboard.beranda.operator', array_merge($stats, compact('perluDikembalikan', 'topPeralatan', 'activities', 'kalender')));
     }
 
-    /**
-     * 6 aktivitas terbaru (14 hari terakhir) milik operator ini: jadwal baru yang ditugaskan
-     * ke dia & pengajuan peminjamannya sendiri (baik yang baru diajukan maupun yang sudah diproses admin).
-     */
     private function recentActivities(string $userId)
     {
         $sejak = now()->subDays(14);
@@ -106,10 +95,6 @@ class OperatorController extends Controller
         return $jadwal->concat($peminjaman)->sortByDesc('time')->take(6)->values();
     }
 
-    /**
-     * Kalender bulanan (Min–Sab) khusus jadwal yang ditugaskan ke operator ini, dengan navigasi
-     * bulan serta daftar jadwal per tanggal (dipakai saat tanggal diklik di frontend).
-     */
     private function jadwalKalender(?string $bulan, string $userId): array
     {
         $bulanAktif = $bulan

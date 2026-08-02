@@ -14,12 +14,12 @@ class PenjadwalanController extends Controller
 
     public function index(Request $request)
     {
-        // Operator cuma lihat jadwal yang ditugaskan ke dirinya; role lain lihat semua.
+
         $jadwal = Penjadwalan::with(['operators', 'peralatanReferensi'])
             ->when(auth()->user()->role === 'operator', fn($q) =>
                 $q->whereHas('operators', fn($qq) => $qq->where('users.id_user', auth()->user()->id_user))
             )
-            // where() dibungkus closure supaya orWhere tidak bocor ke scope operator di atas.
+
             ->when($request->search, fn($q, $s) =>
                 $q->where(fn($qq) => $qq->where('judul_kegiatan', 'like', "%{$s}%")
                                         ->orWhere('platform', 'like', "%{$s}%"))
@@ -27,14 +27,14 @@ class PenjadwalanController extends Controller
             ->when($request->platform, fn($q, $p) =>
                 $q->where('platform', 'like', "%{$p}%")
             )
-            // Status Aktif/Selesai diturunkan dari tanggal+waktu, bukan kolom status literal.
+
             ->when($request->status, fn($q, $s) => match ($s) {
                 'aktif'      => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) >= NOW()'),
                 'selesai'    => $q->where('status', '!=', 'dibatalkan')->whereRaw('TIMESTAMP(tanggal, waktu_selesai) < NOW()'),
                 'dibatalkan' => $q->where('status', 'dibatalkan'),
                 default      => $q,
             })
-            // Aktif tampil dulu (tanggal terdekat); Selesai+Dibatalkan digabung satu riwayat di bawah (paling baru dulu).
+
             ->orderByRaw("(status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()) ASC")
             ->orderByRaw("CASE WHEN status = 'dibatalkan' OR TIMESTAMP(tanggal, waktu_selesai) < NOW()
                           THEN -DATEDIFF(tanggal, CURDATE()) ELSE DATEDIFF(tanggal, CURDATE()) END ASC")
@@ -76,7 +76,7 @@ class PenjadwalanController extends Controller
                 ->with('warning', "Jadwal berhasil disimpan. {$peringatan}");
         }
         return redirect()->route(auth()->user()->role . '.jadwal.index')
-            ->with('success', 'Jadwal berhasil ditambahkan dan notifikasi WA telah dikirim.');
+            ->with('success', 'Jadwal berhasil ditambahkan dan notifikasi email telah dikirim.');
     }
 
     public function show(string $id)
@@ -84,7 +84,7 @@ class PenjadwalanController extends Controller
         $jadwal = Penjadwalan::with([
             'operators',
             'peralatanReferensi',
-            // Urut dari yang paling lama diajukan supaya riwayat kebaca runtut.
+
             'peminjaman' => fn ($q) => $q->with(['user', 'items'])->orderBy('created_at'),
         ])->findOrFail($id);
         return view('dashboard.jadwal.show', compact('jadwal'));
@@ -140,15 +140,10 @@ class PenjadwalanController extends Controller
 
     private function peralatanUntukReferensi()
     {
-        // stok/rusak diambil supaya accessor stok_tersedia bisa dipakai di view.
+
         return Peralatan::orderBy('nama_peralatan')->get(['id_peralatan', 'nama_peralatan', 'gedung', 'stok', 'rusak']);
     }
 
-    /**
-     * Jadwal Zoom-otomatis existing, dikelompokkan per akun - dipakai JS di form
-     * create/edit untuk disable opsi "Akun 1"/"Akun 2" di dropdown pilihan akun
-     * kalau akun itu sudah bentrok jadwal di tanggal+jam yang sedang diisi.
-     */
     private function zoomJadwalPerAkun(?string $excludeId = null)
     {
         return Penjadwalan::where('link_otomatis', true)
@@ -195,7 +190,6 @@ class PenjadwalanController extends Controller
             'peralatan_jumlah.*' => 'nullable|integer|min:1',
         ]);
 
-        // Rule per-field tidak menangkap jam yang sudah lewat untuk rapat hari ini.
         $selesaiPada = Carbon::parse($validated['tanggal'] . ' ' . $validated['waktu_selesai']);
         if ($selesaiPada->isPast()) {
             throw ValidationException::withMessages([
@@ -246,6 +240,6 @@ class PenjadwalanController extends Controller
             return back()->with('error', $e->getMessage());
         }
         return redirect()->route(auth()->user()->role . '.jadwal.index')
-            ->with('success', 'Jadwal berhasil dibatalkan dan notifikasi WA telah dikirim ke operator.');
+            ->with('success', 'Jadwal berhasil dibatalkan dan notifikasi email telah dikirim ke operator.');
     }
 }

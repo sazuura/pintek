@@ -18,15 +18,11 @@ class InventarisController extends Controller
         $totalRusak     = Peralatan::sum('rusak');
 
         $peralatanKritis = Peralatan::whereRaw('(stok - COALESCE(rusak,0)) BETWEEN 1 AND 2')
-            ->orderBy('gedung') // Tetap diurutkan berdasarkan gedung asal peralatan
+            ->orderBy('gedung')
             ->orderByRaw('(stok - COALESCE(rusak,0)) ASC')
             ->take(4)
             ->get();
 
-        // Dashboard cuma jadi shortcut, bukan daftar lengkap - diambil yang tanggal
-        // pinjamnya PALING DEKAT (paling mendesak diputuskan), dibatasi maksimal 4
-        // biar tidak kepanjangan. Daftar lengkapnya tetap ada di halaman Peminjaman
-        // Peralatan (link "Kelola Semua").
         $peminjamanMenunggu = Peminjaman::with(['user', 'items.peralatan'])
             ->where('status', 'diajukan')
             ->whereDate('tanggal_pinjam', '>=', $today)
@@ -61,11 +57,6 @@ class InventarisController extends Controller
         return view('dashboard.laporan.inventaris-index', compact('stok', 'terpasang', 'peminjaman', 'gedungList'));
     }
 
-    /**
-     * PDF laporan dirender sebagai halaman HTML biasa yang men-generate PDF asli
-     * lewat jsPDF+AutoTable di sisi browser - pola yang sama dengan laporan admin
-     * (resources/views/layouts/print.blade.php).
-     */
     public function laporanExportPdf(Request $request)
     {
         $namaFile = $this->buatNamaLaporanPeralatan($request);
@@ -135,8 +126,6 @@ class InventarisController extends Controller
         })->toArray();
     }
 
-    // Satu baris per alat (bukan digabung satu sel per pengajuan) supaya kode, lokasi,
-    // dan jumlah masing-masing punya kolom sendiri - sama seperti tampilan HTML-nya.
     private function barisPdfPeminjaman($peminjaman): array
     {
         $baris = [];
@@ -195,8 +184,7 @@ class InventarisController extends Controller
 
     private function queryStokLaporan(Request $request)
     {
-        // Ambang batas status disamakan persis dengan Peralatan::getStatusLabelAttribute() dan
-        // filter status di PeralatanController (>2 Tersedia, 1-2 Hampir Habis, <=0 Tidak Tersedia).
+
         $stokTersediaRaw = '(stok - COALESCE(rusak,0))';
 
         return Peralatan::query()
@@ -232,11 +220,6 @@ class InventarisController extends Controller
             ->orderBy('nama_alat');
     }
 
-    /**
-     * Riwayat peminjaman dikelompokkan per peminjaman (bukan per item), sama
-     * seperti laporan "Peralatan Digunakan" di admin - daftar alatnya ditampilkan
-     * lewat baris detail (accordion) di tampilan live / kolom "Peralatan" di PDF & Excel.
-     */
     private function queryPeminjamanLaporan(Request $request)
     {
         return Peminjaman::with(['user', 'penjadwalan', 'items.peralatan'])

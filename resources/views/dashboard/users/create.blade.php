@@ -24,7 +24,7 @@
                     <x-input name="nama_user" label="Nama Lengkap" required placeholder="cth: Budi Santoso" autocomplete="name" />
 
                     <x-input name="nohp" label="No. HP" required placeholder="08xxxxxxxxxx"
-                        hint="Dipakai untuk notifikasi WhatsApp" autocomplete="tel" inputmode="numeric"
+                        hint="Dipakai untuk tombol chat WhatsApp cepat di halaman Users" autocomplete="tel" inputmode="numeric"
                         oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
 
                     <x-input type="email" name="email" label="Email" required placeholder="nama@diskominfotik.go.id" autocomplete="email" />
@@ -38,9 +38,6 @@
                         <x-input type="textarea" name="alamat" label="Alamat" required placeholder="Alamat lengkap" autocomplete="street-address" />
                     </div>
 
-                    {{-- autocomplete="new-password" (bukan cuma type="password") wajib supaya Chrome
-                         tidak mengira ini form login dan menawarkan saran kredensial tersimpan di
-                         field lain (itu penyebab "Nama Lengkap" malah menyarankan alamat email). --}}
                     <x-input name="password" label="Password" type="password" toggleable required
                         placeholder="Min. 6 karakter" autocomplete="new-password" />
 

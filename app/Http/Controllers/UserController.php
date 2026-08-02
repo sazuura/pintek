@@ -20,8 +20,7 @@ class UserController extends Controller
             ->orderBy('nama_user')
             ->paginate(10)
             ->withQueryString();
-        // Semua role (termasuk yang nonaktif) supaya filter tetap bisa dipakai untuk
-        // mencari user yang role-nya sudah dinonaktifkan setelahnya.
+
         $roles = Role::orderBy('nama_role')->get();
         return view('dashboard.users.index', compact('users', 'roles'));
     }
@@ -61,9 +60,7 @@ class UserController extends Controller
     {
         abort_if(!auth()->user()->punyaAkses('users', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah user.');
         $user = User::findOrFail($id);
-        // Role aktif + role user ini sendiri (kalau-kalau role-nya sudah dinonaktifkan
-        // setelah user ini di-assign) supaya pilihan yang sedang dipakai tidak hilang
-        // dari dropdown begitu saja.
+
         $roles = Role::where('status', 'aktif')->orWhere('slug', $user->role)->orderBy('nama_role')->get();
         return view('dashboard.users.edit', ['user' => $user, 'roles' => $roles]);
     }

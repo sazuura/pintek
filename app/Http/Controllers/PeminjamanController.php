@@ -15,8 +15,7 @@ class PeminjamanController extends Controller
     {
         $peminjaman = Peminjaman::with(['items.peralatan', 'penjadwalan'])
             ->where('id_user', auth()->user()->id_user)
-            // Search mencakup keperluan DAN nama alat di dalam pengajuan - dibungkus
-            // where() supaya orWhereHas tidak bocor keluar dari filter kepemilikan.
+
             ->when($request->search, fn($q, $s) =>
                 $q->where(fn($qq) => $qq->where('keperluan', 'like', "%{$s}%")
                     ->orWhereHas('items.peralatan', fn($qa) => $qa->where('nama_peralatan', 'like', "%{$s}%")))
@@ -24,20 +23,11 @@ class PeminjamanController extends Controller
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
             ->when($request->start, fn($q, $v) => $q->whereDate('tanggal_pinjam', '>=', $v))
             ->when($request->end,   fn($q, $v) => $q->whereDate('tanggal_pinjam', '<=', $v))
-            // Menunggu & Disetujui paling atas (masih perlu dipantau aktif). Di dalam tier itu,
-            // yang rencana kembalinya masih akan datang (belum lewat hari ini) didahulukan
-            // seluruhnya di atas yang sudah lewat/overdue - baru di dalam masing-masing
-            // kelompok itu diurutkan yang paling dekat ke hari ini. Tanpa pemisah "akan
-            // datang vs lewat" ini, tanggal yang sudah lama overdue bisa numpuk di atas
-            // tanggal yang justru masih akan datang cuma karena kebetulan jarak harinya sama.
-            // Dikembalikan/Ditolak/Dibatalkan sama-sama sudah selesai/tidak aktif lagi - dicampur
-            // satu tumpukan di bawah, tidak perlu dipisah per status.
+
             ->orderByRaw("CASE WHEN status IN ('diajukan', 'menunggu', 'disetujui') THEN 0 ELSE 1 END ASC")
             ->orderByRaw('CASE WHEN tanggal_kembali_rencana < CURDATE() THEN 1 ELSE 0 END ASC')
             ->orderByRaw('ABS(DATEDIFF(tanggal_kembali_rencana, CURDATE())) ASC')
-            // Kalau tanggalnya kebetulan sama-sama dekat (seri di atas), Menunggu tetap
-            // sedikit diprioritaskan di atas Disetujui - tapi ini cuma pemecah seri, bukan
-            // pemisah blok kaku, jadi Menunggu & Disetujui tetap tercampur berdasarkan tanggal.
+
             ->orderByRaw("CASE WHEN status IN ('diajukan', 'menunggu') THEN 0 ELSE 1 END ASC")
             ->paginate(10)
             ->withQueryString();
@@ -56,11 +46,11 @@ class PeminjamanController extends Controller
         $jadwalAktif          = $this->jadwalAktifOperator();
         return view('dashboard.peminjaman.create', compact('peralatan', 'selectedPeralatanId', 'jadwalAktif'));
     }
-    public function operatorStore(Request $request) 
+    public function operatorStore(Request $request)
     {
         abort_if(!auth()->user()->punyaAkses('peminjaman', 'tambah'), 403, 'Anda tidak memiliki akses untuk mengajukan peminjaman.');
-        $idJadwalAktif = $this->jadwalAktifOperator()->pluck('id_penjadwalan');
-        $request->validate($this->aturanValidasiPengajuan($idJadwalAktif), $this->pesanValidasiPengajuan());
+        $jadwalAktif = $this->jadwalAktifOperator();
+        $request->validate($this->aturanValidasiPengajuan($jadwalAktif), $this->pesanValidasiPengajuan());
 
         try {
             $this->service->ajukan(
@@ -82,9 +72,6 @@ class PeminjamanController extends Controller
             ->with('success', 'Pengajuan berhasil dikirim. Notifikasi telah dikirim ke petugas inventaris.');
     }
 
-    /**
-     * Dipanggil lewat AJAX sesaat sebelum form submit (create & edit) - mengecek apakah operator yang login sudah berkali-kali mengajukan alat yang sama untuk tanggal pinjam yang sama
-     */
     public function operatorCekSpam(Request $request)
     {
         $request->validate([
@@ -101,10 +88,6 @@ class PeminjamanController extends Controller
         ]);
     }
 
-    /**
-     * Alat yang sudah diajukan operator ybs (status diajukan/disetujui/dikembalikan)
-     * sebanyak >= 2 kali untuk tanggal pinjam yang sama
-     */
     private function peringatanSpam(string $tanggalPinjam, array $peralatanIds, ?string $kecualiIdPeminjaman = null): array
     {
         $peralatanIds = array_values(array_unique(array_filter($peralatanIds)));
@@ -162,8 +145,8 @@ class PeminjamanController extends Controller
         $peminjaman = Peminjaman::findOrFail($id);
         abort_if($peminjaman->id_user !== auth()->user()->id_user, 403);
 
-        $idJadwalAktif = $this->jadwalAktifOperator()->pluck('id_penjadwalan');
-        $request->validate($this->aturanValidasiPengajuan($idJadwalAktif), $this->pesanValidasiPengajuan());
+        $jadwalAktif = $this->jadwalAktifOperator();
+        $request->validate($this->aturanValidasiPengajuan($jadwalAktif), $this->pesanValidasiPengajuan());
 
         try {
             $this->service->ubah(
@@ -184,12 +167,23 @@ class PeminjamanController extends Controller
             ->with('success', 'Pengajuan berhasil diperbarui. Notifikasi telah dikirim ke petugas inventaris.');
     }
 
-    private function aturanValidasiPengajuan($idJadwalAktif): array
+    private function aturanValidasiPengajuan($jadwalAktif): array
     {
+        $idJadwalAktif    = $jadwalAktif->pluck('id_penjadwalan');
+        $tanggalPerJadwal = $jadwalAktif->pluck('tanggal', 'id_penjadwalan');
+
         return [
             'id_penjadwalan'          => ['nullable', Rule::in($idJadwalAktif)],
             'tanggal_pinjam'          => 'required|date|after_or_equal:today',
-            'tanggal_kembali_rencana' => 'required|date|after_or_equal:tanggal_pinjam',
+            'tanggal_kembali_rencana' => [
+                'required', 'date', 'after_or_equal:tanggal_pinjam',
+                function ($attribute, $value, $fail) use ($tanggalPerJadwal) {
+                    $tanggalJadwal = $tanggalPerJadwal[request('id_penjadwalan')] ?? null;
+                    if ($tanggalJadwal && \Carbon\Carbon::parse($value)->lt($tanggalJadwal)) {
+                        $fail('Tanggal kembali tidak boleh sebelum tanggal rapat (' . $tanggalJadwal->translatedFormat('l, d F Y') . ').');
+                    }
+                },
+            ],
             'keperluan'               => 'required|string|max:255',
             'peralatan_ids'           => 'required|array|min:1',
             'peralatan_ids.*'         => 'required|exists:peralatan,id_peralatan',
@@ -207,10 +201,6 @@ class PeminjamanController extends Controller
         ];
     }
 
-    /**
-     * Jadwal milik operator yang login, berstatus aktif (belum lewat & belum dibatalkan) -
-     * dipakai sebagai pilihan "kaitkan ke jadwal" saat mengajukan peminjaman.
-     */
     private function jadwalAktifOperator()
     {
         return Penjadwalan::whereHas('operators', fn($q) => $q->where('users.id_user', auth()->user()->id_user))
@@ -222,9 +212,7 @@ class PeminjamanController extends Controller
     }
     public function inventarisIndex(Request $request){
         $peminjaman = Peminjaman::with(['user', 'items.peralatan', 'penjadwalan'])
-            // Search mencakup nama pemohon, keperluan, dan nama alat di dalam
-            // pengajuan - dibungkus where() supaya orWhere tidak bocor keluar
-            // dari filter status/operator yang sedang aktif.
+
             ->when($request->search, fn($q, $s) =>
                 $q->where(fn($qq) => $qq->where('keperluan', 'like', "%{$s}%")
                     ->orWhereHas('user', fn($qu) => $qu->where('nama_user', 'like', "%{$s}%"))
@@ -234,9 +222,7 @@ class PeminjamanController extends Controller
             ->when($request->id_user, fn($q, $v) => $q->where('id_user', $v))
             ->when($request->start, fn($q, $v) => $q->whereDate('tanggal_pinjam', '>=', $v))
             ->when($request->end,   fn($q, $v) => $q->whereDate('tanggal_pinjam', '<=', $v))
-            // Menunggu & Disetujui (masih perlu ditindaklanjuti) dicampur jadi satu grup di
-            // depan, diurutkan rencana kembali paling dekat dulu; Dikembalikan menyusul,
-            // Dibatalkan/Ditolak (sudah selesai/tidak relevan) paling akhir.
+
             ->orderByRaw("CASE status
                 WHEN 'diajukan' THEN 0
                 WHEN 'menunggu' THEN 0
@@ -346,6 +332,6 @@ class PeminjamanController extends Controller
             return back()->with('error', $e->getMessage());
         }
         return redirect()->route(auth()->user()->role . '.peminjaman.index')
-            ->with('success', 'Pengajuan berhasil dibatalkan dan notifikasi WA telah dikirim ke inventaris.');
+            ->with('success', 'Pengajuan berhasil dibatalkan dan notifikasi email telah dikirim ke inventaris.');
     }
 }

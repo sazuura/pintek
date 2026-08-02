@@ -8,11 +8,9 @@
         <div><h1 class="text-4xl font-semibold mb-2.5 text-text dark:text-text-dark">Laporan & Rekap</h1></div>
     </div>
 
-    {{-- Filter - berubah sesuai tab aktif --}}
     <div class="bg-surface dark:bg-surface-dark rounded-[10px] py-3.5 px-4 mb-4 flex items-center gap-2.5 flex-wrap shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-md:flex-col max-md:items-stretch">
         <form method="GET" action="{{ route('admin.laporan.index') }}" id="filter-form" class="contents">
 
-            {{-- Input hidden: simpan tab aktif untuk filter & export --}}
             <input type="hidden" name="tab" id="active-tab-input" value="{{ request('tab', 'panel-jadwal') }}">
 
             <label class="text-[13px] text-text-muted whitespace-nowrap">Dari</label>
@@ -39,7 +37,7 @@
             @endif
 
             <div class="ml-auto flex gap-2 items-center max-md:ml-0 max-md:w-full">
-                {{-- Export - URL menyertakan tab aktif + filter yang sedang berlaku --}}
+
                 <a id="btn-pdf" target="_blank" rel="noopener" href="{{ route('admin.laporan.exportPdf', array_merge(request()->except(['jadwal_page','peralatan_page']), ['tab' => request('tab','panel-jadwal')])) }}"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-danger-text text-white">
                     <i class="bx bxs-file-pdf"></i> PDF
@@ -57,7 +55,6 @@
         $tabBadgeClass = 'shrink-0 text-[11px] font-semibold py-px px-[7px] rounded-full leading-[1.6] bg-page-bg dark:bg-page-bg-dark text-text-muted group-[.active]:bg-primary group-[.active]:text-white';
     @endphp
 
-    {{-- Tab container --}}
     <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden">
         <div class="tab-group flex border-b-2 border-page-bg dark:border-page-bg-dark bg-surface dark:bg-surface-dark px-1 gap-0.5" data-panels="laporan-panels">
             <button class="{{ $tabBtnClass }} {{ request('tab','panel-jadwal') === 'panel-jadwal' ? 'active' : '' }}"
@@ -76,7 +73,6 @@
 
         <div class="p-4" id="laporan-panels" data-skel>
 
-            {{-- Panel 1: Jadwal & Operator --}}
             <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab','panel-jadwal') === 'panel-jadwal' ? 'active' : '' }}"
                  id="panel-jadwal">
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
@@ -108,8 +104,7 @@
                                             {{ $j->operators->pluck('nama_user')->join(', ') ?: '-' }}
                                         </div>
                                     </td>
-                                    {{-- data-sort-value: grup Aktif (0) selalu di atas grup Selesai/Dibatalkan (1),
-                                         di dalam tiap grup diurutkan tanggal terdekat -> terjauh (lihat public/js/content.js). --}}
+
                                     <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-left"
                                         data-sort-value="{{ (($dibatalkan || $sudahLewat) ? 100000000 : 0) + (int) $j->tanggal->format('Ymd') }}">{{ $j->tanggal->translatedFormat('l, d F Y') }}</td>
                                     <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">
@@ -165,7 +160,6 @@
                     <x-pagination :paginator="$jadwal" />
                 </div>
 
-                {{-- Kartu jadwal - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
                 <div class="hidden max-xs:flex flex-col gap-3 mb-4">
                     @forelse($jadwal as $j)
                         @php
@@ -220,7 +214,6 @@
                 </div>
             </div>
 
-            {{-- Panel 2: Peralatan - dikelompokkan per peminjaman, daftar alatnya di dropdown --}}
             <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab') === 'panel-peralatan' ? 'active' : '' }}"
                  id="panel-peralatan">
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
@@ -297,7 +290,6 @@
                     <x-pagination :paginator="$peralatan" />
                 </div>
 
-                {{-- Kartu peminjaman - hanya tampil di mobile, tabel di atas tetap dipakai untuk tablet & desktop --}}
                 <div class="hidden max-xs:flex flex-col gap-3 mb-4">
                     @forelse($peralatan as $p)
                         <div class="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-3.5 cursor-pointer"
@@ -345,7 +337,6 @@
         </div>
     </div>
 
-    {{-- Modal detail jadwal, dipakai kartu mobile panel Jadwal & Operator --}}
     <div id="modalLapJadwalDetail"
         class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
         <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
@@ -359,7 +350,6 @@
         </div>
     </div>
 
-    {{-- Modal detail peminjaman peralatan, dipakai kartu mobile panel Peralatan Digunakan --}}
     <div id="modalLapPeralatanDetail"
         class="fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
         <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
@@ -377,11 +367,6 @@
 
 @push('scripts')
 <script>
-/**
- * Saat tab diganti:
- *   1. Update hidden input "tab" agar filter form tahu tab mana yang aktif
- *   2. Update URL tombol export PDF & Excel
- */
 document.addEventListener('click', function (e) {
     var btn = e.target.closest('.tab-btn');
     if (!btn) return;
@@ -403,15 +388,12 @@ document.addEventListener('click', function (e) {
     updateExportUrl(btnExcel);
 });
 
-// ── Modal detail untuk kartu mobile (kedua panel) ───────────────────────────
 function escapeHtml(str) {
     var div = document.createElement('div');
     div.textContent = str == null ? '' : String(str);
     return div.innerHTML;
 }
 
-// Peta warna badge - sumber kebenarannya ada di resources/views/components/badge.blade.php,
-// diduplikasi di sini karena badge yang dibangun lewat JS (bukan Blade) tidak bisa memanggil komponen itu langsung.
 var badgeColorMap = {
     'badge-active':   'bg-success dark:bg-success-dark text-success-text',
     'badge-warning':  'bg-warning dark:bg-warning-dark text-warning-text',

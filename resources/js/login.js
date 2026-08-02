@@ -12,13 +12,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             input.type = isHidden ? 'text' : 'password';
 
-            // Ganti ikon bx-hide ↔ bx-show
             eyeIcon.classList.toggle('bx-hide', !isHidden);
             eyeIcon.classList.toggle('bx-show',  isHidden);
         });
     });
 
-    // reCAPTCHA "normal" cuma tersedia ukuran tetap 304x78 dari Google
     var recaptchaWrap  = document.getElementById('recaptcha-wrap');
     var recaptchaScale = document.getElementById('recaptcha-scale');
     if (recaptchaWrap && recaptchaScale) {

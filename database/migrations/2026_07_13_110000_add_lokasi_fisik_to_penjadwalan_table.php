@@ -8,9 +8,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('penjadwalan', function (Blueprint $table) {
-            // Terpisah dari "keterangan" karena keterangan dipakai untuk link meeting
-            // (ditimpa otomatis saat link_otomatis aktif) - rapat Hybrid butuh tempat
-            // menyimpan lokasi fisik yang tidak ikut ketimpa saat link Zoom dibuat/diubah.
+
             $table->string('lokasi_fisik', 255)->nullable()->after('keterangan');
         });
     }

@@ -1,11 +1,9 @@
-// Logic form Jadwal Rapat (Tambah & Ubah) - dimuat lewat @vite() di kedua halaman, elemen yang diakses di bawah selalu ada.
 
-// ── Platform hint & Link Zoom otomatis ─────────────────────────────────────
+
 function platformPakaiZoom(v) {
     return v.includes('Zoom') || v === 'Hybrid';
 }
 
-// Field Keterangan dipakai bergantian: lokasi (Offline) vs link meeting (Online/Hybrid) - disimpan & dikembalikan saat platform ganti kategori.
 var platformSebelumnyaOffline = document.getElementById('platform').value.includes('Offline');
 var keteranganSebelumOffline = '';
 var linkOtomatisSebelumOffline = false;
@@ -79,7 +77,6 @@ document.getElementById('link_otomatis').addEventListener('change', function () 
     syncZoomCheckboxUI(true);
 });
 
-// ── Pilih Akun Zoom: disable opsi yang bentrok jadwal di tanggal+jam ini ───
 function refreshZoomAkunOptions() {
     var select = document.getElementById('zoom_akun_pilihan');
     if (!select) return;
@@ -88,7 +85,7 @@ function refreshZoomAkunOptions() {
     var selesai = document.getElementById('waktu_selesai').value;
 
     Array.from(select.options).forEach(function (opt) {
-        if (!opt.value) return; // skip opsi "Otomatis"
+        if (!opt.value) return;
 
         var daftarJadwal = [];
         try { daftarJadwal = JSON.parse(opt.dataset.jadwal || '[]'); } catch (e) { }
@@ -111,7 +108,6 @@ function refreshZoomAkunOptions() {
     document.getElementById(id).addEventListener('change', refreshZoomAkunOptions);
 });
 
-// ── Operator: hide yang sudah dipilih, disable yang bentrok tanggal ────────
 function getSelectedOperators() {
     return Array.from(document.querySelectorAll('.operator-select'))
         .map(function (s) { return s.value; })
@@ -138,9 +134,8 @@ function refreshOperatorOptions() {
             var isSelectedElsewhere = selected.includes(opt.value) && opt.value !== currentVal;
             var isBentrok = tanggal && jadwalDates.includes(tanggal) && opt.value !== currentVal;
 
-            // Sudah dipilih di baris lain → sembunyikan
             opt.hidden = isSelectedElsewhere;
-            // Bentrok jadwal → disable tapi tetap tampil dengan badge keterangan
+
             opt.disabled = isBentrok && !isSelectedElsewhere;
 
             if (isBentrok && !isSelectedElsewhere) {
@@ -200,7 +195,6 @@ function updateRemoveButtons() {
 
 document.getElementById('add-operator').addEventListener('click', addOperator);
 
-// ── Alat yang dibutuhkan: cuma cegah alat yang sama dipilih dobel ──────────
 function refreshPeralatanOptions() {
     var selected = Array.from(document.querySelectorAll('.peralatan-select'))
         .map(function (s) { return s.value; })
@@ -231,7 +225,7 @@ function removePeralatan(btn) {
     if (list.children.length > 1) {
         item.remove();
     } else {
-        // Baris terakhir: reset ke kosong daripada dihapus, biar selalu ada minimal 1 baris template.
+
         item.querySelector('select').value = '';
     }
     refreshPeralatanOptions();
@@ -269,10 +263,6 @@ document.addEventListener('DOMContentLoaded', function () {
     syncZoomCheckboxUI(false);
 });
 
-// Dipanggil dari onclick="".../onchange="" di Blade (termasuk baris yang di-clone JS saat
-// "Tambah Operator"/"Tambah Alat" diklik) - harus diekspos eksplisit ke window karena file ini
-// dimuat sebagai <script type="module"> lewat Vite, dan deklarasi function di dalam module
-// tidak otomatis jadi global seperti <script src> klasik (sama seperti kasus di content.js).
 window.removeOperator = removeOperator;
 window.removePeralatan = removePeralatan;
 window.refreshOperatorOptions = refreshOperatorOptions;

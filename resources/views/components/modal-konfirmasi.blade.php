@@ -1,8 +1,5 @@
 @props(['id', 'title' => 'Konfirmasi', 'icon' => 'bx-error-circle', 'iconClass' => 'text-warning-text'])
-{{--
-    Modal konfirmasi generik. Buka/tutup lewat window.bukaModalKonfirmasi(id) / window.tutupModalKonfirmasi(id) (didefinisikan di resources/js/content.js), tombol
-    dengan atribut [data-modal-close], klik di luar kartu (backdrop), atau Escape.
---}}
+
 <div id="{{ $id }}" class="modal-konfirmasi fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
     <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
         <div class="flex items-center justify-between gap-3 py-[18px] px-5 border-b border-page-bg dark:border-page-bg-dark">
