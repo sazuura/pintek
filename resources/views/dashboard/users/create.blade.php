@@ -24,7 +24,8 @@
                     <x-input name="nama_user" label="Nama Lengkap" required placeholder="cth: Budi Santoso" autocomplete="name" />
 
                     <x-input name="nohp" label="No. HP" required placeholder="08xxxxxxxxxx"
-                        hint="Dipakai untuk notifikasi WhatsApp" autocomplete="tel" />
+                        hint="Dipakai untuk notifikasi WhatsApp" autocomplete="tel" inputmode="numeric"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
 
                     <x-input type="email" name="email" label="Email" required placeholder="nama@diskominfotik.go.id" autocomplete="email" />
 

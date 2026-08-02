@@ -44,9 +44,10 @@ class Peminjaman extends Model
         return $this->hasMany(PeminjamanItem::class, 'id_peminjaman', 'id_peminjaman')->chaperone();
     }
 
-    public function isMenunggu(): bool   { return $this->status === 'diajukan'; }
-    public function isDisetujui(): bool  { return $this->status === 'disetujui'; }
-    public function isDibatalkan(): bool { return $this->status === 'dibatalkan'; }
+    public function isMenunggu(): bool     { return $this->status === 'diajukan'; }
+    public function isDisetujui(): bool    { return $this->status === 'disetujui'; }
+    public function isDibatalkan(): bool   { return $this->status === 'dibatalkan'; }
+    public function isDikembalikan(): bool { return $this->status === 'dikembalikan'; }
 
     public function getBadgeAttribute(): array
     {

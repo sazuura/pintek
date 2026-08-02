@@ -35,6 +35,13 @@ class PeminjamanItem extends Model
         if ($this->peminjaman?->isDibatalkan()) {
             return ['class' => 'badge-danger', 'label' => 'Dibatalkan'];
         }
+        // Sama halnya pengembalian - konfirmasiKembali() cuma menandai pengajuan induk
+        // (status + tanggal_kembali_aktual), status tiap item TIDAK ikut diubah jadi
+        // 'dikembalikan'. Tanpa cek ini, item yang sudah kembali tetap tampil "Disetujui"
+        // seolah masih dipinjam.
+        if ($this->peminjaman?->isDikembalikan()) {
+            return ['class' => 'badge-info', 'label' => 'Dikembalikan'];
+        }
         return match ($this->status) {
             'diajukan'  => ['class' => 'badge-warning', 'label' => 'Menunggu'],
             'disetujui' => ['class' => 'badge-active',  'label' => 'Disetujui'],

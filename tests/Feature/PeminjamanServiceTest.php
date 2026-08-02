@@ -270,6 +270,22 @@ class PeminjamanServiceTest extends TestCase
     }
 
     /** @test */
+    public function badge_item_menampilkan_dikembalikan_saat_pengajuan_induknya_dikembalikan(): void
+    {
+        // konfirmasiKembali() cuma menandai pengajuan induk (status + tanggal_kembali_aktual),
+        // status tiap item TIDAK ikut diubah - label badge-nya harus ikut status induk, bukan
+        // tetap tampil "Disetujui" seolah alatnya masih dipinjam.
+        $peminjaman = $this->buatPeminjaman([$this->alat->id_peralatan], 'dikembalikan');
+        $peminjaman->items()->update(['status' => 'disetujui']);
+
+        $item = Peminjaman::with('items')->find($peminjaman->id_peminjaman)->items->first();
+
+        $this->assertSame('disetujui', $item->status);
+        $this->assertSame('Dikembalikan', $item->badge['label']);
+        $this->assertSame('badge-info', $item->badge['class']);
+    }
+
+    /** @test */
     public function setujui_item_hanya_mengubah_status_item_itu_alat_lain_tetap_menunggu(): void
     {
         $alatKedua = Peralatan::create([

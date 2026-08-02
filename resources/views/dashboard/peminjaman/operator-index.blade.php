@@ -187,7 +187,7 @@
                         @empty
                             <tr>
                                 <td colspan="8" class="text-center py-10 text-text-muted">
-                                    <i class="bx bx-briefcase text-4xl block mb-2"></i>
+                                    <i class="bx bxs-briefcase text-4xl block mb-2"></i>
                                     Belum ada pengajuan peminjaman
                                 </td>
                             </tr>
@@ -243,7 +243,7 @@
                 </div>
             @empty
                 <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-10 text-center text-text-muted">
-                    <i class="bx bx-briefcase text-4xl block mb-2"></i>
+                    <i class="bx bxs-briefcase text-4xl block mb-2"></i>
                     Belum ada pengajuan peminjaman
                 </div>
             @endforelse
