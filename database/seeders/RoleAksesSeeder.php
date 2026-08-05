@@ -28,7 +28,6 @@ class RoleAksesSeeder extends Seeder
             ['slug' => 'jadwal',         'nama_menu' => 'Jadwal Rapat',           'icon' => 'bxs-calendar',  'urutan' => 3],
             ['slug' => 'peralatan',      'nama_menu' => 'Peralatan',              'icon' => 'bxs-wrench',    'urutan' => 4],
             ['slug' => 'peminjaman',     'nama_menu' => 'Peminjaman Peralatan',   'icon' => 'bx-package',    'urutan' => 5],
-            ['slug' => 'alat-terpasang', 'nama_menu' => 'Alat Terpasang',         'icon' => 'bx-tv',         'urutan' => 6],
             ['slug' => 'laporan',        'nama_menu' => 'Laporan',                'icon' => 'bxs-file',      'urutan' => 7],
             ['slug' => 'pengaturan',     'nama_menu' => 'Pengaturan Sistem',      'icon' => 'bxs-cog',       'urutan' => 8],
         ];
@@ -58,7 +57,6 @@ class RoleAksesSeeder extends Seeder
             'inventaris' => [
                 'dashboard'      => [true, false, false, false],
                 'peralatan'      => [true, true,  true,  true],
-                'alat-terpasang' => [true, true,  true,  true],
                 'peminjaman'     => [true, false, true,  false],
                 'laporan'        => [true, false, false, false],
             ],

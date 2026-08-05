@@ -111,6 +111,12 @@
             var y = viewDate.getFullYear(), m = viewDate.getMonth();
             var min = parseTanggal(input.min), max = parseTanggal(input.max);
             var selected = parseTanggal(input.value);
+            // Do not override user selection. If selected < min, clear selection so
+            // the field remains empty and user must pick a valid date.
+            if (selected && min && selected < min) {
+                setValue(input, '');
+                selected = null;
+            }
             var today = new Date(); today.setHours(0, 0, 0, 0);
             var hariKerjaSaja = input.dataset.weekdaysOnly !== undefined;
 
@@ -185,7 +191,14 @@
 
         ui.trigger.addEventListener('click', function () {
             if (panel.classList.contains('open')) { panel.classList.remove('open'); return; }
-            viewDate = parseTanggal(input.value) || new Date();
+            // Ensure input value obeys min before rendering calendar
+            var min = parseTanggal(input.min);
+            var cur = parseTanggal(input.value);
+            if (min && (!cur || cur < min)) {
+                setValue(input, toVal(min));
+                cur = min;
+            }
+            viewDate = cur || new Date();
             render();
             openPanel(ui.trigger, panel);
         });

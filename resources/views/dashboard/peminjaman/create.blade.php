@@ -56,6 +56,7 @@
                     <x-input type="date" name="tanggal_pinjam" label="Tanggal Pinjam" required
                         min="{{ now()->format('Y-m-d') }}" value="{{ old('tanggal_pinjam') }}" />
                     <x-input type="date" name="tanggal_kembali_rencana" label="Rencana Kembali" required
+                        min="{{ now()->format('Y-m-d') }}"
                         value="{{ old('tanggal_kembali_rencana') }}" hint="Boleh sama dengan atau setelah tanggal pinjam." />
                 </div>
             </div>
@@ -73,8 +74,9 @@
                                 <optgroup label="{{ $gedung }}">
                                     @foreach($items as $alat)
                                         <option value="{{ $alat->id_peralatan }}"
-                                            data-subtitle="{{ $gedung }} &middot; Stok: {{ $alat->stok_tersedia }}"
+                                            data-subtitle="{{ $gedung }}{{ $alat->kode_barang ? ' · ' . $alat->kode_barang : '' }} · Stok: {{ $alat->stok_tersedia }}"
                                             data-nama="{{ $alat->nama_peralatan }}"
+                                            @if($alat->status_terpasang === 'terpasang') data-terpasang="1" data-badge="Terpasang" data-badge-variant="info" @endif
                                             {{ (isset($selectedPeralatanId) && $selectedPeralatanId == $alat->id_peralatan) ? 'selected' : '' }}>
                                             {{ $alat->nama_peralatan }}
                                         </option>
@@ -118,6 +120,20 @@
                 <button type="button" onclick="konfirmasiTetapAjukan()"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-warning-text text-white">
                     <i class="bx bx-check"></i> Ya, Tetap Ajukan
+                </button>
+            </div>
+        </x-modal-konfirmasi>
+
+        <x-modal-konfirmasi id="modalKonfirmasiTerpasang" title="Konfirmasi Peminjaman Alat Terpasang" icon="bx-error" icon-class="text-warning-text">
+            <p class="text-[13px] text-text dark:text-text-dark m-0 mb-2">Terdapat alat berikut yang sudah terpasang:</p>
+            <ul id="modalKonfirmasiTerpasangList" class="text-[13px] text-text dark:text-text-dark m-0 pl-[18px] flex flex-col gap-1"></ul>
+            <p class="text-[13px] text-text-muted m-0">Apakah Anda yakin tetap ingin meminjam alat terpasang?</p>
+            <div class="flex justify-end gap-2.5 mt-1">
+                <button type="button" data-modal-close
+                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">Batal</button>
+                <button type="button" onclick="konfirmasiTetapAjukanTerpasang()"
+                    class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 hover:opacity-85 bg-warning-text text-white">
+                    <i class="bx bx-check"></i> Ya, Tetap Pinjam
                 </button>
             </div>
         </x-modal-konfirmasi>

@@ -1,6 +1,5 @@
 <?php
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\AlatTerpasangController;
 use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\PeminjamanController;
@@ -33,6 +32,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::resource('peralatan', PeralatanController::class)->names('peralatan')->except(['show']);
+        Route::post('/peralatan/{id}/status', [PeralatanController::class, 'updateStatus'])->name('peralatan.status');
     });
 
     Route::middleware('menu-akses:peminjaman')->group(function () {
@@ -60,9 +60,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         });
     });
 
-    Route::middleware('menu-akses:alat-terpasang')->group(function () {
-        Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang')->except(['show']);
-    });
 });
 
 Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator'])->group(function () {
@@ -92,6 +89,8 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
             Route::get('/{id}/edit', [PeralatanController::class, 'edit'])->name('edit');
             Route::put('/{id}',      [PeralatanController::class, 'update'])->name('update');
             Route::delete('/{id}',   [PeralatanController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/status', [PeralatanController::class, 'updateStatus'])->name('status');
+
         });
     });
     Route::middleware('menu-akses:peminjaman')->group(function () {
@@ -105,9 +104,6 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
         });
         Route::post('/peminjaman/{id}/batalkan', [PeminjamanController::class, 'operatorBatalkan'])->name('peminjaman.batalkan');
     });
-    Route::middleware('menu-akses:alat-terpasang')->group(function () {
-        Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang')->except(['show']);
-    });
 });
 
 Route::prefix('inventaris')->name('inventaris.')->middleware(['auth', 'role:inventaris'])->group(function () {
@@ -116,9 +112,7 @@ Route::prefix('inventaris')->name('inventaris.')->middleware(['auth', 'role:inve
     });
     Route::middleware('menu-akses:peralatan')->group(function () {
         Route::resource('peralatan', PeralatanController::class)->names('peralatan')->except(['show']);
-    });
-    Route::middleware('menu-akses:alat-terpasang')->group(function () {
-        Route::resource('alat-terpasang', AlatTerpasangController::class)->names('alat-terpasang')->except(['show']);
+        Route::post('/peralatan/{id}/status', [PeralatanController::class, 'updateStatus'])->name('peralatan.status');
     });
     Route::middleware('menu-akses:laporan')->group(function () {
         Route::prefix('laporan')->name('laporan.')->group(function () {

@@ -83,11 +83,16 @@
             item.appendChild(text);
 
             if (opt.dataset.badge) {
-                var variant = opt.dataset.badgeVariant === 'warning'
-                    ? 'bg-warning dark:bg-warning-dark text-warning-text'
-                    : 'bg-danger dark:bg-danger-dark text-danger-text';
                 var badge = document.createElement('span');
-                badge.className = 'shrink-0 inline-flex items-center gap-1 py-[3px] px-2.5 rounded-full text-xs font-medium whitespace-nowrap ' + variant;
+                badge.className = 'shrink-0 inline-flex items-center gap-1 py-[3px] px-2.5 rounded-full text-xs font-medium whitespace-nowrap';
+                var variant = opt.dataset.badgeVariant;
+                if (variant === 'warning') {
+                    badge.classList.add('bg-warning', 'dark:bg-warning-dark', 'text-warning-text');
+                } else if (variant === 'info') {
+                    badge.style.cssText = 'background:rgba(0,102,255,0.12);color:#0066ff;';
+                } else {
+                    badge.classList.add('bg-danger', 'dark:bg-danger-dark', 'text-danger-text');
+                }
                 badge.textContent = opt.dataset.badge;
                 item.appendChild(badge);
             }

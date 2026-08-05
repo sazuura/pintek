@@ -50,6 +50,19 @@
                             autocomplete="off" placeholder="cth: Rak 3, Lt.2" value="{{ old('lokasi_detail', $peralatan->lokasi_detail) }}" />
                         <datalist id="daftar-lokasi-detail"></datalist>
                     </div>
+                    <div>
+                        <label class="text-[13px] font-medium text-text dark:text-text-dark block mb-1.5">Status Terpasang <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
+                        <select name="status_terpasang" class="{{ $inputClass }}">
+                            <option value="terpasang" {{ old('status_terpasang', $peralatan->status_terpasang ?? 'tidak terpasang') == 'terpasang' ? 'selected' : '' }}
+                                @if($peralatan->stok_tersedia < 1) disabled title="Tidak cukup stok baik untuk dipasang" @endif>
+                                Terpasang
+                            </option>
+                            <option value="tidak terpasang" {{ old('status_terpasang', $peralatan->status_terpasang ?? 'tidak terpasang') == 'tidak terpasang' ? 'selected' : '' }}>Tidak Terpasang</option>
+                        </select>
+                        @if($peralatan->stok_tersedia < 1)
+                            <div class="text-xs text-warning-text mt-1">Tidak bisa menandai sebagai terpasang karena tidak ada unit baik tersedia.</div>
+                        @endif
+                    </div>
                     <x-input name="keterangan" label="Keterangan"
                         value="{{ old('keterangan', $peralatan->keterangan) }}" />
                 </div>

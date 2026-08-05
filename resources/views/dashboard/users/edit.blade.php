@@ -23,8 +23,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <x-input name="nama_user" label="Nama Lengkap" required value="{{ $user->nama_user }}" autocomplete="name" />
 
-                    <x-input name="nohp" label="No. HP" required value="{{ $user->nohp }}"
-                        hint="Dipakai untuk tombol chat WhatsApp cepat di halaman Users" autocomplete="tel" inputmode="numeric"
+                    <x-input name="nohp" label="No. HP" required value="{{ $user->nohp }}" autocomplete="tel" inputmode="numeric"
                         oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
 
                     <x-input type="email" name="email" label="Email" required value="{{ $user->email }}" autocomplete="email" />

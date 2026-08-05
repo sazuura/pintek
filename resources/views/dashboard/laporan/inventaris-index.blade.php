@@ -82,12 +82,6 @@
                 <span class="truncate">Stok Peralatan</span>
                 <span class="{{ $tabBadgeClass }}">{{ $stok->total() }}</span>
             </button>
-            <button class="{{ $tabBtnClass }} {{ request('tab') === 'panel-terpasang' ? 'active' : '' }}"
-                    data-tab="panel-terpasang">
-                <i class="bx bx-tv text-base max-xs:hidden"></i>
-                <span class="truncate">Alat Terpasang</span>
-                <span class="{{ $tabBadgeClass }}">{{ $terpasang->total() }}</span>
-            </button>
             <button class="{{ $tabBtnClass }} {{ request('tab') === 'panel-peminjaman' ? 'active' : '' }}"
                     data-tab="panel-peminjaman">
                 <i class="bx bx-history text-base max-xs:hidden"></i>
@@ -169,72 +163,6 @@
                 </div>
                 <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
                     <x-pagination :paginator="$stok" />
-                </div>
-            </div>
-
-            <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab') === 'panel-terpasang' ? 'active' : '' }}"
-                 id="panel-terpasang">
-                <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr>
-                                    <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
-                                    <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Nama Alat <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                                    <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Lokasi</th>
-                                    <th class="max-md:hidden group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Tanggal Pasang <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
-                                    <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Kondisi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($terpasang as $i => $a)
-                                    <tr class="border-b border-page-bg dark:border-page-bg-dark last:border-b-0 hover:bg-page-bg dark:hover:bg-page-bg-dark">
-                                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $terpasang->firstItem() + $i }}</td>
-                                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
-                                            <div class="font-medium">{{ $a->nama_alat }}</div>
-                                        </td>
-                                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $a->gedung }}{{ $a->lokasi_detail ? ' - ' . $a->lokasi_detail : '' }}</td>
-                                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center">{{ $a->tanggal_pasang->translatedFormat('l, d F Y') }}</td>
-                                        <td class="py-3.5 px-4 align-middle text-center"><x-badge :variant="$a->kondisiBadgeClass">{{ $a->kondisiLabel }}</x-badge></td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center py-10 text-text-muted">
-                                            <i class="bx bx-tv text-4xl block mb-2"></i>
-                                            Tidak ada data
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <x-pagination :paginator="$terpasang" />
-                </div>
-
-                <div class="hidden max-xs:flex flex-col gap-3 mb-4">
-                    @forelse($terpasang as $a)
-                        <div class="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-2.5">
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="min-w-0">
-                                    <div class="font-semibold text-sm text-text dark:text-text-dark truncate">{{ $a->nama_alat }}</div>
-                                    <div class="text-xs text-text-muted">{{ $a->gedung }}{{ $a->lokasi_detail ? ' - ' . $a->lokasi_detail : '' }}</div>
-                                </div>
-                                <x-badge :variant="$a->kondisiBadgeClass">{{ $a->kondisiLabel }}</x-badge>
-                            </div>
-                            <div class="flex items-center justify-between text-[13px] text-text-muted pt-2.5 border-t border-page-bg dark:border-page-bg-dark">
-                                <span>Tanggal Pasang</span>
-                                <span class="text-text dark:text-text-dark">{{ $a->tanggal_pasang->translatedFormat('l, d F Y') }}</span>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-10 text-center text-text-muted">
-                            <i class="bx bx-tv text-4xl block mb-2"></i>
-                            Tidak ada data
-                        </div>
-                    @endforelse
-                </div>
-                <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
-                    <x-pagination :paginator="$terpasang" />
                 </div>
             </div>
 

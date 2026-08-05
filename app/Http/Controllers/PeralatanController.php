@@ -25,10 +25,11 @@ class PeralatanController extends Controller
             })
             ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
             ->when($request->status, fn($q, $v) => match ($v) {
-                'tersedia'       => $q->whereRaw("{$stokTersediaRaw} > 2"),
-                'kritis'         => $q->whereRaw("{$stokTersediaRaw} between 1 and 2"),
-                'tidak_tersedia' => $q->whereRaw("{$stokTersediaRaw} <= 0"),
-                default          => $q,
+                'tersedia'         => $q->whereRaw("{$stokTersediaRaw} > 0"),
+                'tidak_tersedia'   => $q->whereRaw("{$stokTersediaRaw} <= 0"),
+                'terpasang'        => $q->where('status_terpasang', 'terpasang'),
+                'tidak terpasang'  => $q->where('status_terpasang', 'tidak terpasang'),
+                default            => $q,
             })
             ->when($request->kondisi, fn($q, $v) => match ($v) {
                 'baik'  => $q->whereRaw('COALESCE(rusak,0) <= 0'),
@@ -63,6 +64,7 @@ class PeralatanController extends Controller
             'gedung'            => 'required|string|max:100',
             'lokasi_detail'     => 'nullable|string|max:255',
             'stok'              => 'required|integer|min:0',
+            'status_terpasang'  => 'nullable|in:terpasang,tidak terpasang',
             'keterangan'        => 'nullable|string|max:255',
             'foto'              => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
@@ -70,6 +72,14 @@ class PeralatanController extends Controller
         $data['foto']         = $request->hasFile('foto')
             ? $request->file('foto')->store('peralatan', 'public')
             : null;
+        // Validasi bisnis: jika ingin menandai sebagai 'terpasang', pastikan minimal 1 unit baik tersedia
+        $stok = (int) ($data['stok'] ?? 0);
+        $rusak = (int) ($data['rusak'] ?? 0);
+        $tersedia = max(0, $stok - $rusak);
+        if (($data['status_terpasang'] ?? '') === 'terpasang' && $tersedia < 1) {
+            return back()->withInput()->withErrors(['status_terpasang' => 'Tidak dapat menandai sebagai terpasang: minimal 1 unit dalam kondisi baik diperlukan.']);
+        }
+
         Peralatan::create($data);
         return redirect()->route(auth()->user()->role . '.peralatan.index')
             ->with('success', 'Peralatan berhasil ditambahkan.');
@@ -106,6 +116,7 @@ class PeralatanController extends Controller
             'lokasi_detail'     => 'nullable|string|max:255',
             'stok'              => 'required|integer|min:0',
             'rusak'             => 'nullable|integer|min:0',
+            'status_terpasang'  => 'nullable|in:terpasang,tidak terpasang',
             'keterangan'        => 'nullable|string|max:255',
             'foto'              => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
@@ -113,6 +124,12 @@ class PeralatanController extends Controller
         if ($rusak > (int) $data['stok']) {
             return back()->withInput()
                 ->withErrors(['rusak' => 'Jumlah rusak tidak boleh melebihi stok total.']);
+        }
+        // Validasi bisnis: jika ingin menandai sebagai 'terpasang', pastikan minimal 1 unit baik tersedia
+        $stok = (int) ($data['stok'] ?? 0);
+        $tersedia = max(0, $stok - $rusak);
+        if (($data['status_terpasang'] ?? '') === 'terpasang' && $tersedia < 1) {
+            return back()->withInput()->withErrors(['status_terpasang' => 'Tidak dapat menandai sebagai terpasang: minimal 1 unit dalam kondisi baik diperlukan.']);
         }
         $data['foto'] = $this->prosesUploadFoto($request, $peralatan);
         $peralatan->update($data);
@@ -133,6 +150,27 @@ class PeralatanController extends Controller
         }
         return back()->with('success', 'Peralatan berhasil dihapus.');
     }
+
+    public function updateStatus(Request $request, string $id)
+    {
+        abort_if(!auth()->user()->punyaAkses('peralatan', 'ubah'), 403, 'Anda tidak memiliki akses untuk mengubah peralatan.');
+        $peralatan = Peralatan::findOrFail($id);
+        $data = $request->validate([
+            'status_terpasang' => 'required|in:terpasang,tidak terpasang',
+        ]);
+
+        $stok = (int) $peralatan->stok;
+        $rusak = (int) ($peralatan->rusak ?? 0);
+        $tersedia = max(0, $stok - $rusak);
+        if ($data['status_terpasang'] === 'terpasang' && $tersedia < 1) {
+            return back()->with('error', 'Tidak dapat menandai sebagai terpasang: minimal 1 unit dalam kondisi baik diperlukan.');
+        }
+
+        $peralatan->update(['status_terpasang' => $data['status_terpasang']]);
+
+        return back()->with('success', 'Status peralatan berhasil diperbarui.');
+    }
+
     private function prosesUploadFoto(Request $request, Peralatan $peralatan): ?string
     {
         if ($request->boolean('hapus_foto') && $peralatan->foto) {

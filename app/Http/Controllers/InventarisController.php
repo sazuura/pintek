@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 
 use App\Exports\PeralatanExport;
-use App\Models\AlatTerpasang;
 use App\Models\Peralatan;
 use App\Models\Peminjaman;
 use Illuminate\Http\Request;
@@ -23,6 +22,17 @@ class InventarisController extends Controller
             ->take(4)
             ->get();
 
+        $peralatanBelumDipasang = Peralatan::whereNull('status_terpasang')
+            ->orWhere('status_terpasang', 'tidak terpasang')
+            ->orderBy('gedung')
+            ->orderBy('nama_peralatan')
+            ->take(4)
+            ->get();
+
+        $totalBelumDipasang = Peralatan::whereNull('status_terpasang')
+            ->orWhere('status_terpasang', 'tidak terpasang')
+            ->count();
+
         $peminjamanMenunggu = Peminjaman::with(['user', 'items.peralatan'])
             ->where('status', 'diajukan')
             ->whereDate('tanggal_pinjam', '>=', $today)
@@ -37,6 +47,8 @@ class InventarisController extends Controller
             'totalTersedia',
             'totalRusak',
             'peralatanKritis',
+            'peralatanBelumDipasang',
+            'totalBelumDipasang',
             'peminjamanMenunggu',
             'totalMenunggu',
         ));
@@ -45,33 +57,20 @@ class InventarisController extends Controller
     public function laporanIndex(Request $request)
     {
         $gedungList = Peralatan::distinct()->pluck('gedung')
-            ->merge(AlatTerpasang::distinct()->pluck('gedung'))
             ->unique()
             ->sort()
             ->values();
 
         $stok       = $this->queryStokLaporan($request)->paginate(10, ['*'], 'stok_page')->withQueryString();
-        $terpasang  = $this->queryTerpasangLaporan($request)->paginate(10, ['*'], 'terpasang_page')->withQueryString();
         $peminjaman = $this->queryPeminjamanLaporan($request)->paginate(10, ['*'], 'peminjaman_page')->withQueryString();
 
-        return view('dashboard.laporan.inventaris-index', compact('stok', 'terpasang', 'peminjaman', 'gedungList'));
+        return view('dashboard.laporan.inventaris-index', compact('stok', 'peminjaman', 'gedungList'));
     }
 
     public function laporanExportPdf(Request $request)
     {
         $namaFile = $this->buatNamaLaporanPeralatan($request);
 
-        if ($request->tab === 'panel-terpasang') {
-            $terpasang = $this->queryTerpasangLaporan($request)->get();
-            return view('dashboard.laporan.print_terpasang', [
-                'terpasang'      => $terpasang,
-                'namaFile'       => $namaFile,
-                'judul'          => 'LAPORAN ALAT TERPASANG',
-                'pdfHeaders'     => ['#', 'Nama Alat', 'Gedung', 'Lokasi Detail', 'Tanggal Pasang', 'Kondisi'],
-                'pdfRows'        => $this->barisPdfTerpasang($terpasang),
-                'pdfStatusIndex' => 5,
-            ]);
-        }
 
         if ($request->tab === 'panel-peminjaman') {
             $peminjaman = $this->queryPeminjamanLaporan($request)->get();
@@ -112,19 +111,6 @@ class InventarisController extends Controller
         })->toArray();
     }
 
-    private function barisPdfTerpasang($terpasang): array
-    {
-        return $terpasang->values()->map(function ($a, $index) {
-            return [
-                $index + 1,
-                $a->nama_alat,
-                $a->gedung,
-                $a->lokasi_detail ?? '-',
-                $a->tanggal_pasang->format('d/m/Y'),
-                $a->kondisiLabel,
-            ];
-        })->toArray();
-    }
 
     private function barisPdfPeminjaman($peminjaman): array
     {
@@ -152,12 +138,6 @@ class InventarisController extends Controller
     {
         $namaFile = $this->buatNamaLaporanPeralatan($request);
 
-        if ($request->tab === 'panel-terpasang') {
-            return \Maatwebsite\Excel\Facades\Excel::download(
-                new \App\Exports\AlatTerpasangExport($request),
-                $namaFile . '.xlsx'
-            );
-        }
 
         if ($request->tab === 'panel-peminjaman') {
             return \Maatwebsite\Excel\Facades\Excel::download(
@@ -175,7 +155,6 @@ class InventarisController extends Controller
     private function buatNamaLaporanPeralatan(Request $request): string
     {
         $jenis = match ($request->tab) {
-            'panel-terpasang'  => 'alat-terpasang',
             'panel-peminjaman' => 'riwayat-peminjaman',
             default            => 'stok-peralatan',
         };
@@ -208,17 +187,6 @@ class InventarisController extends Controller
             ->orderBy('nama_peralatan');
     }
 
-    private function queryTerpasangLaporan(Request $request)
-    {
-        return AlatTerpasang::query()
-            ->when($request->search, fn($q, $s) => $q->where('nama_alat', 'like', "%{$s}%"))
-            ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
-            ->when($request->kondisi, fn($q, $v) => $q->where('kondisi', $v))
-            ->when($request->start, fn($q, $v) => $q->whereDate('tanggal_pasang', '>=', $v))
-            ->when($request->end, fn($q, $v) => $q->whereDate('tanggal_pasang', '<=', $v))
-            ->orderBy('gedung')
-            ->orderBy('nama_alat');
-    }
 
     private function queryPeminjamanLaporan(Request $request)
     {

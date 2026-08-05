@@ -1,6 +1,6 @@
 @props(['id', 'title' => 'Konfirmasi', 'icon' => 'bx-error-circle', 'iconClass' => 'text-warning-text'])
 
-<div id="{{ $id }}" class="modal-konfirmasi fixed inset-0 bg-black/45 z-[2100] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
+<div id="{{ $id }}" class="modal-konfirmasi fixed inset-0 bg-black/45 z-[99999] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
     <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
         <div class="flex items-center justify-between gap-3 py-[18px] px-5 border-b border-page-bg dark:border-page-bg-dark">
             <h3 class="m-0 text-[15px] font-semibold text-text dark:text-text-dark flex items-center gap-2">
@@ -16,3 +16,19 @@
         </div>
     </div>
 </div>
+<script>
+    (function(){
+        var id = '{{ $id }}';
+        function move(){
+            var el = document.getElementById(id);
+            if(!el) return;
+            if(el.parentNode !== document.body){
+                document.body.appendChild(el);
+            }
+        }
+        if(document.readyState === 'loading'){
+            document.addEventListener('DOMContentLoaded', move);
+        } else { move(); }
+    })();
+</script>
+

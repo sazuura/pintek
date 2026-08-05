@@ -56,14 +56,13 @@
 
                 <div data-skel class="bg-surface dark:bg-surface-dark rounded-xl shadow-card flex-1 lg:min-h-0 flex flex-col overflow-hidden">
                     <div class="p-5 pb-3.5 shrink-0 flex items-start justify-between gap-3 flex-wrap">
-                        <h2 class="text-[15px] font-semibold text-text dark:text-text-dark m-0"><i class="bx bx-error text-[#f39c12]"></i> Stok Sisa Sedikit
-                            <x-badge variant="badge-warning" class="ml-1">Stok ≤ 2</x-badge>
+                        <h2 class="text-[15px] font-semibold text-text dark:text-text-dark m-0"><i class="bx bx-error text-[#f39c12]"></i> Belum Dipasang
+                            <x-badge variant="badge-info" class="ml-1">Belum Dipasang</x-badge>
                         </h2>
                         <a href="{{ route('inventaris.peralatan.index') }}" class="text-[13px] font-medium text-primary inline-flex items-center gap-1.5 shrink-0">Lihat semua peralatan <i class="bx bx-right-arrow-alt"></i></a>
                     </div>
                     <div class="flex-1 lg:min-h-0 lg:overflow-y-auto custom-scrollbar px-5 pb-4 flex flex-col gap-2.5 border-t border-gray-300 dark:border-gray-700 pt-3.5">
-                        @forelse($peralatanKritis as $p)
-                            @php $sisaStok = $p->stok - ($p->rusak ?? 0); @endphp
+                        @forelse($peralatanBelumDipasang as $p)
                             <div class="border border-gray-300 dark:border-gray-700 rounded-xl p-3 flex items-center gap-3 shadow-sm">
                                 <x-foto-item :path="$p->foto" :alt="$p->nama_peralatan" icon="bx-package"
                                     img-class="w-11 h-11 rounded-lg object-cover shrink-0"
@@ -77,16 +76,16 @@
                                 </div>
                                 <div class="w-px self-stretch bg-gray-300 dark:bg-gray-700 shrink-0"></div>
                                 <div class="text-center shrink-0">
-                                    <div class="text-[10px] uppercase tracking-[0.4px] text-text-muted mb-1">Sisa Stok</div>
-                                    <x-badge :variant="$sisaStok == 0 ? 'badge-danger' : 'badge-warning'" class="text-sm font-bold">
-                                        {{ $sisaStok }} unit
+                                    <div class="text-[10px] uppercase tracking-[0.4px] text-text-muted mb-1">Status</div>
+                                    <x-badge variant="badge-info" class="text-sm font-bold">
+                                        Belum Dipasang
                                     </x-badge>
                                 </div>
                             </div>
                         @empty
                             <div class="text-center py-[90px] text-text-muted">
                                 <i class="bx bx-check-shield text-3xl block mb-2 text-[#1abc9c]"></i>
-                                All stocks secured
+                                Semua peralatan sudah dipasang
                             </div>
                         @endforelse
                     </div>

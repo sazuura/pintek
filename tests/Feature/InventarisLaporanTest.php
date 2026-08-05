@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AlatTerpasang;
 use App\Models\Peminjaman;
 use App\Models\PeminjamanItem;
 use App\Models\Peralatan;
@@ -33,17 +32,9 @@ class InventarisLaporanTest extends TestCase
     }
 
     #[Test]
-    public function halaman_laporan_bisa_diakses_dan_menampilkan_kedua_tab(): void
+    public function halaman_laporan_bisa_diakses_dan_menampilkan_tab(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router Cisco', 'gedung' => 'Gedung A', 'stok' => 10, 'rusak' => 2]);
-        AlatTerpasang::create([
-            'id_alat_terpasang' => 'AT-001',
-            'id_peralatan'      => 'PR-A',
-            'nama_alat'         => 'Router Cisco',
-            'gedung'            => 'Gedung A',
-            'tanggal_pasang'    => now(),
-            'kondisi'           => 'baik',
-        ]);
 
         $response = $this->actingAs($this->inventaris)
             ->get(route('inventaris.laporan.index'))
@@ -51,7 +42,6 @@ class InventarisLaporanTest extends TestCase
 
         $response->assertSee('Router Cisco');
         $response->assertSee('Stok Peralatan');
-        $response->assertSee('Alat Terpasang');
     }
 
     #[Test]
@@ -68,27 +58,6 @@ class InventarisLaporanTest extends TestCase
         $response->assertDontSee('Proyektor Mulus');
     }
 
-    #[Test]
-    public function terpasang_bisa_difilter_berdasarkan_gedung(): void
-    {
-        Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router A', 'gedung' => 'Gedung A', 'stok' => 5]);
-        Peralatan::create(['id_peralatan' => 'PR-B', 'nama_peralatan' => 'Router B', 'gedung' => 'Gedung B', 'stok' => 5]);
-        AlatTerpasang::create([
-            'id_alat_terpasang' => 'AT-001', 'id_peralatan' => 'PR-A', 'nama_alat' => 'Router A',
-            'gedung' => 'Gedung A', 'tanggal_pasang' => now(), 'kondisi' => 'baik',
-        ]);
-        AlatTerpasang::create([
-            'id_alat_terpasang' => 'AT-002', 'id_peralatan' => 'PR-B', 'nama_alat' => 'Router B',
-            'gedung' => 'Gedung B', 'tanggal_pasang' => now(), 'kondisi' => 'baik',
-        ]);
-
-        $response = $this->actingAs($this->inventaris)
-            ->get(route('inventaris.laporan.index', ['tab' => 'panel-terpasang', 'gedung' => 'Gedung A']))
-            ->assertOk();
-
-        $response->assertSee('Router A');
-        $response->assertDontSee('Router B');
-    }
 
     #[Test]
     public function export_pdf_stok_berhasil(): void
@@ -101,32 +70,14 @@ class InventarisLaporanTest extends TestCase
             ->assertSee('Router Cisco');
     }
 
-    #[Test]
-    public function export_pdf_terpasang_berhasil(): void
-    {
-        Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router Cisco', 'gedung' => 'Gedung A', 'stok' => 10]);
-        AlatTerpasang::create([
-            'id_alat_terpasang' => 'AT-001', 'id_peralatan' => 'PR-A', 'nama_alat' => 'Router Cisco',
-            'gedung' => 'Gedung A', 'tanggal_pasang' => now(), 'kondisi' => 'baik',
-        ]);
-
-        $this->actingAs($this->inventaris)
-            ->get(route('inventaris.laporan.exportPdf', ['tab' => 'panel-terpasang']))
-            ->assertOk()
-            ->assertSee('Router Cisco');
-    }
 
     #[Test]
-    public function export_excel_stok_dan_terpasang_berhasil(): void
+    public function export_excel_stok_berhasil(): void
     {
         Peralatan::create(['id_peralatan' => 'PR-A', 'nama_peralatan' => 'Router Cisco', 'gedung' => 'Gedung A', 'stok' => 10]);
 
         $this->actingAs($this->inventaris)
             ->get(route('inventaris.laporan.exportExcel', ['tab' => 'panel-stok']))
-            ->assertOk();
-
-        $this->actingAs($this->inventaris)
-            ->get(route('inventaris.laporan.exportExcel', ['tab' => 'panel-terpasang']))
             ->assertOk();
     }
 

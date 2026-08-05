@@ -19,6 +19,7 @@ class Peralatan extends Model
         'stok',
         'rusak',
         'keterangan',
+        'status_terpasang',
         'foto',
     ];
 
@@ -30,7 +31,6 @@ class Peralatan extends Model
     {
         return match (true) {
             $this->stok_tersedia <= 0 => 'Tidak Tersedia',
-            $this->stok_tersedia <= 2 => 'Hampir Habis',
             default                   => 'Tersedia',
         };
     }
@@ -38,7 +38,6 @@ class Peralatan extends Model
     {
         return match (true) {
             $this->stok_tersedia <= 0 => 'badge-danger',
-            $this->stok_tersedia <= 2 => 'badge-warning',
             default                   => 'badge-active',
         };
     }

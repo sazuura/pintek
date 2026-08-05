@@ -144,13 +144,22 @@ function updateReferensiHint() {
 
 function terapkanBatasKembaliDariJadwal(opt) {
     var kembali = document.getElementById('tanggal_kembali_rencana');
-    if (opt && opt.value) {
-        kembali.min = opt.dataset.tanggal;
-        if (!kembali.value || kembali.value < opt.dataset.tanggal) {
-            kembali.value = opt.dataset.tanggal;
-        }
-    } else {
-        kembali.removeAttribute('min');
+    var hariIni = new Date().toISOString().slice(0, 10);
+    var pinjam = document.getElementById('tanggal_pinjam').value || null;
+    var jadwalTanggal = (opt && opt.value) ? opt.dataset.tanggal : null;
+
+    // Determine the earliest allowed return date: max(hariIni, tanggal_pinjam, jadwalTanggal)
+    var batas = hariIni;
+    if (pinjam && pinjam > batas) batas = pinjam;
+    if (jadwalTanggal && jadwalTanggal > batas) batas = jadwalTanggal;
+
+    kembali.min = batas;
+    // Do not set a default value. If user already selected a date that is now before
+    // the minimum, clear it so the field stays empty and forces explicit selection.
+    if (kembali.value && kembali.value < batas) {
+        kembali.value = '';
+        kembali.dispatchEvent(new Event('input', { bubbles: true }));
+        kembali.dispatchEvent(new Event('change', { bubbles: true }));
     }
 }
 
@@ -164,6 +173,11 @@ document.getElementById('id_penjadwalan').addEventListener('change', function ()
     var berubah = jadwalGantiTerakhir !== opt.value;
     jadwalGantiTerakhir = opt.value;
     updateJadwalDuplikasiState(berubah);
+});
+
+document.getElementById('tanggal_pinjam').addEventListener('change', function () {
+    // When borrow date changes, update the minimum allowed return date
+    terapkanBatasKembaliDariJadwal(document.getElementById('id_penjadwalan').options[document.getElementById('id_penjadwalan').selectedIndex]);
 });
 
 function getSelectedPeralatan() {
@@ -184,6 +198,9 @@ function refreshPeralatanOptions() {
             if (sudahDiajukan) {
                 opt.dataset.badge = 'Sudah Diajukan';
                 opt.dataset.badgeVariant = 'warning';
+            } else if (opt.dataset.terpasang === '1') {
+                opt.dataset.badge = 'Terpasang';
+                opt.dataset.badgeVariant = 'info';
             } else {
                 delete opt.dataset.badge;
                 delete opt.dataset.badgeVariant;
@@ -191,6 +208,17 @@ function refreshPeralatanOptions() {
         });
     });
     window.SearchableSelect && window.SearchableSelect.refreshAll();
+}
+
+function getSelectedTerpasangPeralatan() {
+    return Array.from(document.querySelectorAll('.peralatan-select')).reduce(function (acc, select) {
+        var opt = select.options[select.selectedIndex];
+        if (!opt || !opt.value) return acc;
+        if (opt.dataset.terpasang === '1') {
+            acc.push(opt.dataset.nama || opt.textContent.trim());
+        }
+        return acc;
+    }, []);
 }
 
 function removeItem(btn) {
@@ -275,6 +303,15 @@ function lanjutkanSetelahCekDuplikat() {
         return;
     }
 
+    var namaTerpasang = getSelectedTerpasangPeralatan();
+    if (namaTerpasang.length > 0) {
+        document.getElementById('modalKonfirmasiTerpasangList').innerHTML = namaTerpasang.map(function (n) {
+            return '<li>' + escapeHtml(n) + '</li>';
+        }).join('');
+        bukaModalKonfirmasi('modalKonfirmasiTerpasang');
+        return;
+    }
+
     cekSpamLaluSubmit();
 }
 
@@ -282,6 +319,15 @@ function konfirmasiTetapAjukan() {
     tutupModalKonfirmasi('modalKonfirmasiDuplikat');
     cekSpamLaluSubmit();
 }
+
+function konfirmasiTetapAjukanTerpasang() {
+    tutupModalKonfirmasi('modalKonfirmasiTerpasang');
+    cekSpamLaluSubmit();
+}
+
+window.konfirmasiTetapAjukanTerpasang = konfirmasiTetapAjukanTerpasang;
+window.konfirmasiTetapAjukan = konfirmasiTetapAjukan;
+window.lanjutkanSetelahCekDuplikat = lanjutkanSetelahCekDuplikat;
 
 function cekSpamLaluSubmit() {
     var form = document.getElementById('form-peminjaman');

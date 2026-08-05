@@ -48,6 +48,13 @@
                     <x-input type="number" name="stok" label="Stok Total" required min="0"
                         value="{{ old('stok', 0) }}" />
                     <div>
+                        <label class="text-[13px] font-medium text-text dark:text-text-dark block mb-1.5">Status Terpasang <small class="font-normal text-text-muted ml-1">(opsional)</small></label>
+                        <select name="status_terpasang" class="{{ $inputClass }}">
+                            <option value="terpasang" {{ old('status_terpasang') == 'terpasang' ? 'selected' : '' }}>Terpasang</option>
+                            <option value="tidak terpasang" {{ old('status_terpasang', 'tidak terpasang') == 'tidak terpasang' ? 'selected' : '' }}>Tidak Terpasang</option>
+                        </select>
+                    </div>
+                    <div>
                         <x-input name="keterangan" placeholder="Catatan tambahan" value="{{ old('keterangan') }}">
                             <x-slot:label>Keterangan <small class="font-normal text-text-muted ml-1">(opsional)</small></x-slot:label>
                         </x-input>
