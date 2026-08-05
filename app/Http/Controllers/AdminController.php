@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers;
+use App\Exports\StokPeralatanExport;
 use App\Models\Penjadwalan;
+use App\Models\Peralatan;
 use App\Models\Peminjaman;
 use App\Models\PeminjamanItem;
 use App\Models\User;
@@ -176,13 +178,27 @@ class AdminController extends Controller
         $operators = User::where('role', 'operator')->orderBy('nama_user')->get();
         $jadwal    = $this->queryJadwalLaporan($request)->paginate(10, ['*'], 'jadwal_page')->withQueryString();
         $peralatan = $this->queryPeralatanLaporan($request)->paginate(10, ['*'], 'peralatan_page')->withQueryString();
+        $stok      = $this->queryStokLaporan($request)->paginate(10, ['*'], 'stok_page')->withQueryString();
+        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
 
-        return view('dashboard.laporan.admin-index', compact('jadwal', 'peralatan', 'operators'));
+        return view('dashboard.laporan.admin-index', compact('jadwal', 'peralatan', 'stok', 'operators', 'gedungList'));
     }
 
     public function laporanExportPdf(Request $request)
     {
         $namaFile = $this->buatNamaLaporan($request);
+
+        if ($request->tab === 'panel-stok') {
+            $stok = $this->queryStokLaporan($request)->get();
+            return view('dashboard.laporan.print_stok', [
+                'stok'           => $stok,
+                'namaFile'       => $namaFile,
+                'judul'          => 'LAPORAN STOK PERALATAN',
+                'pdfHeaders'     => ['#', 'Nama Alat', 'Kode Barang', 'Gedung', 'Stok Total', 'Rusak', 'Status'],
+                'pdfRows'        => $this->barisPdfStok($stok),
+                'pdfStatusIndex' => 6,
+            ]);
+        }
 
         if ($request->tab === 'panel-peralatan') {
             $peralatan = $this->queryPeralatanLaporan($request)->get();
@@ -247,9 +263,56 @@ class AdminController extends Controller
         return $baris;
     }
 
+    private function barisPdfStok($stok): array
+    {
+        return $stok->values()->map(function ($p, $index) {
+            return [
+                $index + 1,
+                $p->nama_peralatan,
+                $p->kode_barang ?? '-',
+                $p->gedung,
+                $p->stok,
+                $p->rusak ?? 0,
+                $p->statusLabel,
+            ];
+        })->toArray();
+    }
+
+    private function queryStokLaporan(Request $request)
+    {
+        return Peralatan::query()
+            ->when($request->search, fn($q, $s) =>
+                $q->where('nama_peralatan', 'like', "%{$s}%")
+                  ->orWhere('kode_barang', 'like', "%{$s}%")
+            )
+            ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
+            ->when($request->kondisi, fn($q, $v) => match ($v) {
+                'baik'  => $q->whereRaw('COALESCE(rusak,0) <= 0'),
+                'rusak' => $q->whereRaw('COALESCE(rusak,0) > 0'),
+                default => $q,
+            })
+            ->when($request->status, fn($q, $v) => match ($v) {
+                'terpasang'       => $q->where('status_terpasang', 'terpasang'),
+                'tidak_terpasang' => $q->where(function ($query) {
+                    $query->where('status_terpasang', 'tidak terpasang')
+                          ->orWhereNull('status_terpasang');
+                }),
+                default            => $q,
+            })
+            ->orderBy('gedung')
+            ->orderBy('nama_peralatan');
+    }
+
     public function laporanExportExcel(Request $request)
     {
         $namaFile = $this->buatNamaLaporan($request);
+
+        if ($request->tab === 'panel-stok') {
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new StokPeralatanExport($request),
+                $namaFile . '.xlsx'
+            );
+        }
 
         if ($request->tab === 'panel-peralatan') {
             return \Maatwebsite\Excel\Facades\Excel::download(
@@ -266,7 +329,11 @@ class AdminController extends Controller
 
     private function buatNamaLaporan(Request $request): string
     {
-        $jenis = $request->tab === 'panel-peralatan' ? 'peralatan-digunakan' : 'jadwal-operator';
+        $jenis = match ($request->tab) {
+            'panel-peralatan' => 'peralatan-digunakan',
+            'panel-stok'      => 'stok-peralatan',
+            default           => 'jadwal-operator',
+        };
 
         if ($request->start && $request->end) {
             $periode = Carbon::parse($request->start)->format('d-m-Y') . '_sd_' . Carbon::parse($request->end)->format('d-m-Y');

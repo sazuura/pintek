@@ -38,6 +38,14 @@ class StokPeralatanExport implements FromCollection, WithHeadings, ShouldAutoSiz
         } elseif ($this->request->kondisi === 'rusak') {
             $query->whereRaw('COALESCE(rusak,0) > 0');
         }
+        if ($this->request->status === 'terpasang') {
+            $query->where('status_terpasang', 'terpasang');
+        } elseif ($this->request->status === 'tidak_terpasang') {
+            $query->where(function ($q) {
+                $q->where('status_terpasang', 'tidak terpasang')
+                  ->orWhereNull('status_terpasang');
+            });
+        }
 
         return $query->orderBy('gedung')->orderBy('nama_peralatan')->get()->map(fn($p) => [
             'Nama Alat'   => $p->nama_peralatan,
@@ -45,13 +53,12 @@ class StokPeralatanExport implements FromCollection, WithHeadings, ShouldAutoSiz
             'Gedung'      => $p->gedung,
             'Stok Total'  => $p->stok,
             'Rusak'       => $p->rusak ?? 0,
-            'Tersedia'    => $p->stok_tersedia,
             'Status'      => $p->statusLabel,
         ]);
     }
 
     public function headings(): array
     {
-        return ['Nama Alat', 'Kode Barang', 'Gedung', 'Stok Total', 'Rusak', 'Tersedia', 'Status'];
+        return ['Nama Alat', 'Kode Barang', 'Gedung', 'Stok Total', 'Rusak', 'Status'];
     }
 }

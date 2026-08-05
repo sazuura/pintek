@@ -41,8 +41,8 @@
                                 <select name="status" onchange="this.form.submit()"
                                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                                     <option value="">Semua Status</option>
-                                    <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
-                                    <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak Tersedia</option>
+                                    <option value="terpasang" {{ request('status') == 'terpasang' ? 'selected' : '' }}>Terpasang</option>
+                                    <option value="tidak_terpasang" {{ request('status') == 'tidak_terpasang' ? 'selected' : '' }}>Tidak Terpasang</option>
                                 </select>
                                 <select name="kondisi" onchange="this.form.submit()"
                                     class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
@@ -80,13 +80,11 @@
                                             <x-foto-item :path="$item->foto" :alt="$item->nama_peralatan" icon="bx-package"
                                                 img-class="w-full aspect-[4/3] object-cover"
                                                 icon-wrap-class="w-full aspect-[4/3] flex items-center justify-center text-text-muted text-5xl" />
-                                            @if($item->status_terpasang)
-                                                <div class="absolute top-3 right-3 z-10">
-                                                    <x-badge variant="{{ $item->status_terpasang === 'terpasang' ? 'badge-info' : 'badge-inactive' }}" class="shadow-sm">
-                                                        {{ $item->status_terpasang === 'terpasang' ? 'TERPASANG' : 'TIDAK TERPASANG' }}
-                                                    </x-badge>
-                                                </div>
-                                            @endif
+                                            <div class="absolute top-3 right-3 z-10">
+                                                <x-badge variant="{{ $item->status_terpasang === 'terpasang' ? 'badge-info' : 'badge-inactive' }}" class="shadow-sm">
+                                                    {{ $item->status_terpasang === 'terpasang' ? 'TERPASANG' : 'TIDAK TERPASANG' }}
+                                                </x-badge>
+                                            </div>
                                         </div>
 
                                         {{-- Info --}}
@@ -148,7 +146,7 @@
                                                     @if($bisaUbah)
                                                         <button type="button"
                                                             class="flex-1 justify-center h-10 rounded-xl text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-semibold transition-colors duration-200 border border-success-text/30 text-success-text bg-surface dark:bg-surface-dark hover:bg-success/75 dark:hover:bg-success-dark/10"
-                                                            onclick="bukaModalStatusPeralatan('{{ route($roleAktif . '.peralatan.status', $item->id_peralatan) }}', '{{ $item->status_terpasang ?? 'tidak terpasang' }}')"
+                                                            onclick="bukaModalStatusPeralatan('{{ route($roleAktif . '.peralatan.status', $item->id_peralatan) }}', '{{ $item->status_terpasang }}')"
                                                             title="Pasang">
                                                             <i class="bx bx-pin"></i> Pasang
                                                         </button>
@@ -205,13 +203,13 @@
                             </form>
                         </x-modal-konfirmasi>
 
-                        <x-modal-konfirmasi id="modalStatusPeralatan" title="Ubah Status Terpasang" icon="bx-transfer-alt" icon-class="text-primary">
+                        <x-modal-konfirmasi id="modalStatusPeralatan" title="Ubah Status Terpasang" icon="bx-transfer-alt" icon-class="text-primary" overflow="visible">
                             <form id="formStatusPeralatan" method="POST">
                                 @csrf
                                 <div class="mt-2">
                                     <label for="status-terpasang" class="text-[13px] font-medium text-text dark:text-text-dark block mb-2">Status Terpasang</label>
-                                    <select id="status-terpasang" name="status_terpasang" class="w-full h-9 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans">
-                                        <option>-- Pilih Status --</option>
+                                    <select id="status-terpasang" name="status_terpasang" data-placeholder="-- Pilih Status --" class="searchable w-full h-9 px-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans">
+                                        <option value="" disabled selected>-- Pilih Status --</option>
                                         <option value="terpasang">Terpasang</option>
                                         <option value="tidak terpasang">Tidak Terpasang</option>
                                     </select>
@@ -240,8 +238,10 @@
 
                         function bukaModalStatusPeralatan(url, status) {
                             var form = document.getElementById('formStatusPeralatan');
+                            var select = document.getElementById('status-terpasang');
                             form.action = url;
-                            document.getElementById('status-terpasang').value = status || 'tidak terpasang';
+                            select.value = status || '';
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
                             bukaModalKonfirmasi('modalStatusPeralatan');
                         }
                     </script>

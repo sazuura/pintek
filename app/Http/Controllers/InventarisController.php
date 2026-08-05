@@ -89,9 +89,9 @@ class InventarisController extends Controller
             'stok'           => $stok,
             'namaFile'       => $namaFile,
             'judul'          => 'LAPORAN STOK PERALATAN',
-            'pdfHeaders'     => ['#', 'Nama Alat', 'Kode Barang', 'Gedung', 'Stok Total', 'Rusak', 'Tersedia', 'Status'],
+            'pdfHeaders'     => ['#', 'Nama Alat', 'Kode Barang', 'Gedung', 'Stok Total', 'Rusak', 'Status'],
             'pdfRows'        => $this->barisPdfStok($stok),
-            'pdfStatusIndex' => 7,
+            'pdfStatusIndex' => 6,
         ]);
     }
 
@@ -105,7 +105,6 @@ class InventarisController extends Controller
                 $p->gedung,
                 $p->stok,
                 $p->rusak ?? 0,
-                $p->stok_tersedia,
                 $p->statusLabel,
             ];
         })->toArray();
@@ -178,9 +177,11 @@ class InventarisController extends Controller
                 default => $q,
             })
             ->when($request->status, fn($q, $v) => match ($v) {
-                'tersedia'       => $q->whereRaw("{$stokTersediaRaw} > 2"),
-                'kritis'         => $q->whereRaw("{$stokTersediaRaw} between 1 and 2"),
-                'tidak_tersedia' => $q->whereRaw("{$stokTersediaRaw} <= 0"),
+                'terpasang'       => $q->where('status_terpasang', 'terpasang'),
+                'tidak_terpasang' => $q->where(function ($query) {
+                    $query->where('status_terpasang', 'tidak terpasang')
+                          ->orWhereNull('status_terpasang');
+                }),
                 default          => $q,
             })
             ->orderBy('gedung')

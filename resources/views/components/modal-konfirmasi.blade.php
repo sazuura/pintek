@@ -1,4 +1,4 @@
-@props(['id', 'title' => 'Konfirmasi', 'icon' => 'bx-error-circle', 'iconClass' => 'text-warning-text'])
+@props(['id', 'title' => 'Konfirmasi', 'icon' => 'bx-error-circle', 'iconClass' => 'text-warning-text', 'overflow' => 'auto'])
 
 <div id="{{ $id }}" class="modal-konfirmasi fixed inset-0 bg-black/45 z-[99999] items-center justify-center p-5 [&:not(.open)]:hidden [&.open]:flex">
     <div class="bg-surface dark:bg-surface-dark rounded-[14px] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
@@ -11,7 +11,7 @@
                 <i class="bx bx-x"></i>
             </button>
         </div>
-        <div class="pt-4 px-5 pb-5 overflow-y-auto flex flex-col gap-3">
+        <div class="pt-4 px-5 pb-5 {{ $overflow === 'visible' ? 'overflow-visible' : 'overflow-y-auto' }} flex flex-col gap-3" @if($overflow === 'visible') style="overflow: visible !important;" @endif>
             {{ $slot }}
         </div>
     </div>

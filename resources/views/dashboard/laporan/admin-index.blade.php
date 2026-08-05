@@ -13,24 +13,56 @@
 
             <input type="hidden" name="tab" id="active-tab-input" value="{{ request('tab', 'panel-jadwal') }}">
 
-            <label class="text-[13px] text-text-muted whitespace-nowrap">Dari</label>
-            <input type="date" name="start" value="{{ request('start') }}" onchange="this.form.submit()"
-                class="max-md:w-full h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
-            <label class="text-[13px] text-text-muted whitespace-nowrap">s/d</label>
-            <input type="date" name="end" value="{{ request('end') }}" onchange="this.form.submit()"
-                class="max-md:w-full h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+            <div id="filter-group-jadwal" class="{{ request('tab','panel-jadwal') === 'panel-stok' ? 'hidden' : '' }} flex flex-wrap items-center gap-2.5">
+                <label class="text-[13px] text-text-muted whitespace-nowrap">Dari</label>
+                <input type="date" name="start" value="{{ request('start') }}" onchange="this.form.submit()"
+                    class="max-md:w-full h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                <label class="text-[13px] text-text-muted whitespace-nowrap">s/d</label>
+                <input type="date" name="end" value="{{ request('end') }}" onchange="this.form.submit()"
+                    class="max-md:w-full h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
 
-            <select name="operator" onchange="this.form.submit()"
-                class="searchable h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
-                <option value="">Semua Operator</option>
-                @foreach($operators as $op)
-                    <option value="{{ $op->id_user }}" {{ request('operator')==$op->id_user?'selected':'' }}>
-                        {{ $op->nama_user }}
-                    </option>
-                @endforeach
-            </select>
+                <select name="operator" onchange="this.form.submit()"
+                    class="searchable h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="">Semua Operator</option>
+                    @foreach($operators as $op)
+                        <option value="{{ $op->id_user }}" {{ request('operator')==$op->id_user?'selected':'' }}>
+                            {{ $op->nama_user }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
-            @if(request()->hasAny(['start','end','operator']))
+            <div id="filter-group-stok" class="{{ request('tab') === 'panel-stok' ? '' : 'hidden' }} flex flex-wrap items-center gap-2.5">
+                <div class="relative flex-1 min-w-[180px] max-w-[300px] max-md:max-w-full">
+                    <i class="bx bx-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none"></i>
+                    <input type="text" name="search" autocomplete="off" placeholder="Cari nama alat..." value="{{ request('search') }}"
+                        class="w-full h-9 pl-[34px] pr-3 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans transition-colors duration-200 focus:border-primary focus:outline-none focus:bg-surface dark:focus:bg-surface-dark">
+                </div>
+
+                <select name="gedung" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="">Semua Lokasi</option>
+                    @foreach($gedungList as $g)
+                        <option value="{{ $g }}" {{ request('gedung') == $g ? 'selected' : '' }}>{{ $g }}</option>
+                    @endforeach
+                </select>
+
+                <select name="kondisi" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="">Semua Kondisi</option>
+                    <option value="baik" {{ request('kondisi') == 'baik' ? 'selected' : '' }}>Baik</option>
+                    <option value="rusak" {{ request('kondisi') == 'rusak' ? 'selected' : '' }}>Rusak</option>
+                </select>
+
+                <select name="status" onchange="this.form.submit()"
+                    class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
+                    <option value="">Semua Status</option>
+                    <option value="terpasang" {{ request('status') == 'terpasang' ? 'selected' : '' }}>Terpasang</option>
+                    <option value="tidak_terpasang" {{ request('status') == 'tidak_terpasang' ? 'selected' : '' }}>Tidak Terpasang</option>
+                </select>
+            </div>
+
+            @if(request()->hasAny(['start','end','operator','search','gedung','kondisi','status']))
                 <a href="{{ route('admin.laporan.index', ['tab' => request('tab','panel-jadwal')]) }}"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark">
                     <i class="bx bx-x"></i> Reset</a>
@@ -38,11 +70,11 @@
 
             <div class="ml-auto flex gap-2 items-center max-md:ml-0 max-md:w-full">
 
-                <a id="btn-pdf" target="_blank" rel="noopener" href="{{ route('admin.laporan.exportPdf', array_merge(request()->except(['jadwal_page','peralatan_page']), ['tab' => request('tab','panel-jadwal')])) }}"
+                <a id="btn-pdf" target="_blank" rel="noopener" href="{{ route('admin.laporan.exportPdf', array_merge(request()->except(['jadwal_page','peralatan_page','stok_page']), ['tab' => request('tab','panel-jadwal')])) }}"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-danger-text text-white">
                     <i class="bx bxs-file-pdf"></i> PDF
                 </a>
-                <a id="btn-excel" href="{{ route('admin.laporan.exportExcel', array_merge(request()->except(['jadwal_page','peralatan_page']), ['tab' => request('tab','panel-jadwal')])) }}"
+                <a id="btn-excel" href="{{ route('admin.laporan.exportExcel', array_merge(request()->except(['jadwal_page','peralatan_page','stok_page']), ['tab' => request('tab','panel-jadwal')])) }}"
                     class="h-9 px-3.5 rounded-lg border-none text-[13px] font-sans cursor-pointer inline-flex items-center gap-1.5 font-medium transition-opacity duration-200 no-underline hover:opacity-85 bg-[#1abc9c] text-white">
                     <i class="bx bxs-spreadsheet"></i> Excel
                 </a>
@@ -68,6 +100,12 @@
                 <i class="bx bx-wrench text-base max-xs:hidden"></i>
                 <span class="truncate">Peralatan Digunakan</span>
                 <span class="{{ $tabBadgeClass }}">{{ $peralatan->total() }}</span>
+            </button>
+            <button class="{{ $tabBtnClass }} {{ request('tab') === 'panel-stok' ? 'active' : '' }}"
+                    data-tab="panel-stok">
+                <i class="bx bx-package text-base max-xs:hidden"></i>
+                <span class="truncate">Stok Peralatan</span>
+                <span class="{{ $tabBadgeClass }}">{{ $stok->total() }}</span>
             </button>
         </div>
 
@@ -334,6 +372,77 @@
                 </div>
             </div>
 
+            <div class="tab-panel [&:not(.active)]:hidden [&.active]:block {{ request('tab') === 'panel-stok' ? 'active' : '' }}"
+                 id="panel-stok">
+                <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card overflow-hidden max-xs:hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="w-10 py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">#</th>
+                                    <th class="group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Nama Alat <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                                    <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Lokasi</th>
+                                    <th class="w-[90px] group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Stok <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
+                                    <th class="w-[90px] py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rusak</th>
+                                    <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($stok as $i => $p)
+                                    <tr class="border-b border-page-bg dark:border-page-bg-dark last:border-b-0 hover:bg-page-bg dark:hover:bg-page-bg-dark">
+                                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $stok->firstItem() + $i }}</td>
+                                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">
+                                            <div class="font-medium">{{ $p->nama_peralatan }}</div>
+                                            @if($p->kode_barang)
+                                                <div class="text-xs text-text-muted">{{ $p->kode_barang }}</div>
+                                            @endif
+                                        </td>
+                                        <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->gedung }}</td>
+                                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center font-semibold">{{ $p->stok }}</td>
+                                        <td class="py-3.5 px-4 text-sm align-middle text-center {{ $p->rusak > 0 ? 'text-[#e74c3c] font-semibold' : 'text-text-muted' }}">{{ $p->rusak ?? 0 }}</td>
+                                        <td class="py-3.5 px-4 align-middle text-center"><x-badge :variant="$p->statusBadgeClass">{{ $p->statusLabel }}</x-badge></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-10 text-text-muted">
+                                            <i class="bx bx-package text-4xl block mb-2"></i>
+                                            Tidak ada data
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <x-pagination :paginator="$stok" />
+                </div>
+
+                <div class="hidden max-xs:flex flex-col gap-3 mb-4">
+                    @forelse($stok as $p)
+                        <div class="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-card flex flex-col gap-3.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <div class="font-semibold text-sm text-text dark:text-text-dark truncate">{{ $p->nama_peralatan }}</div>
+                                    <div class="text-xs text-text-muted">{{ $p->kode_barang ?? '-' }} &middot; {{ $p->gedung }}</div>
+                                </div>
+                                <x-badge :variant="$p->statusBadgeClass">{{ $p->statusLabel }}</x-badge>
+                            </div>
+                            <div class="flex items-center justify-between text-[13px] text-text-muted pt-2.5 border-t border-page-bg dark:border-page-bg-dark">
+                                <span>Stok: <strong class="text-text dark:text-text-dark">{{ $p->stok }}</strong></span>
+                                <span>Rusak: <strong class="{{ $p->rusak > 0 ? 'text-[#e74c3c]' : 'text-text dark:text-text-dark' }}">{{ $p->rusak ?? 0 }}</strong></span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="bg-surface dark:bg-surface-dark rounded-xl shadow-card p-10 text-center text-text-muted">
+                            <i class="bx bx-package text-4xl block mb-2"></i>
+                            Tidak ada data
+                        </div>
+                    @endforelse
+                </div>
+                <div class="hidden max-xs:block bg-surface dark:bg-surface-dark rounded-xl shadow-card">
+                    <x-pagination :paginator="$stok" />
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -377,6 +486,16 @@ document.addEventListener('click', function (e) {
     var btnExcel    = document.getElementById('btn-excel');
 
     if (activeInput) activeInput.value = tabId;
+
+    var filterJadwal = document.getElementById('filter-group-jadwal');
+    var filterStok   = document.getElementById('filter-group-stok');
+    if (tabId === 'panel-stok') {
+        filterJadwal?.classList.add('hidden');
+        filterStok?.classList.remove('hidden');
+    } else {
+        filterJadwal?.classList.remove('hidden');
+        filterStok?.classList.add('hidden');
+    }
 
     function updateExportUrl(el) {
         if (!el) return;

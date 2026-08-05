@@ -114,7 +114,7 @@
         var label = wrapper.querySelector('.searchable-select-trigger-label');
         var opt = select.options[select.selectedIndex];
 
-        if (opt && !opt.disabled) {
+        if (opt && !opt.disabled && opt.value !== '') {
             label.textContent = optionLabel(opt);
             label.classList.remove('text-text-muted');
             label.classList.add('text-text', 'dark:text-text-dark');
@@ -243,6 +243,10 @@
                 if (e.key === 'Escape') closeDropdown(select);
             });
         }
+
+        select.addEventListener('change', function () {
+            syncTriggerLabel(select);
+        });
 
         select._searchableSelect = {
             refresh: function () {

@@ -25,10 +25,11 @@ class PeralatanController extends Controller
             })
             ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
             ->when($request->status, fn($q, $v) => match ($v) {
-                'tersedia'         => $q->whereRaw("{$stokTersediaRaw} > 0"),
-                'tidak_tersedia'   => $q->whereRaw("{$stokTersediaRaw} <= 0"),
-                'terpasang'        => $q->where('status_terpasang', 'terpasang'),
-                'tidak terpasang'  => $q->where('status_terpasang', 'tidak terpasang'),
+                'terpasang'       => $q->where('status_terpasang', 'terpasang'),
+                'tidak_terpasang' => $q->where(function ($query) {
+                    $query->where('status_terpasang', 'tidak terpasang')
+                          ->orWhereNull('status_terpasang');
+                }),
                 default            => $q,
             })
             ->when($request->kondisi, fn($q, $v) => match ($v) {

@@ -141,6 +141,12 @@ function tutupModalKonfirmasi(id) {
     if (modal) modal.classList.remove('open');
 }
 
+var mousedownTarget = null;
+
+document.addEventListener('mousedown', function (e) {
+    mousedownTarget = e.target;
+});
+
 window.bukaModalKonfirmasi = bukaModalKonfirmasi;
 window.tutupModalKonfirmasi = tutupModalKonfirmasi;
 
@@ -152,9 +158,10 @@ document.addEventListener('click', function (e) {
         return;
     }
     var backdrop = e.target.closest('.modal-konfirmasi.open');
-    if (backdrop && e.target === backdrop) {
+    if (backdrop && e.target === backdrop && mousedownTarget === backdrop) {
         backdrop.classList.remove('open');
     }
+    mousedownTarget = null;
 });
 
 document.addEventListener('keydown', function (e) {

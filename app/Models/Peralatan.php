@@ -29,17 +29,16 @@ class Peralatan extends Model
     }
     public function getStatusLabelAttribute(): string
     {
-        return match (true) {
-            $this->stok_tersedia <= 0 => 'Tidak Tersedia',
-            default                   => 'Tersedia',
-        };
+        return $this->status_terpasang === 'terpasang'
+            ? 'Terpasang'
+            : 'Tidak Terpasang';
     }
+
     public function getStatusBadgeClassAttribute(): string
     {
-        return match (true) {
-            $this->stok_tersedia <= 0 => 'badge-danger',
-            default                   => 'badge-active',
-        };
+        return $this->status_terpasang === 'terpasang'
+            ? 'badge-info'
+            : 'badge-inactive';
     }
     public function getFotoUrlAttribute(): ?string
     {

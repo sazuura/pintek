@@ -44,9 +44,8 @@
             <select name="status" onchange="this.form.submit()"
                 class="h-9 px-2.5 border border-page-bg dark:border-page-bg-dark rounded-lg bg-page-bg dark:bg-page-bg-dark text-text dark:text-text-dark text-[13px] font-sans cursor-pointer">
                 <option value="">Semua Status</option>
-                <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
-                <option value="kritis" {{ request('status') == 'kritis' ? 'selected' : '' }}>Hampir Habis</option>
-                <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak Tersedia</option>
+                <option value="terpasang" {{ request('status') == 'terpasang' ? 'selected' : '' }}>Terpasang</option>
+                <option value="tidak_terpasang" {{ request('status') == 'tidak_terpasang' ? 'selected' : '' }}>Tidak Terpasang</option>
             </select>
 
             @if(request()->hasAny(['search','gedung','kondisi','status','start','end']))
@@ -104,7 +103,6 @@
                                     <th class="max-md:hidden py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-left bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Lokasi</th>
                                     <th class="w-[90px] group sortable py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap cursor-pointer select-none hover:text-primary">Stok <span class="sort-icon ml-1 opacity-40 text-[10px] group-[.sorted]:opacity-100 group-[.sorted]:text-primary">⇅</span></th>
                                     <th class="w-[90px] py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Rusak</th>
-                                    <th class="w-[90px] py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Tersedia</th>
                                     <th class="py-3 px-4 text-[11px] uppercase tracking-[0.5px] text-text-muted text-center bg-page-bg dark:bg-page-bg-dark border-b border-page-bg dark:border-page-bg-dark whitespace-nowrap">Status</th>
                                 </tr>
                             </thead>
@@ -121,12 +119,11 @@
                                         <td class="max-md:hidden py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle">{{ $p->gedung }}</td>
                                         <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center font-semibold">{{ $p->stok }}</td>
                                         <td class="py-3.5 px-4 text-sm align-middle text-center {{ $p->rusak > 0 ? 'text-[#e74c3c] font-semibold' : 'text-text-muted' }}">{{ $p->rusak ?? 0 }}</td>
-                                        <td class="py-3.5 px-4 text-sm text-text dark:text-text-dark align-middle text-center font-semibold">{{ $p->stok_tersedia }}</td>
                                         <td class="py-3.5 px-4 align-middle text-center"><x-badge :variant="$p->statusBadgeClass">{{ $p->statusLabel }}</x-badge></td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-10 text-text-muted">
+                                        <td colspan="6" class="text-center py-10 text-text-muted">
                                             <i class="bx bx-package text-4xl block mb-2"></i>
                                             Tidak ada data
                                         </td>
@@ -151,7 +148,7 @@
                             <div class="flex items-center justify-between text-[13px] text-text-muted pt-2.5 border-t border-page-bg dark:border-page-bg-dark">
                                 <span>Stok: <strong class="text-text dark:text-text-dark">{{ $p->stok }}</strong></span>
                                 <span>Rusak: <strong class="{{ $p->rusak > 0 ? 'text-[#e74c3c]' : 'text-text dark:text-text-dark' }}">{{ $p->rusak ?? 0 }}</strong></span>
-                                <span>Tersedia: <strong class="text-text dark:text-text-dark">{{ $p->stok_tersedia }}</strong></span>
+                                <span>Status: <strong class="text-text dark:text-text-dark">{{ $p->statusLabel }}</strong></span>
                             </div>
                         </div>
                     @empty
